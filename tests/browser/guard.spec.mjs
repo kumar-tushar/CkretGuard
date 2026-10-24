@@ -1063,7 +1063,7 @@ test('Mask sends once while held Enter cannot duplicate the submission', async (
 });
 test('settings preserve custom fields and fit the toolbar dashboard', async () => {
   await addFields(['dataset1','internal_code']);
-  await expect(composer.locator('#sensitive-names')).toHaveAttribute('placeholder','datasetKey');
+  await expect(composer.locator('#sensitive-names')).toHaveAttribute('placeholder','dataset_key');
   await expect(composer.locator('#mode label')).toHaveText(['Send, Edit, or Mask','Edit or Mask']);
   await expect(composer.locator('select,#save')).toHaveCount(0);
   await expect(composer.locator('#protection-settings')).toHaveCSS('border-left-width','1px');
