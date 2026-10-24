@@ -57,22 +57,28 @@
     }
   }
   async function changeHistory(action, extra) {
-    if (changing) return;
+    if (changing) return false;
     changing = true;
     $('clear-history').disabled = true;
+    $('confirm-clear-history').disabled = true;
+    $('cancel-clear-history').disabled = true;
     $('history-list').querySelectorAll('button').forEach(button => { button.disabled = true; });
     try {
       await SecretShieldHistory.request(action, extra);
       await refreshHistory();
-    } catch { $('history-status').textContent = 'Could not delete history. Try again.'; }
+      return true;
+    } catch { $('history-status').textContent = 'Could not delete history. Try again.'; return false; }
     finally {
       changing = false;
       $('clear-history').disabled = false;
+      $('confirm-clear-history').disabled = false;
+      $('cancel-clear-history').disabled = false;
       $('history-list').querySelectorAll('button').forEach(button => { button.disabled = false; });
     }
   }
   function renderView(focus = false) {
     const selected = fullPage ? activeView() : 'home';
+    if (selected !== 'history') $('clear-history-dialog').close();
     for (const view of views) $(view + '-view').hidden = view !== selected;
     for (const link of $('sidebar').querySelectorAll('a')) {
       if (link.hash === '#' + selected) link.setAttribute('aria-current', 'page');
@@ -83,7 +89,19 @@
     if (focus) document.querySelector(`#${selected}-view h2`)?.focus();
   }
   $('clear-history').addEventListener('click', () => {
-    if (confirm('Delete all saved unmasked prompts from this device? Activity totals will stay the same.')) void changeHistory('clear');
+    if (changing || $('clear-history-dialog').open) return;
+    $('clear-history-error').textContent = '';
+    $('clear-history-dialog').showModal();
+  });
+  $('cancel-clear-history').addEventListener('click', () => $('clear-history-dialog').close());
+  $('clear-history-dialog').addEventListener('cancel', event => { if (changing) event.preventDefault(); });
+  $('confirm-clear-history').addEventListener('click', async () => {
+    if (changing) return;
+    $('clear-history-error').textContent = '';
+    if (await changeHistory('clear')) {
+      $('clear-history-dialog').close();
+      $('history-title').focus();
+    } else $('clear-history-error').textContent = 'Could not clear history. Try again.';
   });
   window.addEventListener('hashchange', () => renderView(true));
   chrome.runtime.onMessage.addListener((message, sender) => {

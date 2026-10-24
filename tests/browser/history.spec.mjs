@@ -124,14 +124,48 @@ test('newest prompts appear first and updates reach every open dashboard', async
   await expect(dashboard.locator('#history-list li')).toHaveCount(1);
   await expect(dashboard.locator('#history-list pre')).toHaveText('key=synthetic-older-123');
   const totals = await dashboard.evaluate(() => SecretShieldStats.read());
-  dashboard.once('dialog', dialog => dialog.dismiss());
+  const confirmation = dashboard.getByRole('dialog', { name: 'Clear history?', exact: true });
   await dashboard.locator('#clear-history').click();
+  await expect(confirmation).toBeVisible();
+  await expect(confirmation.getByRole('button', { name: 'Cancel', exact: true })).toBeFocused();
+  expect((await entries()).length).toBe(1);
+  await confirmation.getByRole('button', { name: 'Cancel', exact: true }).click();
+  await expect(confirmation).toBeHidden();
+  await expect(dashboard.locator('#clear-history')).toBeFocused();
   await expect(dashboard.locator('#history-list li')).toHaveCount(1);
-  dashboard.once('dialog', dialog => dialog.accept());
   await dashboard.locator('#clear-history').click();
+  await dashboard.keyboard.press('Escape');
+  await expect(confirmation).toBeHidden();
+  expect((await entries()).length).toBe(1);
+  await dashboard.locator('#clear-history').click();
+  await confirmation.getByRole('button', { name: 'Clear history', exact: true }).click();
+  await expect(confirmation).toBeHidden();
   await expect(dashboard.locator('#history-list li')).toHaveCount(0);
   await expect(second.locator('#history-list li')).toHaveCount(0);
+  await expect(dashboard.locator('#history-title')).toBeFocused();
   expect(await dashboard.evaluate(() => SecretShieldStats.read())).toEqual(totals);
+});
+
+test('clear history modal retains entries after a failure and permits retry', async () => {
+  const page = await chat();
+  await choose(page, 'key=synthetic-clear-failure-123', 'Send');
+  await expect.poll(async () => (await entries()).length).toBe(1);
+  await dashboard.getByRole('navigation').getByRole('link', { name: 'History', exact: true }).click();
+  await dashboard.locator('#clear-history').click();
+  const confirmation = dashboard.getByRole('dialog', { name: 'Clear history?', exact: true });
+  const worker = context.serviceWorkers()[0];
+  await worker.evaluate(() => { globalThis.originalHistoryDB = indexedDB.open; indexedDB.open = () => { throw new Error('synthetic failure'); }; });
+  try {
+    await confirmation.getByRole('button', { name: 'Clear history', exact: true }).click();
+    await expect(confirmation).toBeVisible();
+    await expect(confirmation.getByRole('status')).toHaveText('Could not clear history. Try again.');
+    await expect(confirmation.getByRole('button', { name: 'Clear history', exact: true })).toBeEnabled();
+    await expect(dashboard.locator('#history-list li')).toHaveCount(1);
+  } finally { await worker.evaluate(() => { indexedDB.open = originalHistoryDB; delete globalThis.originalHistoryDB; }); }
+  expect((await entries()).length).toBe(1);
+  await confirmation.getByRole('button', { name: 'Clear history', exact: true }).click();
+  await expect(confirmation).toBeHidden();
+  expect(await entries()).toEqual([]);
 });
 
 test('failed or invalidated sends never enter History', async () => {
@@ -196,4 +230,7 @@ test('Home and History retain the brand styling in full mode', async () => {
   await dashboard.getByRole('navigation').getByRole('link', { name: 'History', exact: true }).click();
   await dashboard.locator('#history-list summary').click();
   await dashboard.screenshot({ path: path.join(root, 'artifacts', 'full-page-history.png'), fullPage: true });
+  await dashboard.locator('#clear-history').click();
+  await dashboard.screenshot({ path: path.join(root, 'artifacts', 'clear-history-modal.png'), fullPage: true });
+  await dashboard.getByRole('dialog', { name: 'Clear history?', exact: true }).getByRole('button', { name: 'Cancel', exact: true }).click();
 });
