@@ -32,6 +32,34 @@ test('preserves surrounding code and quoted whitespace', () => {
     'const apiKey = "xxxxx";\nconsole.log("hello")');
   assert.equal(redact('{"clientSecret":"fake\\\"credential-tail"}').text, '{"clientSecret":"xxxxx"}');
 });
+test('Markdown wrappers around labels and values protect complete credentials', () => {
+  for (const quote of ['`','``','```']) {
+    for (const label of ['client_secret', `${quote}client_secret${quote}`]) {
+      const original=`${label}: ${quote}synthetic markdown secret${quote}`;
+      assert.equal(redact(original).text,`${label}: ${quote}xxxxx${quote}`);
+      assert.equal(redact(redact(original).text).count,0);
+    }
+  }
+  assert.equal(redact('dataset_key: `synthetic-value-123`',{sensitiveNames:['dataset_key']}).text,'dataset_key: `xxxxx`');
+  for (const [open,close] of [['``','`'],['`','``'],['``','']]) {
+    assert.equal(redact(`client_secret: ${open}synthetic-unclosed-123${close}`).text,`client_secret: ${open}xxxxx${close}`);
+  }
+  const fenced='client_secret:\n```text\nsynthetic-fenced-123\n```';
+  assert.equal(redact(fenced).text,'client_secret:\n```xxxxx```');
+  assert.equal(redact('password:\n`client_secret`: `synthetic-next-123`').text,'password:\n`client_secret`: `xxxxx`');
+});
+test('wrapped authorization tokens are masked across line breaks and incomplete schemes block', () => {
+  for (const scheme of ['Bearer','Basic']) for (const separator of ['\n','\r\n','\r','\n\n  ']) {
+    for (const quote of ['', '"', '`']) {
+      const original=`Authorization: ${scheme}${separator}${quote}synthetic-token-123${quote}`;
+      const result=redact(original);
+      assert.equal(result.text,`Authorization: ${scheme}${separator}${quote}xxxxx${quote}`);
+      assert.equal(result.count,1);
+      assert.equal(redact(result.text).count,0);
+    }
+  }
+  for (const original of ['Authorization: Bearer','Authorization: Basic\n']) assert.throws(()=>redact(original),ScanError);
+});
 test('rushed and pasted credential formatting masks complete values without losing surrounding text', () => {
   const cases=[
     ['client secret:\nfake-nextline-123','client secret:\nxxxxx'],

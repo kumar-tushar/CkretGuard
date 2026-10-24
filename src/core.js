@@ -11,7 +11,7 @@
     'aws_secret_access_key', 'aws_access_key_id', 'authorization'];
   const placeholders = /^(?:\[REDACTED\]|x{4,}|\*{4,}|\$\{[^}]+\}|\$[A-Z_][A-Z0-9_]*|<[^>]+>)$/i;
   const horizontal = '[^\\S\\r\\n\\u2028\\u2029]';
-  const valuePattern = String.raw`"((?:\\.|[^"\\\r\n])*)(?:"|(?=\r?\n|\r|$))|'((?:\\.|[^'\\\r\n])*)(?:'|(?=\r?\n|\r|$))|“([^”\r\n]*)(?:”|(?=\r?\n|\r|$))|‘([^’\r\n]*)(?:’|(?=\r?\n|\r|$))|((?:\$\{[^{}\s]+\}|[^\s,;\x60"'“”‘’<>}&])+)`;
+  const valuePattern = String.raw`"((?:\\.|[^"\\\r\n])*)(?:"|(?=\r?\n|\r|$))|'((?:\\.|[^'\\\r\n])*)(?:'|(?=\r?\n|\r|$))|“([^”\r\n]*)(?:”|(?=\r?\n|\r|$))|‘([^’\r\n]*)(?:’|(?=\r?\n|\r|$))|\x60{3}([\s\S]*?)(?:\x60{3}|$)|\x60+([^\x60\r\n]*)(?:\x60+|(?=\r?\n|\r|$))|((?:\$\{[^{}\s]+\}|[^\s,;\x60"'“”‘’<>}&])+)`;
   const escape = value => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   class ScanError extends Error {
     constructor() { super('This text could not be scanned. Keep it local and shorten it before retrying.'); }
@@ -47,7 +47,7 @@
     matchAll(/(?<![\w-])(?:sk-(?:(?:proj|svcacct)-|ant-(?:api03|admin01)-)?[A-Za-z0-9_-]{20,}|AIza[A-Za-z0-9_-]{35}|gh[pousr]_[A-Za-z0-9]{20,}|github_pat_[A-Za-z0-9_]{20,}|xox[baprs]-[A-Za-z0-9-]{15,}|(?:AKIA|ASIA)[A-Z0-9]{16}|(?:sk|rk)_(?:live|test)_[A-Za-z0-9]{16,}|SG\.[A-Za-z0-9_-]{16,}\.[A-Za-z0-9_-]{20,})(?![\w-])/g, 'provider-key');
     matchAll(/(?<![\w-])eyJ[A-Za-z0-9_-]{6,}\.[A-Za-z0-9_-]{6,}\.[A-Za-z0-9_-]{8,}(?![\w-])/g, 'jwt');
     const authorizationSchemes = new Set();
-    const authorization = new RegExp(`\\b(Bearer|Basic)${horizontal}+(?:${valuePattern})`, 'dgi');
+    const authorization = new RegExp(`\\b(Bearer|Basic)\\s+(?:${valuePattern})`, 'dgi');
     for (const match of text.matchAll(authorization)) {
       const group = match.findIndex((value, index) => index >= 2 && value !== undefined);
       const [start, end] = match.indices[group];
@@ -63,15 +63,18 @@
     // Prefixes cover environment variable names such as STRIPE_SECRET_KEY.
     const label = `(?<![\\w-])(?:[a-zA-Z][a-zA-Z0-9]*[_-])*?(?:${sensitive.join('|')})(?![\\w-])`;
     const separator = '(?::|=|：|＝|\\bis\\b)';
-    const followingField = `(?:${label}|["'“‘]${label}["'”’])${horizontal}*${separator}`;
+    const followingField = `(?:${label}|["'“‘\x60]+${label}["'”’\x60]+)${horizontal}*${separator}`;
     // An empty field must not consume another assignment on the following line.
-    const assignment = new RegExp(`(${label})["'”’]?${horizontal}*${separator}${horizontal}*(?:(?:\\r\\n|[\\r\\n])${horizontal}*(?!${followingField}))?(?:${valuePattern})`, 'dgi');
+    const assignment = new RegExp(`(${label})["'”’\x60]*${horizontal}*${separator}${horizontal}*(?:(?:\\r\\n|[\\r\\n])${horizontal}*(?!${followingField}))?(?:${valuePattern})`, 'dgi');
     for (const match of text.matchAll(assignment)) {
       const group = match.findIndex((value, index) => index >= 2 && value !== undefined);
       const value = match[group];
       const [start, end] = match.indices[group];
       // The authorization rule already protects the token following its scheme.
-      if (/authorization$/i.test(match[1]) && /^(?:Bearer|Basic)$/i.test(value) && authorizationSchemes.has(end)) continue;
+      if (/authorization$/i.test(match[1]) && /^(?:Bearer|Basic)$/i.test(value)) {
+        if (!authorizationSchemes.has(end)) throw new ScanError();
+        continue;
+      }
       add(start, end, 'named-secret');
     }
     // Protect repeated occurrences of a detected value without retaining a vault.

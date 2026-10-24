@@ -42,7 +42,17 @@
         const summary = document.createElement('summary');
         summary.textContent = 'View unmasked prompt';
         const prompt = document.createElement('pre');
-        prompt.textContent = entry.prompt;
+        let loading = false, loaded = false;
+        details.addEventListener('toggle', async () => {
+          if (!details.open || loading || loaded) return;
+          loading = true;
+          prompt.textContent = 'Loading prompt…';
+          try {
+            const text = await SecretShieldHistory.readPrompt(entry.id);
+            if (details.isConnected) { prompt.textContent = text; loaded = true; }
+          } catch { if (details.isConnected) prompt.textContent = 'Could not load this prompt. Close and reopen to retry.'; }
+          finally { loading = false; }
+        });
         details.append(summary, prompt);
         item.append(header, count, details);
         $('history-list').append(item);
@@ -52,7 +62,7 @@
     } catch {
       if (request !== revision) return;
       $('history-list').replaceChildren();
-      $('clear-history').hidden = true;
+      $('clear-history').hidden = false;
       $('history-status').textContent = 'Could not load history. Reload this tab and try again.';
     }
   }

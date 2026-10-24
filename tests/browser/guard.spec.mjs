@@ -204,9 +204,10 @@ test('field Save requires three characters and routine field changes remain quie
 test('failed field and settings writes preserve saved values and allow retry', async () => {
   await addFields(['dataset1']);
   await composer.locator('#protection-settings').evaluate(el=>{el.open=true;});
-  await composer.evaluate(()=>{
+  const worker=context.serviceWorkers()[0];
+  await worker.evaluate(()=>{
     const original=chrome.storage.local.set;
-    window.restoreSettingsStorage=()=>{chrome.storage.local.set=original;};
+    globalThis.restoreSettingsStorage=()=>{chrome.storage.local.set=original;};
     chrome.storage.local.set=async()=>{throw new Error('synthetic storage failure');};
   });
   try {
@@ -226,7 +227,7 @@ test('failed field and settings writes preserve saved values and allow retry', a
     expect(policy.protectClientIds).toBe(true);
     expect(policy.sensitiveNames).toEqual(['dataset1']);
   } finally {
-    await composer.evaluate(()=>{window.restoreSettingsStorage();delete window.restoreSettingsStorage;});
+    await worker.evaluate(()=>{restoreSettingsStorage();delete globalThis.restoreSettingsStorage;});
   }
   await composer.locator('#save-fields').click();
   await expect(composer.locator('#saved-fields span')).toHaveText(['dataset2','dataset1']);
@@ -1000,10 +1001,16 @@ test('saved fields use full-width rows and controls use brand hover colors', asy
 });
 
 test('managed custom fields are read-only while unlocked settings remain editable', async () => {
+  const worker=context.serviceWorkers()[0];
+  await worker.evaluate(()=>{
+    const managed=chrome.storage.managed.get;
+    globalThis.restoreManagedStorage=()=>{chrome.storage.managed.get=managed;};
+    chrome.storage.managed.get=async()=>({sensitiveNames:['org_dataset']});
+  });
   await composer.evaluate(async()=>{
     const original=SecretShieldPolicy;
     window.restoreCkretguardPolicy=()=>{globalThis.SecretShieldPolicy=original;};
-    globalThis.SecretShieldPolicy={loadPolicy:async()=>{
+    globalThis.SecretShieldPolicy={...original,loadPolicy:async()=>{
       const {policy={}}=await chrome.storage.local.get('policy');
       return {policy:SecretShieldCore.normalizePolicy({...policy,sensitiveNames:['org_dataset']}),locked:['sensitiveNames']};
     }};
@@ -1024,6 +1031,7 @@ test('managed custom fields are read-only while unlocked settings remain editabl
     await expect(composer.locator('#saved-fields span')).toHaveText(['org_dataset']);
   } finally {
     await composer.evaluate(()=>{window.restoreCkretguardPolicy();delete window.restoreCkretguardPolicy;});
+    await worker.evaluate(()=>{restoreManagedStorage();delete globalThis.restoreManagedStorage;});
   }
 });
 test('form submission and held Enter cannot forward the first secret-bearing attempt', async () => {
@@ -1202,4 +1210,66 @@ for (const state of ['pending','unavailable','invalid']) test(`${state} policy b
   await page.locator('textarea').fill('ordinary prompt');await page.locator('textarea').press('Enter');
   expect(await page.evaluate(()=>window.submitted)).toEqual([]);
   await browser.close();
+});
+
+for (const host of ['chatgpt.com','claude.ai']) test(`${host}: Markdown and multiline authorization cannot send unmasked credentials after Mask`,async()=>{
+  const page=await chat(host), requests=[];
+  page.on('request',request=>{if(request.method()==='POST') requests.push(request.postData());});
+  const cases=[
+    ['client_secret: `synthetic-markdown-123`','client_secret: `xxxxx`'],
+    ['`client_secret`: synthetic-label-123','`client_secret`: xxxxx'],
+    ['client_secret:\n```\nsynthetic-fenced-123\n```','client_secret:\n```xxxxx```'],
+    ['Authorization: Bearer\nsynthetic-bearer-123','Authorization: Bearer\nxxxxx'],
+    ['Authorization: Basic\n"synthetic basic token"','Authorization: Basic\n"xxxxx"'],
+  ];
+  const sent=[];
+  for(const [original,masked] of cases){
+    await page.locator('textarea,[contenteditable]').fill(original);
+    await page.locator('textarea,[contenteditable]').press('Enter');
+    await expect(review(page)).toBeVisible();
+    expect(requests).toEqual(sent);
+    await review(page).getByRole('button',{name:'Mask',exact:true}).click();
+    sent.push(masked);
+    await expect.poll(()=>requests).toEqual(sent);
+  }
+  await page.close();
+});
+for(const host of ['chatgpt.com','claude.ai']) test(`${host}: CSS-hidden editor and send duplicates do not block the visible composer`,async()=>{
+  const page=await chat(host);
+  await page.evaluate(()=>{
+    const active=document.querySelector('textarea,[contenteditable]');
+    const hidden=active.cloneNode(true);hidden.removeAttribute('id');
+    if(hidden.tagName==='TEXTAREA') hidden.dataset.id='root';
+    hidden.style.visibility='hidden';document.body.append(hidden);
+    const button=document.querySelector('[data-testid="send-button"]').cloneNode(true);
+    button.style.visibility='hidden';document.body.append(button);
+  });
+  const editor=page.locator('textarea,[contenteditable]').first();
+  await editor.fill('A plain prompt.');await clickSend(page);
+  await expect.poll(()=>page.evaluate(()=>window.submitted)).toEqual(['A plain prompt.']);
+  await editor.fill('client_secret=synthetic-visible-123');await editor.press('Enter');
+  await expect(review(page)).toBeVisible();
+  await review(page).getByRole('button',{name:'Mask',exact:true}).click();
+  await expect.poll(()=>page.evaluate(()=>window.submitted)).toEqual(['A plain prompt.','client_secret=xxxxx']);
+  await page.close();
+});
+test('two extension views preserve simultaneous field additions and independent setting changes',async()=>{
+  const other=await context.newPage();
+  try {
+    await other.goto(`chrome-extension://${extensionId}/composer.html`);
+    await expect(other.locator('#sensitive-names')).toBeEnabled();
+    await other.locator('#fields-title').click();
+    await composer.locator('#sensitive-names').fill('first_field');
+    await other.locator('#sensitive-names').fill('second_field');
+    await Promise.all([composer,other].map(page=>page.locator('#field-form').evaluate(form=>form.requestSubmit())));
+    await expect.poll(()=>composer.evaluate(async()=>(await chrome.storage.local.get('policy')).policy.sensitiveNames.slice().sort())).toEqual(['first_field','second_field']);
+    await expect(composer.locator('#sensitive-names')).toHaveValue('');
+    await expect(other.locator('#sensitive-names')).toHaveValue('');
+    await other.locator('#protection-settings').evaluate(element=>{element.open=true;});
+    await Promise.all([composer.getByRole('button',{name:'Remove first_field',exact:true}).click(),
+      other.getByRole('radio',{name:'Edit or Mask',exact:true}).check()]);
+    await expect.poll(()=>composer.evaluate(async()=>(await chrome.storage.local.get('policy')).policy)).toEqual({mode:'block',protectClientIds:true,sensitiveNames:['second_field']});
+    await expect(composer.locator('#field-status')).toHaveText('');
+    await expect(other.locator('#settings-status')).toHaveText('');
+  } finally { await other.close(); }
 });

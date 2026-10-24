@@ -16,7 +16,8 @@
   adapters['chat.openai.com'] = adapters['chatgpt.com'];
   function getAdapter(hostname) { return adapters[hostname] ?? null; }
   function isVisible(element) {
-    return element.isConnected && element.getClientRects().length > 0 && !element.closest('[hidden], [aria-hidden="true"]');
+    return element.isConnected && element.getClientRects().length > 0 &&
+      !element.closest('[hidden], [aria-hidden="true"]') && getComputedStyle(element).visibility === 'visible';
   }
   function getEditors(adapter) {
     return [...document.querySelectorAll(adapter.editors)].filter(isVisible);

@@ -65,8 +65,8 @@
     </footer>
     </div>
     <section id="history-view" class="view page-view" aria-labelledby="history-title" hidden>
-      <div class="page-heading"><div><h2 id="history-title" tabindex="-1">History</h2><p>Prompts you sent with detected secrets left unmasked.</p></div><button id="clear-history" class="secondary" type="button" hidden>Clear history</button></div>
-      <p class="history-note">Full prompts, including their secrets, are saved only on this device. Delete entries after rotating any exposed credentials.<br>Entries record send attempts; delivery is not confirmed.</p>
+      <div class="page-heading"><div><h2 id="history-title" tabindex="-1">History</h2><p>Prompts you sent with secrets left unmasked in the last 90 days.</p></div><button id="clear-history" class="secondary" type="button" hidden>Clear history</button></div>
+      <p class="history-note">Full prompts, including their secrets, are saved only on this device for 90 days. Delete entries after rotating exposed credentials.<br>Entries record send attempts; delivery is not confirmed.</p>
       <p id="history-status" role="status" aria-live="polite"></p>
       <ul id="history-list" class="history-list" aria-label="Unmasked prompt history"></ul>
     </section>
@@ -75,7 +75,7 @@
       <div class="workspace policy-copy">
         <h3>What stays on your device</h3><p>CkretGuard scans prompts locally. Settings, custom field names, and activity totals stay in this browser. When you choose Send for a prompt with detected secrets, History saves the complete unmasked prompt, detected count, chat site, conversation link when available, and time.</p>
         <h3>What History includes</h3><p>Only unmasked prompts submitted through CkretGuard’s Send choice are saved. Masked prompts, ordinary messages, edited drafts, and cancelled sends are not saved. History begins with this update; earlier prompts cannot be recovered. An entry records a send attempt, not confirmation that the chat service received it.</p>
-        <h3>Storage and deletion</h3><p>History is stored in this extension’s local database. It is not synced or uploaded by CkretGuard, and CkretGuard does not encrypt it. Entries stay until you delete them, clear extension data, or uninstall the extension, subject to browser storage limits. You can delete one entry or clear History. Deleting History does not change activity totals or remove messages already shared with a chat service.</p>
+        <h3>Storage and deletion</h3><p>History is stored in this extension’s local database. It is not synced or uploaded by CkretGuard, and CkretGuard does not encrypt it. Entries older than 90 days are deleted automatically while Chrome is running. You can also delete one entry, clear History, clear extension data, or uninstall the extension. Browser storage limits apply. Deleting History does not change activity totals or remove messages already shared with a chat service.</p>
         <h3>Coverage</h3><p>CkretGuard has no server or remote analytics. The chat website can read text entered into its own page before you send it. Protection covers recognized ChatGPT and Claude text inputs and send controls. Files, images, voice, other apps, and existing conversations are outside its scanning coverage. Detection can miss secrets.</p>
       </div>
     </section>

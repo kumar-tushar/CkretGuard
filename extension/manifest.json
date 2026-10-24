@@ -5,7 +5,7 @@
   "author": "Orenthic",
   "description": "Detect credentials and custom secret fields before sending ChatGPT or Claude prompts. Choose Send, Edit, or Mask.",
   "minimum_chrome_version": "120",
-  "permissions": ["storage"],
+  "permissions": ["storage", "alarms"],
   "action": { "default_title": "CkretGuard · Protection", "default_popup": "composer.html" },
   "background": { "service_worker": "background.js" },
   "options_ui": { "page": "composer.html", "open_in_tab": true },

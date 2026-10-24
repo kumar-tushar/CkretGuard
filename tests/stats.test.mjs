@@ -5,6 +5,8 @@ import vm from 'node:vm';
 
 const statsSource = await readFile(new URL('../src/stats.js', import.meta.url), 'utf8');
 const historySource = await readFile(new URL('../src/history.js', import.meta.url), 'utf8');
+const coreSource = await readFile(new URL('../src/core.js', import.meta.url), 'utf8');
+const policySource = await readFile(new URL('../src/policy.js', import.meta.url), 'utf8');
 const workerSource = await readFile(new URL('../extension/background.js', import.meta.url), 'utf8');
 function store(initial, failFirstWrite = false) {
   let listener, failures = Number(failFirstWrite);
@@ -21,7 +23,7 @@ function store(initial, failFirstWrite = false) {
         },
       } },
     },
-    importScripts: (...names) => names.forEach(name => vm.runInContext(name === 'history.js' ? historySource : statsSource, context)),
+    importScripts: (...names) => names.forEach(name => vm.runInContext({ 'core.js':coreSource, 'policy.js':policySource, 'history.js':historySource, 'stats.js':statsSource }[name], context)),
   });
   vm.runInContext(workerSource, context);
   const send = (kind, count = 1, id = 'test-extension') => new Promise(resolve => {

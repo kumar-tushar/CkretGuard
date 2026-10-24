@@ -5,7 +5,10 @@ import { mkdir } from 'node:fs/promises';
 const root = path.resolve('.');
 let context, dashboard, extensionId;
 const review = page => page.getByRole('dialog');
-async function entries() { return dashboard.evaluate(() => SecretShieldHistory.request('list')); }
+async function entries() { return dashboard.evaluate(async () => {
+  const entries = await SecretShieldHistory.request('list');
+  return Promise.all(entries.map(async entry => ({ ...entry, prompt: await SecretShieldHistory.readPrompt(entry.id) })));
+}); }
 async function chat(host = 'chatgpt.com') {
   const page = await context.newPage();
   await page.goto(`https://${host}/${host === 'claude.ai' ? 'chat' : 'c'}/test-conversation?token=not-saved#not-saved`);
@@ -132,6 +135,7 @@ test('newest prompts appear first and updates reach every open dashboard', async
   await expect(second.locator('#history-list li')).toHaveCount(1);
   await choose(page, 'key=synthetic-newer-456', 'Send');
   await expect(second.locator('#history-list li')).toHaveCount(2);
+  await dashboard.locator('#history-list details').evaluateAll(items => items.forEach(item => { item.open = true; }));
   await expect(dashboard.locator('#history-list pre')).toHaveText(['key=synthetic-newer-456', 'key=synthetic-older-123']);
   await second.locator('#history-list button').first().click();
   await expect(dashboard.locator('#history-list li')).toHaveCount(1);
@@ -207,7 +211,7 @@ test('History renders prompt text safely, preserves long prompts and keeps prefe
   expect((await entries())[0].prompt).toBe(original);
   await dashboard.getByRole('navigation').getByRole('link', { name: 'History', exact: true }).click();
   await dashboard.locator('#history-list summary').click();
-  expect(await dashboard.locator('#history-list pre').textContent()).toBe(original);
+  await expect.poll(() => dashboard.locator('#history-list pre').textContent()).toBe(original);
   await expect(dashboard.locator('#history-list img')).toHaveCount(0);
   expect(await dashboard.evaluate(() => window.injected)).toBeUndefined();
   const preferences = await dashboard.evaluate(async () => JSON.stringify(await chrome.storage.local.get(null)));
@@ -230,6 +234,7 @@ test('History reports storage errors without changing Send and recovers after a 
     await expect(dashboard.locator('#history-status')).toContainText('Could not load history');
   } finally { await worker.evaluate(() => { indexedDB.open = originalHistoryDB; delete globalThis.originalHistoryDB; }); }
   await dashboard.reload();
+  await dashboard.locator('#history-list summary').click();
   await expect(dashboard.locator('#history-list pre')).toHaveText('key=synthetic-persist-123');
 });
 
@@ -246,4 +251,75 @@ test('Home and History retain the brand styling in full mode', async () => {
   await dashboard.locator('#clear-history').click();
   await dashboard.screenshot({ path: path.join(root, 'artifacts', 'clear-history-modal.png'), fullPage: true });
   await dashboard.getByRole('dialog', { name: 'Clear history?', exact: true }).getByRole('button', { name: 'Cancel', exact: true }).click();
+});
+
+async function seedHistory(items) {
+  return dashboard.evaluate(async items=>{
+    await SecretShieldHistory.perform('prune');
+    const records=items.map(item=>({...SecretShieldHistory.entry(item.large ? 'key=synthetic-volume-123\n'+'plain text '.repeat(100000) : 'key=synthetic-history-123',1,'https://chatgpt.com/c/history-test'),
+      ...(item.createdAt===undefined?{}:{createdAt:item.createdAt})}));
+    const db=await new Promise((resolve,reject)=>{const request=indexedDB.open('ckretguard-history',1);request.onsuccess=()=>resolve(request.result);request.onerror=()=>reject(request.error);});
+    try { await new Promise((resolve,reject)=>{
+      const transaction=db.transaction('prompts','readwrite');
+      for(const record of records) transaction.objectStore('prompts').add(record);
+      transaction.oncomplete=resolve;transaction.onerror=transaction.onabort=()=>reject(transaction.error);
+    }); } finally { db.close(); }
+    return records.map(({id,prompt,createdAt})=>({id,length:prompt.length,createdAt}));
+  },items);
+}
+test('History physically deletes entries older than 90 days and retains the cutoff boundary',async()=>{
+  const worker=context.serviceWorkers()[0], now=Date.now(), day=86400000;
+  await worker.evaluate(now=>{globalThis.originalHistoryNow=Date.now;Date.now=()=>now;},now);
+  try {
+    const seeded=await seedHistory([{createdAt:now-90*day-1},{createdAt:now-90*day},{createdAt:now-89*day}]);
+    const listed=await dashboard.evaluate(()=>SecretShieldHistory.request('list'));
+    expect(listed.map(item=>item.id)).toEqual([seeded[2].id,seeded[1].id]);
+    const remaining=await dashboard.evaluate(()=>new Promise((resolve,reject)=>{
+      const request=indexedDB.open('ckretguard-history',1);
+      request.onsuccess=()=>{const db=request.result,transaction=db.transaction('prompts');const count=transaction.objectStore('prompts').count();count.onsuccess=()=>resolve(count.result);transaction.oncomplete=()=>db.close();};
+      request.onerror=reject;
+    }));
+    expect(remaining).toBe(2);
+    expect(await dashboard.evaluate(async id=>{try{await SecretShieldHistory.readPrompt(id);return false;}catch{return true;}},seeded[0].id)).toBe(true);
+    const alarm=await dashboard.evaluate(()=>chrome.alarms.get('history-retention'));
+    expect(alarm.periodInMinutes).toBe(60);
+  } finally { await worker.evaluate(()=>{Date.now=originalHistoryNow;delete globalThis.originalHistoryNow;}); }
+});
+test('History metadata pagination preserves records sharing a timestamp',async()=>{
+  const seeded=await seedHistory(Array.from({length:405},()=>({createdAt:Date.now()})));
+  const metadata=await dashboard.evaluate(()=>SecretShieldHistory.request('list'));
+  expect(metadata).toHaveLength(405);
+  expect(new Set(metadata.map(item=>item.id))).toEqual(new Set(seeded.map(item=>item.id)));
+  expect(metadata.every(item=>!Object.hasOwn(item,'prompt'))).toBe(true);
+});
+test('large History lists stay below message limits and selected prompts load without truncation',async()=>{
+  const seeded=await seedHistory(Array.from({length:70},()=>({large:true})));
+  await dashboard.locator('#sidebar a[href="#history"]').click();
+  await expect(dashboard.locator('#history-list li')).toHaveCount(70);
+  expect(await dashboard.evaluate(async()=>JSON.stringify(await SecretShieldHistory.request('list')).length)).toBeLessThan(100000);
+  await expect(dashboard.locator('#history-list pre').first()).toHaveText('');
+  await dashboard.locator('#history-list summary').first().click();
+  await expect.poll(()=>dashboard.locator('#history-list pre').first().evaluate(element=>element.textContent.length)).toBe(seeded[0].length);
+  await expect(dashboard.locator('#clear-history')).toBeVisible();
+  await dashboard.locator('#clear-history').click();
+  await dashboard.getByRole('dialog').getByRole('button',{name:'Clear history',exact:true}).click();
+  await expect(dashboard.locator('#history-list li')).toHaveCount(0);
+});
+test('Clear history remains available when listing fails',async()=>{
+  await seedHistory([{}]);
+  const worker=context.serviceWorkers()[0];
+  await worker.evaluate(()=>{
+    const original=SecretShieldHistory;
+    globalThis.restoreHistoryList=()=>{globalThis.SecretShieldHistory=original;};
+    globalThis.SecretShieldHistory={...original,perform:async(action,value)=>{if(action==='list')throw new Error('synthetic list failure');return original.perform(action,value);}};
+  });
+  try {
+    await dashboard.locator('#sidebar a[href="#history"]').click();
+    await expect(dashboard.locator('#history-status')).toContainText('Could not load history');
+    await expect(dashboard.locator('#clear-history')).toBeVisible();
+    await dashboard.locator('#clear-history').click();
+    await dashboard.getByRole('dialog').getByRole('button',{name:'Clear history',exact:true}).click();
+    await expect(dashboard.getByRole('dialog')).toBeHidden();
+  } finally { await worker.evaluate(()=>{restoreHistoryList();delete globalThis.restoreHistoryList;}); }
+  expect(await entries()).toEqual([]);
 });

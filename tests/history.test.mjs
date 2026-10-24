@@ -6,17 +6,27 @@ import vm from 'node:vm';
 
 const source = await readFile(new URL('../src/history.js', import.meta.url), 'utf8');
 const worker = await readFile(new URL('../extension/background.js', import.meta.url), 'utf8');
-function harness() {
-  let listener;
+const core = await readFile(new URL('../src/core.js', import.meta.url), 'utf8');
+const policy = await readFile(new URL('../src/policy.js', import.meta.url), 'utf8');
+function harness(cleanup = false) {
+  let listener, alarmListener;
   const messages = [];
+  const cleanups = [], alarms = [];
   const context = vm.createContext({ URL, crypto: webcrypto,
     chrome: { runtime: { id: 'test-extension', onMessage: { addListener: value => { listener = value; } },
       sendMessage: async message => { messages.push(message); return { ok: true, entries: [] }; } } },
     importScripts: () => {},
   });
+  if (cleanup) context.chrome.alarms = { create: async (...args) => { alarms.push(args); },
+    onAlarm: { addListener: value => { alarmListener = value; } } };
   vm.runInContext(source, context);
+  vm.runInContext(core, context);
+  vm.runInContext(policy, context);
+  if (cleanup) context.SecretShieldHistory = { ...context.SecretShieldHistory,
+    perform: async action => { cleanups.push(action); return { removed: 1 }; } };
   vm.runInContext(worker, context);
-  return { history: context.SecretShieldHistory, messages, context,
+  return { history: context.SecretShieldHistory, messages, context, cleanups, alarms,
+    alarm: name => alarmListener({ name }), settled: () => vm.runInContext('pending', context),
     send: (message, sender) => new Promise(resolve => listener({ type: 'ckretguard-history', ...message }, sender, resolve)) };
 }
 test('history preserves complete prompts and keeps only supported conversation links', () => {
@@ -48,11 +58,23 @@ test('history read and deletion messages are rejected outside the extension dash
   const { send } = harness();
   for (const url of ['https://chatgpt.com/composer.html', 'file:///composer.html', 'chrome-extension://other/composer.html',
     'chrome-extension://test-extension/other.html', undefined]) {
-    for (const action of ['list', 'remove', 'clear']) {
+    for (const action of ['list', 'read', 'remove', 'clear']) {
       assert.equal((await send({ action, id: 'a'.repeat(36) }, { id: 'test-extension', url })).ok, false);
     }
   }
   assert.equal((await send({ action: 'list' }, { id: 'other', url: 'chrome-extension://test-extension/composer.html' })).ok, false);
+});
+test('History cleanup runs on worker start and its hourly alarm', async () => {
+  const state = harness(true);
+  await state.settled();
+  assert.equal(state.history.RETENTION_DAYS, 90);
+  assert.equal(state.alarms[0][0], 'history-retention');
+  assert.equal(state.alarms[0][1].periodInMinutes, 60);
+  assert.deepEqual(state.cleanups, ['prune']);
+  state.alarm('unrelated');
+  state.alarm('history-retention');
+  await state.settled();
+  assert.deepEqual(state.cleanups, ['prune', 'prune']);
 });
 test('history recording requires a supported top-level content script', async () => {
   const { send } = harness();

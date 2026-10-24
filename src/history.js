@@ -1,12 +1,14 @@
 (() => {
   'use strict';
   const type = 'ckretguard-history';
+  const RETENTION_DAYS = 90, PAGE_SIZE = 200, CHUNK_SIZE = 1024 * 1024;
+  const RETENTION_MS = RETENTION_DAYS * 24 * 60 * 60 * 1000;
   const sites = Object.freeze({ 'chatgpt.com': 'ChatGPT', 'chat.openai.com': 'ChatGPT', 'claude.ai': 'Claude' });
   function entry(prompt, count, source) {
     const url = new URL(source);
     if (url.protocol !== 'https:' || url.port || url.username || url.password || !Object.hasOwn(sites, url.hostname) ||
         typeof prompt !== 'string' || !prompt.trim() || !Number.isSafeInteger(count) || count < 1) throw new Error('Invalid history entry');
-    const conversation = url.hostname === 'claude.ai' ? /^\/chat\/[a-zA-Z0-9-]+$/ : /^\/c\/[a-zA-Z0-9-]+$/;
+    const conversation = url.hostname === 'claude.ai' ? /^\/chat\/[a-zA-Z0-9-]{1,256}$/ : /^\/c\/[a-zA-Z0-9-]{1,256}$/;
     return { id: crypto.randomUUID(), createdAt: Date.now(), site: sites[url.hostname],
       url: url.origin + (conversation.test(url.pathname) ? url.pathname : '/'), prompt, count };
   }
@@ -22,23 +24,73 @@
     });
   }
   async function perform(action, value) {
+    if (!['record','list','read','remove','clear','prune'].includes(action)) throw new Error('Invalid history action');
     const db = await database();
     try {
       return await new Promise((resolve, reject) => {
-        const transaction = db.transaction('prompts', action === 'list' ? 'readonly' : 'readwrite');
+        const transaction = db.transaction('prompts', 'readwrite');
         const records = transaction.objectStore('prompts');
-        const request = action === 'list' ? records.index('createdAt').getAll() :
-          action === 'record' ? records.add(value) : action === 'remove' ? records.delete(value) : records.clear();
-        transaction.oncomplete = () => resolve(action === 'list' ? request.result.reverse() : undefined);
-        transaction.onabort = () => reject(new Error('History unavailable'));
-        transaction.onerror = () => reject(new Error('History unavailable'));
+        let result = {}, removed = 0;
+        transaction.oncomplete = () => resolve({ ...result, removed });
+        transaction.onabort = transaction.onerror = () => reject(new Error('History unavailable'));
+        // Remove expired records before any read or write, including existing databases.
+        const expired = records.index('createdAt').openKeyCursor(IDBKeyRange.upperBound(Date.now() - RETENTION_MS, true));
+        expired.onsuccess = () => {
+          const cursor = expired.result;
+          if (cursor) { records.delete(cursor.primaryKey); removed++; cursor.continue(); return; }
+          if (action === 'prune') return;
+          if (action === 'record') { records.add(value); return; }
+          if (action === 'remove') { records.delete(value); return; }
+          if (action === 'clear') { records.clear(); return; }
+          if (action === 'read') {
+            const request = records.get(value.id);
+            request.onsuccess = () => {
+              const item = request.result;
+              result = item ? { text: item.prompt.slice(value.offset, value.offset + CHUNK_SIZE),
+                done: value.offset + CHUNK_SIZE >= item.prompt.length } : { missing: true };
+            };
+            return;
+          }
+          const entries = [];
+          const request = records.index('createdAt').openCursor(value ? IDBKeyRange.upperBound(value.time) : null, 'prev');
+          result = { entries, next: null };
+          request.onsuccess = () => {
+            const cursor = request.result;
+            if (!cursor) return;
+            if (value && cursor.key === value.time && cursor.primaryKey >= value.id) { cursor.continue(); return; }
+            if (entries.length === PAGE_SIZE) {
+              const last = entries.at(-1);
+              result.next = { time: last.createdAt, id: last.id };
+              return;
+            }
+            const { id, createdAt, site, url, count } = cursor.value;
+            entries.push({ id, createdAt, site, url, count });
+            cursor.continue();
+          };
+        };
       });
     } finally { db.close(); }
   }
   async function request(action, extra = {}) {
-    const response = await chrome.runtime.sendMessage({ type, action, ...extra });
-    if (!response?.ok) throw new Error('History unavailable');
-    return response.entries;
+    const entries = [];
+    let before = extra.before;
+    do {
+      const response = await chrome.runtime.sendMessage({ type, action, ...extra, ...(before ? { before } : {}) });
+      if (!response?.ok) throw new Error('History unavailable');
+      if (action !== 'list') return response;
+      entries.push(...response.entries);
+      before = response.next;
+    } while (before);
+    return entries;
   }
-  globalThis.SecretShieldHistory = Object.freeze({ type, entry, perform, request });
+  async function readPrompt(id) {
+    let text = '', done = false;
+    while (!done) {
+      const chunk = await request('read', { id, offset: text.length });
+      if (chunk.missing || typeof chunk.text !== 'string' || (!chunk.text.length && !chunk.done)) throw new Error('History unavailable');
+      text += chunk.text; done = chunk.done;
+    }
+    return text;
+  }
+  globalThis.SecretShieldHistory = Object.freeze({ type, entry, perform, request, readPrompt, RETENTION_DAYS });
 })();

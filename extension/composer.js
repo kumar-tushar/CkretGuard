@@ -16,9 +16,11 @@
       current.sensitiveNames.length >= SecretShieldCore.MAX_CUSTOM_FIELDS || $('sensitive-names').value.trim().length < 3;
   }
   function renderSettings() {
-    for (const radio of $('mode').querySelectorAll('input')) radio.checked = radio.value === current.mode;
+    if (!saving) {
+      for (const radio of $('mode').querySelectorAll('input')) radio.checked = radio.value === current.mode;
+      $('client-ids').checked = current.protectClientIds;
+    }
     $('mode').disabled = saving || locked.includes('mode');
-    $('client-ids').checked = current.protectClientIds;
     $('client-ids').disabled = saving || locked.includes('protectClientIds');
   }
   function renderFields() {
@@ -46,7 +48,7 @@
         remove.disabled = saving;
         remove.addEventListener('click', () => {
           if (!current || saving || locked.includes('sensitiveNames')) return;
-          void save({ sensitiveNames: current.sensitiveNames.filter(value => value !== name) }, 'field-status');
+          void save({ kind: 'removeField', name }, 'field-status');
         });
         item.append(remove);
       }
@@ -70,7 +72,7 @@
       if (request === revision) setStatus('field-status', 'Protection settings unavailable. Reload the extension.', true);
     }
   }
-  async function save(patch, status) {
+  async function save(change, status) {
     if (saving) return false;
     saving = true;
     setStatus(status, '');
@@ -78,11 +80,8 @@
     $('saved-fields').querySelectorAll('button').forEach(button => { button.disabled = true; });
     try {
       if (!current) throw new Error();
-      const requested = SecretShieldCore.normalizePolicy({ ...current, ...patch });
-      const local = Object.fromEntries(Object.entries(requested).filter(([key]) => !locked.includes(key)));
-      await chrome.storage.local.set({ policy: local });
+      await SecretShieldPolicy.update(change);
       await reload();
-      if (!current) throw new Error();
       return true;
     } catch (error) {
       let message = status === 'field-status' ? 'Could not save fields. Try again.' :
@@ -90,6 +89,9 @@
       if (status === 'field-status' && error instanceof SecretShieldCore.ScanError) {
         message = 'Use 3–64 characters, starting with a letter. Allowed: letters, numbers, spaces, _ and -.';
       }
+      if (error.code === 'duplicate') message = 'That field is already saved.';
+      if (error.code === 'limit') message = 'You can add maximum 50 fields.';
+      if (error.code === 'managed') message = 'These settings are managed by your organization.';
       setStatus(status, message, true);
       return false;
     } finally {
@@ -108,18 +110,18 @@
       setStatus('field-status', 'That field is already saved.', true);
       return;
     }
-    const saved = await save({ sensitiveNames: [name, ...current.sensitiveNames] }, 'field-status');
+    const saved = await save({ kind: 'addField', name }, 'field-status');
     if (saved && $('sensitive-names').value.trim() === name) $('sensitive-names').value = '';
     if (saved) $('saved-fields').scrollTop = 0;
     updateFieldButton();
   });
   $('mode').addEventListener('change', event => {
     if (!current || $('mode').disabled) return;
-    void save({ mode: event.target.value }, 'settings-status');
+    void save({ kind: 'set', key: 'mode', value: event.target.value }, 'settings-status');
   });
   $('client-ids').addEventListener('change', () => {
     if (!current || $('client-ids').disabled) return;
-    void save({ protectClientIds: $('client-ids').checked }, 'settings-status');
+    void save({ kind: 'set', key: 'protectClientIds', value: $('client-ids').checked }, 'settings-status');
   });
   async function refreshActivity() {
     const request = ++activityRevision;

@@ -1,9 +1,22 @@
 'use strict';
-importScripts('stats.js', 'history.js');
+importScripts('core.js', 'policy.js', 'stats.js', 'history.js');
 
-// Serialize activity and history changes from all tabs.
+// Serialize policy, activity, and History changes across views.
 let pending = Promise.resolve();
 chrome.runtime.onMessage.addListener((message, sender, reply) => {
+  if (message?.type === SecretShieldPolicy.type) {
+    try {
+      const source = new URL(sender.url);
+      if (sender.id !== chrome.runtime.id || source.protocol !== 'chrome-extension:' ||
+          source.hostname !== chrome.runtime.id || source.pathname !== '/composer.html') throw new Error();
+    } catch { reply({ ok: false }); return; }
+    const update = pending.then(() => SecretShieldPolicy.apply(message.change));
+    pending = update.catch(() => {});
+    update.then(() => reply({ ok: true }), error => reply({ ok: false,
+      error: error instanceof SecretShieldCore.ScanError ? 'invalid' :
+        ['duplicate', 'limit', 'managed'].includes(error.message) ? error.message : 'unavailable' }));
+    return true;
+  }
   if (message?.type === SecretShieldHistory.type) {
     let value;
     try {
@@ -14,16 +27,23 @@ chrome.runtime.onMessage.addListener((message, sender, reply) => {
       } else {
         const source = new URL(sender.url);
         if (source.protocol !== 'chrome-extension:' || source.hostname !== chrome.runtime.id || source.pathname !== '/composer.html' ||
-            !['list', 'remove', 'clear'].includes(message.action)) throw new Error();
-        if (message.action === 'remove' && (typeof message.id !== 'string' || !/^[a-f0-9-]{36}$/.test(message.id))) throw new Error();
-        value = message.id;
+            !['list', 'read', 'remove', 'clear'].includes(message.action)) throw new Error();
+        if (['remove','read'].includes(message.action) && (typeof message.id !== 'string' || !/^[a-f0-9-]{36}$/.test(message.id))) throw new Error();
+        if (message.action === 'read') {
+          if (!Number.isSafeInteger(message.offset) || message.offset < 0) throw new Error();
+          value = { id: message.id, offset: message.offset };
+        } else if (message.action === 'list') {
+          if (message.before && (!Number.isSafeInteger(message.before.time) || typeof message.before.id !== 'string' ||
+              !/^[a-f0-9-]{36}$/.test(message.before.id))) throw new Error();
+          value = message.before;
+        } else value = message.id;
       }
     } catch { reply({ ok: false }); return; }
     const update = pending.then(() => SecretShieldHistory.perform(message.action, value));
     pending = update.catch(() => {});
-    update.then(entries => {
-      reply({ ok: true, entries });
-      if (message.action !== 'list') void chrome.runtime.sendMessage({ type: 'ckretguard-history-changed' }).catch(() => {});
+    update.then(result => {
+      reply({ ok: true, ...result });
+      if (['record','remove','clear'].includes(message.action) || result.removed) void chrome.runtime.sendMessage({ type: 'ckretguard-history-changed' }).catch(() => {});
     }, () => reply({ ok: false }));
     return true;
   }
@@ -44,3 +64,16 @@ chrome.runtime.onMessage.addListener((message, sender, reply) => {
   update.then(() => reply({ ok: true }), () => reply({ ok: false }));
   return true;
 });
+
+if (chrome.alarms) {
+  const prune = () => {
+    const update = pending.then(() => SecretShieldHistory.perform('prune'));
+    pending = update.catch(() => {});
+    void update.then(result => {
+      if (result.removed) void chrome.runtime.sendMessage({ type: 'ckretguard-history-changed' }).catch(() => {});
+    }).catch(() => {});
+  };
+  chrome.alarms.onAlarm.addListener(alarm => { if (alarm.name === 'history-retention') prune(); });
+  void chrome.alarms.create('history-retention', { periodInMinutes: 60 }).catch(() => {});
+  prune();
+}
