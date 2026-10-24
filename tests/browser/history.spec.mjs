@@ -63,7 +63,7 @@ test('full page navigation supports all four views, reloads and browser back', a
   }
   await dashboard.reload();
   await expect(dashboard.locator('#contact-view')).toBeVisible();
-  await expect(dashboard.locator('.contact-link')).toHaveAttribute('href', 'https://github.com/kumar-tushar/CkretGuard/issues');
+  await expect(dashboard.locator('.contact-link')).toHaveAttribute('href', 'mailto:tushar.officestation@gmail.com');
   await dashboard.goBack();
   await expect(dashboard.locator('#privacy-view')).toBeVisible();
   for (const width of [1280, 800, 661, 410]) {
