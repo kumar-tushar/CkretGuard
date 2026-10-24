@@ -28,8 +28,8 @@
       </dl>
       <p id="activity-status" role="status" hidden></p>
     </section>
-    <section class="workspace" aria-labelledby="fields-title">
-      <div class="section-label"><h3 id="fields-title">Custom secret fields</h3></div>
+    <details id="custom-fields" class="workspace" aria-labelledby="fields-title">
+      <summary id="fields-title">Custom secret fields</summary><div class="settings">
       <p class="field-help" id="field-help">Add field names whose values you want to protect.</p>
       <form id="field-form" class="field-entry">
         <label class="sr-only" for="sensitive-names">Field name</label>
@@ -41,7 +41,7 @@
         <summary id="field-count">0 custom fields saved.</summary>
         <ul id="saved-fields" class="saved-fields" aria-label="Saved secret fields"></ul>
       </details>
-    </section>
+    </div></details>
     <details id="protection-settings" class="workspace"><summary>Protection settings <span id="managed-label"></span></summary><div class="settings">
       <fieldset id="mode" class="mode-options" disabled>
         <legend>When a prompt contains a credential</legend>

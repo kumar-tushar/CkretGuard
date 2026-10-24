@@ -53,6 +53,8 @@ test.afterEach(async () => {
 test.afterAll(async () => { await context?.close(); });
 
 test('full page navigation supports all four views, reloads and browser back', async () => {
+  await expect(dashboard.locator('#field-form')).toBeHidden();
+  await expect(dashboard.locator('#protection-settings .settings')).toBeHidden();
   await expect(dashboard.getByRole('navigation').getByRole('link')).toHaveText(['Home', 'History', 'Privacy Policy', 'Contact Us']);
   await expect(dashboard.locator('#expand')).toBeHidden();
   for (const [name, view] of [['History', 'history'], ['Privacy Policy', 'privacy'], ['Contact Us', 'contact']]) {
@@ -80,6 +82,17 @@ test('toolbar mode keeps the existing Home layout without a sidebar', async () =
   await expect(popup.locator('#home-view')).toBeVisible();
   await expect(popup.locator('#history-view')).toBeHidden();
   await expect(popup.locator('#expand')).toBeVisible();
+  await expect(popup.locator('#field-form')).toBeHidden();
+  await popup.locator('#fields-title').press('Enter');
+  await expect(popup.locator('#field-form')).toBeVisible();
+  await expect(popup.locator('#sensitive-names')).toBeEnabled();
+  await popup.locator('#sensitive-names').fill('unsaved_field');
+  await popup.locator('#fields-title').press('Space');
+  await expect(popup.locator('#field-form')).toBeHidden();
+  await popup.locator('#fields-title').click();
+  await expect(popup.locator('#sensitive-names')).toHaveValue('unsaved_field');
+  await popup.reload();
+  await expect(popup.locator('#field-form')).toBeHidden();
 });
 
 for (const host of ['chatgpt.com', 'chat.openai.com', 'claude.ai']) test(`${host}: only Send saves the complete unmasked prompt and its source`, async () => {

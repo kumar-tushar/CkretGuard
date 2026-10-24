@@ -58,6 +58,7 @@ test.beforeAll(async () => {
   composer = await context.newPage();
   await composer.goto(`chrome-extension://${extensionId}/composer.html`);
   await expect(composer.locator('#sensitive-names')).toBeEnabled();
+  await composer.locator('#fields-title').click();
 });
 test.afterAll(async () => { await context?.close(); });
 test.afterEach(async () => {
@@ -70,6 +71,7 @@ test.afterEach(async () => {
     await composer.evaluate(()=>chrome.storage.local.clear());
     await expect(composer.locator('#sensitive-names')).toBeEnabled();
     await expect(composer.locator('#saved-fields li')).toHaveCount(0);
+    await composer.locator('#custom-fields').evaluate(el=>{el.open=true;});
     await composer.locator('#sensitive-names').fill('');
   }
 });
@@ -937,6 +939,7 @@ test('the 50th saved field hides entry and deleting one restores it', async () =
   });
   expect(await composer.evaluate(async()=>(await chrome.storage.local.get('policy')).policy.sensitiveNames.length)).toBe(50);
   await composer.reload();
+  await composer.locator('#fields-title').click();
   await expect(composer.locator('#field-form')).toBeHidden();
   await expect(composer.locator('#saved-fields')).toBeHidden();
   await composer.locator('#field-count').click();
@@ -1065,6 +1068,7 @@ test('settings preserve custom fields and fit the toolbar dashboard', async () =
   await expect(composer.locator('#client-ids')).toBeEnabled();
   await expect.poll(()=>composer.evaluate(async()=>(await chrome.storage.local.get('policy')).policy.protectClientIds)).toBe(false);
   await composer.reload();
+  await composer.locator('#fields-title').click();
   await expect(composer.locator('#saved-fields span')).toHaveText(['internal_code','dataset1']);
   await expect(composer.locator('input[name=mode]:checked')).toHaveValue('block');
   await expect(composer.locator('#client-ids')).not.toBeChecked();
