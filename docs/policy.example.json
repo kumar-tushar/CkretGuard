@@ -1,0 +1,5 @@
+{
+  "mode": "redact",
+  "protectClientIds": true,
+  "sensitiveNames": ["internal_access_code", "partner_credential"]
+}
