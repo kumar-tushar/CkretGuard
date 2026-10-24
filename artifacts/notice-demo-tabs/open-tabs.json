@@ -1,0 +1,62 @@
+[
+  {
+    "tab": 1,
+    "title": "1/10 · Policy loading · Local demo",
+    "url": "file:///Users/apple/Developer/Projects/CkretGuard/artifacts/notice-demo-tabs/notice-01.html",
+    "notice": "Ckretguard · Loading local policy. Send is paused; try again shortly."
+  },
+  {
+    "tab": 2,
+    "title": "2/10 · Policy unavailable during send · Local demo",
+    "url": "file:///Users/apple/Developer/Projects/CkretGuard/artifacts/notice-demo-tabs/notice-02.html",
+    "notice": "Ckretguard · Policy unavailable. Send is paused. Reload the extension and this tab."
+  },
+  {
+    "tab": 3,
+    "title": "3/10 · Draft or policy changed · Local demo",
+    "url": "file:///Users/apple/Developer/Projects/CkretGuard/artifacts/notice-demo-tabs/notice-03.html",
+    "notice": "Ckretguard · The draft or policy changed. Send again to review the current prompt."
+  },
+  {
+    "tab": 4,
+    "title": "4/10 · Send control not ready · Local demo",
+    "url": "file:///Users/apple/Developer/Projects/CkretGuard/artifacts/notice-demo-tabs/notice-04.html",
+    "notice": "Ckretguard · Send is not ready. Your draft is still in the input box."
+  },
+  {
+    "tab": 5,
+    "title": "5/10 · Send could not activate · Local demo",
+    "url": "file:///Users/apple/Developer/Projects/CkretGuard/artifacts/notice-demo-tabs/notice-05.html",
+    "notice": "Ckretguard · Could not activate Send. Your draft is still in the input box."
+  },
+  {
+    "tab": 6,
+    "title": "6/10 · Masked draft waiting · Local demo",
+    "url": "file:///Users/apple/Developer/Projects/CkretGuard/artifacts/notice-demo-tabs/notice-06.html",
+    "notice": "Ckretguard · The masked draft is ready, but Send is unavailable. It has not been sent."
+  },
+  {
+    "tab": 7,
+    "title": "7/10 · Masked send failed · Local demo",
+    "url": "file:///Users/apple/Developer/Projects/CkretGuard/artifacts/notice-demo-tabs/notice-07.html",
+    "notice": "Ckretguard · Could not send the masked prompt. Check the draft and send again."
+  },
+  {
+    "tab": 8,
+    "title": "8/10 · Chat input unavailable · Local demo",
+    "url": "file:///Users/apple/Developer/Projects/CkretGuard/artifacts/notice-demo-tabs/notice-08.html",
+    "notice": "Ckretguard · Chat input could not be identified uniquely. Use the extension’s local composer."
+  },
+  {
+    "tab": 9,
+    "title": "9/10 · Scan or input update failed · Local demo",
+    "url": "file:///Users/apple/Developer/Projects/CkretGuard/artifacts/notice-demo-tabs/notice-09.html",
+    "notice": "Ckretguard · Could not scan or update this input. Send blocked. Use the local composer."
+  },
+  {
+    "tab": 10,
+    "title": "10/10 · Policy loading failed · Local demo",
+    "url": "file:///Users/apple/Developer/Projects/CkretGuard/artifacts/notice-demo-tabs/notice-10.html",
+    "notice": "Ckretguard · Policy unavailable. Send is paused."
+  }
+]

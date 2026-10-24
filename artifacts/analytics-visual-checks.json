@@ -1,0 +1,17 @@
+{
+  "widths": [
+    410,
+    780
+  ],
+  "cards": 4,
+  "tagline": "Share the question, keep the secret",
+  "stored": {
+    "activity": {
+      "detected": 2,
+      "edited": 0,
+      "masked": 2,
+      "sent": 0
+    }
+  },
+  "errors": []
+}

@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CkretGuard · Protection</title><link rel="icon" href="icons/ckretguard-48.png"><link rel="stylesheet" href="fonts.css"><link rel="stylesheet" href="composer.css">
+</head>
+<body>
+  <main>
+    <header><span class="brand-icon" aria-hidden="true"></span><div><h1>CkretGuard<span>Local prompt guard</span></h1></div></header>
+    <div class="coverage" id="coverage" role="status" hidden></div>
+    <section class="intro"><h2>Ask freely. Keep secrets private.</h2></section>
+    <section class="analytics" aria-label="Protection activity">
+      <dl class="stats" aria-live="polite">
+        <div><dt>Detected</dt><dd id="stat-detected">—</dd></div>
+        <div><dt>Masked Sent</dt><dd id="stat-maskedPrompts">—</dd></div>
+        <div><dt>Unmasked Sent</dt><dd id="stat-unmaskedPrompts">—</dd></div>
+      </dl>
+      <p id="activity-status" role="status" hidden></p>
+    </section>
+    <section class="workspace" aria-labelledby="fields-title">
+      <div class="section-label"><h3 id="fields-title">Custom secret fields</h3></div>
+      <p class="field-help" id="field-help">Add field names whose values you want to protect.</p>
+      <form id="field-form" class="field-entry">
+        <label class="sr-only" for="sensitive-names">Field name</label>
+        <input id="sensitive-names" type="text" spellcheck="false" autocomplete="off" aria-describedby="field-help" placeholder="datasetKey" disabled>
+        <button id="save-fields" class="secondary" type="submit" disabled>Save</button>
+      </form>
+      <p id="field-status" role="status" aria-live="polite">Loading saved fields…</p>
+      <details id="saved-fields-panel" class="saved-fields-panel" hidden>
+        <summary id="field-count">0 custom fields saved.</summary>
+        <ul id="saved-fields" class="saved-fields" aria-label="Saved secret fields"></ul>
+      </details>
+    </section>
+    <details id="protection-settings" class="workspace"><summary>Protection settings <span id="managed-label"></span></summary><div class="settings">
+      <fieldset id="mode" class="mode-options" disabled>
+        <legend>When a prompt contains a credential</legend>
+        <label class="mode-choice"><input type="radio" name="mode" value="redact"> Send, Edit, or Mask</label>
+        <label class="mode-choice"><input type="radio" name="mode" value="block"> Edit or Mask</label>
+      </fieldset>
+      <div class="client-id-row">
+        <label class="checkbox"><input id="client-ids" type="checkbox" aria-describedby="client-ids-help" checked disabled> Protect client IDs</label>
+        <span class="info-tip">
+          <button class="info-button" type="button" aria-label="About client ID protection" aria-describedby="client-ids-help"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v6"/><circle cx="12" cy="7.5" r=".6" fill="currentColor" stroke="none"/></svg></button>
+          <span id="client-ids-help" class="info-tooltip" role="tooltip">Client ID values are also checked when you send a prompt.</span>
+        </span>
+      </div>
+      <p id="settings-status" role="status" aria-live="polite"></p>
+    </div></details>
+    <footer><strong>CkretGuard by Orenthic</strong><p>Local scanning. No server. No prompt history.</p><p>On supported chat pages, detected credentials pause sending with Send, Edit, and Mask choices. Mask replaces detected values with xxxxx and sends the masked prompt. Websites can see text typed into their pages. Files, images, voice, and other apps are outside this version’s coverage. No detector finds every secret.</p><button id="expand" class="text-button">Open in a full tab ↗</button></footer>
+  </main>
+  <script src="core.js"></script><script src="policy.js"></script><script src="stats.js"></script><script src="composer.js"></script>
+</body>
+</html>

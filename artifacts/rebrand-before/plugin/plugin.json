@@ -1,0 +1,23 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "secret-shield",
+  "version": "0.1.0",
+  "description": "Set up SecretShield's local Chrome prompt guard and private composer for ChatGPT and Claude. Companion plugin; browser extension installation is required.",
+  "author": { "name": "SecretShield" },
+  "keywords": ["privacy", "secrets", "redaction", "chrome", "local"],
+  "extensions": {
+    "com.openai": {
+      "interface": {
+        "displayName": "SecretShield",
+        "shortDescription": "Local prompt secret masking",
+        "longDescription": "Install and evaluate the bundled SecretShield Chrome extension. Scan and mask common secrets locally before sharing text with ChatGPT or Claude. This companion does not itself intercept native chat messages; the Chrome extension provides browser input guards and a local composer. An engineering pilot, not universal DLP.",
+        "developerName": "SecretShield",
+        "category": "Developer Tools",
+        "capabilities": [],
+        "defaultPrompt": "Help me set up SecretShield's local Chrome extension and verify its coverage with synthetic data.",
+        "logo": "./assets/shield.png",
+        "composerIcon": "./assets/shield.png"
+      }
+    }
+  }
+}

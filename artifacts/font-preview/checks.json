@@ -1,0 +1,27 @@
+{
+  "fonts": [
+    {
+      "family": "Lexend Deca",
+      "status": "loaded"
+    }
+  ],
+  "family": "\"Lexend Deca\", sans-serif",
+  "snapshots": [
+    {
+      "width": 780,
+      "overflow": false,
+      "clipped": false
+    },
+    {
+      "width": 410,
+      "overflow": false,
+      "clipped": false
+    },
+    {
+      "width": 320,
+      "overflow": false,
+      "clipped": false
+    }
+  ],
+  "errors": []
+}

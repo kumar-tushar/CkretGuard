@@ -1,0 +1,25 @@
+{
+  "manifest_version": 3,
+  "name": "CkretGuard — Local Prompt Guard",
+  "version": "1.0.0",
+  "author": "Orenthic",
+  "description": "Detect credentials and custom secret fields before sending ChatGPT or Claude prompts. Choose Send, Edit, or Mask.",
+  "minimum_chrome_version": "120",
+  "permissions": ["storage"],
+  "action": { "default_title": "CkretGuard · Protection", "default_popup": "composer.html" },
+  "background": { "service_worker": "background.js" },
+  "options_ui": { "page": "composer.html", "open_in_tab": true },
+  "icons": { "16": "icons/ckretguard-16.png", "48": "icons/ckretguard-48.png", "128": "icons/ckretguard-128.png" },
+  "storage": { "managed_schema": "managed-schema.json" },
+  "content_scripts": [{
+    "matches": ["https://chatgpt.com/*", "https://chat.openai.com/*", "https://claude.ai/*"],
+    "css": ["fonts.css"],
+    "js": ["core.js", "policy.js", "stats.js", "adapters.js", "content.js"],
+    "run_at": "document_start"
+  }],
+  "web_accessible_resources": [{
+    "resources": ["icons/orbit-pointer.png", "fonts/dm-sans-latin.woff2"],
+    "matches": ["https://chatgpt.com/*", "https://chat.openai.com/*", "https://claude.ai/*"]
+  }],
+  "content_security_policy": { "extension_pages": "script-src 'self'; object-src 'none'; connect-src 'none'; base-uri 'none'; form-action 'none'" }
+}

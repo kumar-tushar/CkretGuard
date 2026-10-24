@@ -1,0 +1,18 @@
+{
+  "manifest_version": 3,
+  "name": "SecretShield — Local Prompt Guard",
+  "version": "0.1.0",
+  "description": "Mask common secrets locally in ChatGPT and Claude prompts. Includes a private local composer and managed policies.",
+  "minimum_chrome_version": "120",
+  "permissions": ["storage"],
+  "action": { "default_title": "SecretShield · Local composer", "default_popup": "composer.html" },
+  "options_ui": { "page": "composer.html", "open_in_tab": true },
+  "icons": { "16": "icons/shield-16.png", "48": "icons/shield-48.png", "128": "icons/shield-128.png" },
+  "storage": { "managed_schema": "managed-schema.json" },
+  "content_scripts": [{
+    "matches": ["https://chatgpt.com/*", "https://chat.openai.com/*", "https://claude.ai/*"],
+    "js": ["core.js", "policy.js", "adapters.js", "content.js"],
+    "run_at": "document_start"
+  }],
+  "content_security_policy": { "extension_pages": "script-src 'self'; object-src 'none'; connect-src 'none'; base-uri 'none'; form-action 'none'" }
+}

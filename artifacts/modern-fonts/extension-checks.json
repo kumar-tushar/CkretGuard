@@ -1,0 +1,171 @@
+{
+  "results": [
+    {
+      "surface": "composer",
+      "width": 410,
+      "overflow": false,
+      "clipped": false,
+      "fonts": [
+        {
+          "familyName": ".SF NS",
+          "postScriptName": ".SFNS-Regular",
+          "isCustomFont": false,
+          "glyphCount": 1
+        },
+        {
+          "familyName": "DM Sans 9pt",
+          "postScriptName": "DMSans9pt-Regular_Medium",
+          "isCustomFont": true,
+          "glyphCount": 12
+        }
+      ]
+    },
+    {
+      "surface": "composer",
+      "width": 661,
+      "overflow": false,
+      "clipped": false,
+      "fonts": [
+        {
+          "familyName": ".SF NS",
+          "postScriptName": ".SFNS-Regular",
+          "isCustomFont": false,
+          "glyphCount": 1
+        },
+        {
+          "familyName": "DM Sans 9pt",
+          "postScriptName": "DMSans9pt-Regular_Medium",
+          "isCustomFont": true,
+          "glyphCount": 12
+        }
+      ]
+    },
+    {
+      "surface": "composer",
+      "width": 780,
+      "overflow": false,
+      "clipped": false,
+      "fonts": [
+        {
+          "familyName": ".SF NS",
+          "postScriptName": ".SFNS-Regular",
+          "isCustomFont": false,
+          "glyphCount": 1
+        },
+        {
+          "familyName": "DM Sans 9pt",
+          "postScriptName": "DMSans9pt-Regular_Medium",
+          "isCustomFont": true,
+          "glyphCount": 12
+        }
+      ]
+    },
+    {
+      "surface": "chatgpt.com",
+      "width": 410,
+      "overflow": false,
+      "headingFonts": [
+        {
+          "familyName": "DM Sans 9pt",
+          "postScriptName": "DMSans9pt-Regular_Bold",
+          "isCustomFont": true,
+          "glyphCount": 17
+        }
+      ],
+      "buttonFonts": [
+        {
+          "familyName": "DM Sans 9pt",
+          "postScriptName": "DMSans9pt-Regular_Medium",
+          "isCustomFont": true,
+          "glyphCount": 4
+        }
+      ]
+    },
+    {
+      "surface": "chatgpt.com",
+      "width": 780,
+      "overflow": false,
+      "headingFonts": [
+        {
+          "familyName": "DM Sans 9pt",
+          "postScriptName": "DMSans9pt-Regular_Bold",
+          "isCustomFont": true,
+          "glyphCount": 17
+        }
+      ],
+      "buttonFonts": [
+        {
+          "familyName": "DM Sans 9pt",
+          "postScriptName": "DMSans9pt-Regular_Medium",
+          "isCustomFont": true,
+          "glyphCount": 4
+        }
+      ]
+    },
+    {
+      "surface": "chatgpt.com notice",
+      "fonts": [
+        {
+          "familyName": "DM Sans 9pt",
+          "postScriptName": "DMSans9pt-Regular",
+          "isCustomFont": true,
+          "glyphCount": 3
+        }
+      ]
+    },
+    {
+      "surface": "claude.ai",
+      "width": 410,
+      "overflow": false,
+      "headingFonts": [
+        {
+          "familyName": "DM Sans 9pt",
+          "postScriptName": "DMSans9pt-Regular_Bold",
+          "isCustomFont": true,
+          "glyphCount": 17
+        }
+      ],
+      "buttonFonts": [
+        {
+          "familyName": "DM Sans 9pt",
+          "postScriptName": "DMSans9pt-Regular_Medium",
+          "isCustomFont": true,
+          "glyphCount": 4
+        }
+      ]
+    },
+    {
+      "surface": "claude.ai",
+      "width": 780,
+      "overflow": false,
+      "headingFonts": [
+        {
+          "familyName": "DM Sans 9pt",
+          "postScriptName": "DMSans9pt-Regular_Bold",
+          "isCustomFont": true,
+          "glyphCount": 17
+        }
+      ],
+      "buttonFonts": [
+        {
+          "familyName": "DM Sans 9pt",
+          "postScriptName": "DMSans9pt-Regular_Medium",
+          "isCustomFont": true,
+          "glyphCount": 4
+        }
+      ]
+    },
+    {
+      "surface": "claude.ai notice",
+      "fonts": [
+        {
+          "familyName": "DM Sans 9pt",
+          "postScriptName": "DMSans9pt-Regular",
+          "isCustomFont": true,
+          "glyphCount": 3
+        }
+      ]
+    }
+  ],
+  "fontFailures": []
+}
