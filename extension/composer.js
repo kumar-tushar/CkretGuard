@@ -2,8 +2,12 @@
   'use strict';
   const $ = id => document.getElementById(id);
   let current = null, locked = [], revision = 0, activityRevision = 0, saving = false;
+  function setStatus(id, text, error = false) {
+    $(id).textContent = text;
+    $(id).classList.toggle('error', error);
+  }
   $('sensitive-names').addEventListener('input', () => {
-    $('field-status').textContent = '';
+    setStatus('field-status', '');
     updateFieldButton();
   });
   $('expand').addEventListener('click', () => { void chrome.runtime.openOptionsPage(); });
@@ -62,15 +66,15 @@
       renderSettings();
       $('managed-label').textContent = locked.length ? 'Managed by your organization' : '';
       renderFields();
-      $('field-status').textContent = locked.includes('sensitiveNames') ? 'These fields are managed by your organization.' : '';
+      setStatus('field-status', locked.includes('sensitiveNames') ? 'These fields are managed by your organization.' : '');
     } catch {
-      if (request === revision) $('field-status').textContent = 'Protection settings unavailable. Reload the extension.';
+      if (request === revision) setStatus('field-status', 'Protection settings unavailable. Reload the extension.', true);
     }
   }
   async function save(patch, status) {
     if (saving) return false;
     saving = true;
-    $(status).textContent = '';
+    setStatus(status, '');
     $('save-fields').disabled = true; $('mode').disabled = true; $('client-ids').disabled = true;
     $('saved-fields').querySelectorAll('button').forEach(button => { button.disabled = true; });
     try {
@@ -81,10 +85,13 @@
       await reload();
       if (!current) throw new Error();
       return true;
-    } catch {
-      $(status).textContent = status === 'field-status' ?
-        'Could not save fields. Add names of 3–64 characters, starting with a letter. Use letters, numbers, spaces, underscores or hyphens.' :
+    } catch (error) {
+      let message = status === 'field-status' ? 'Could not save fields. Try again.' :
         'Could not save settings. Reload the extension and try again.';
+      if (status === 'field-status' && error instanceof SecretShieldCore.ScanError) {
+        message = 'Use 3–64 characters, starting with a letter. Allowed: letters, numbers, spaces, _ and -.';
+      }
+      setStatus(status, message, true);
       return false;
     } finally {
       saving = false;
@@ -99,7 +106,7 @@
     if (!current || $('save-fields').disabled) return;
     const name = $('sensitive-names').value.trim();
     if (current.sensitiveNames.some(value => value.toLowerCase() === name.toLowerCase())) {
-      $('field-status').textContent = 'That field is already saved.';
+      setStatus('field-status', 'That field is already saved.', true);
       return;
     }
     const saved = await save({ sensitiveNames: [name, ...current.sensitiveNames] }, 'field-status');

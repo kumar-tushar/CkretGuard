@@ -201,7 +201,7 @@ test('field Save requires three characters and routine field changes remain quie
   await expect(composer.locator('#field-status')).toHaveText('');
 });
 
-test('failed automatic settings writes restore the saved choices and allow retry', async () => {
+test('failed field and settings writes preserve saved values and allow retry', async () => {
   await addFields(['dataset1']);
   await composer.locator('#protection-settings').evaluate(el=>{el.open=true;});
   await composer.evaluate(()=>{
@@ -210,8 +210,14 @@ test('failed automatic settings writes restore the saved choices and allow retry
     chrome.storage.local.set=async()=>{throw new Error('synthetic storage failure');};
   });
   try {
+    await composer.locator('#sensitive-names').fill('dataset2');
+    await composer.locator('#save-fields').click();
+    await expect(composer.locator('#field-status')).toHaveText('Could not save fields. Try again.');
+    await expect(composer.locator('#field-status')).toHaveCSS('color','rgb(255, 107, 107)');
+    await expect(composer.locator('#sensitive-names')).toHaveValue('dataset2');
     await composer.getByRole('radio',{name:'Edit or Mask',exact:true}).click();
     await expect(composer.locator('#settings-status')).toContainText('Could not save settings');
+    await expect(composer.locator('#settings-status')).toHaveCSS('color','rgb(255, 107, 107)');
     await expect(composer.getByRole('radio',{name:'Send, Edit, or Mask',exact:true})).toBeChecked();
     await composer.locator('#client-ids').click();
     await expect(composer.locator('#client-ids')).toBeChecked();
@@ -222,10 +228,15 @@ test('failed automatic settings writes restore the saved choices and allow retry
   } finally {
     await composer.evaluate(()=>{window.restoreSettingsStorage();delete window.restoreSettingsStorage;});
   }
+  await composer.locator('#save-fields').click();
+  await expect(composer.locator('#saved-fields span')).toHaveText(['dataset2','dataset1']);
+  await expect(composer.locator('#field-status')).toHaveText('');
+  await expect(composer.locator('#field-status')).not.toHaveClass(/error/);
   await composer.getByRole('radio',{name:'Edit or Mask',exact:true}).check();
   await expect(composer.getByRole('radio',{name:'Edit or Mask',exact:true})).toBeEnabled();
   await expect.poll(()=>composer.evaluate(async()=>(await chrome.storage.local.get('policy')).policy.mode)).toBe('block');
   await expect(composer.locator('#settings-status')).toHaveText('');
+  await expect(composer.locator('#settings-status')).not.toHaveClass(/error/);
 });
 
 for (const host of ['chatgpt.com','claude.ai']) test(`${host}: client-ID selection saves automatically without disabling client-secret detection`, async () => {
@@ -891,8 +902,17 @@ test('invalid custom fields do not replace saved protection or persist secret as
   await addFields(['dataset1']);
   for (const invalid of ['dataset1=synthetic-secret-value', '(a+)+$', 'x'.repeat(65)]) {
     await composer.locator('#sensitive-names').fill(invalid);
+    await expect(composer.locator('#field-status')).toHaveText('');
+    await expect(composer.locator('#field-status')).not.toHaveClass(/error/);
     await composer.locator('#save-fields').click();
-    await expect(composer.locator('#field-status')).toContainText('Could not save fields');
+    await expect(composer.locator('#field-status')).toHaveText('Use 3–64 characters, starting with a letter. Allowed: letters, numbers, spaces, _ and -.');
+    await expect(composer.locator('#field-status')).toHaveCSS('font-size','12px');
+    await expect(composer.locator('#field-status')).toHaveCSS('line-height','16px');
+    await expect(composer.locator('#field-status')).toHaveCSS('font-weight','400');
+    await expect(composer.locator('#field-status')).toHaveCSS('color','rgb(255, 107, 107)');
+    const form=await composer.locator('#field-form').boundingBox();
+    const message=await composer.locator('#field-status').boundingBox();
+    expect(message.y-form.y-form.height).toBe(12);
     expect(await composer.evaluate(async()=>(await chrome.storage.local.get('policy')).policy.sensitiveNames)).toEqual(['dataset1']);
   }
   const saved=await composer.evaluate(async()=>JSON.stringify(await chrome.storage.local.get(null)));
