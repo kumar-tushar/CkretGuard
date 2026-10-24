@@ -1,6 +1,6 @@
 # Enterprise pilot and production work
 
-This build includes managed settings, local processing, narrow host coverage, no raw-content audit, deterministic tests, bounded scanner work, and closed failure behavior on recognized submission paths. It is suitable for engineering evaluation. It has not received an independent audit or production certification.
+This build includes managed settings, local processing, narrow host coverage, local unmasked-send History, deterministic tests, bounded scanner work, and closed failure behavior on recognized submission paths. It is suitable for engineering evaluation. It has not received an independent audit or production certification.
 
 ## Managed policy
 
@@ -22,7 +22,13 @@ The schema is `extension/managed-schema.json`. Managed-storage precedence and fa
 
 ## Local activity counts
 
-The dashboard stores three aggregate numeric totals on the device: detected secret occurrences, prompts forwarded after Mask, and prompts forwarded unchanged after Send. Each sending action increments one prompt even when it contains multiple secrets. Saving custom fields, failed editor updates, and an unavailable Send control do not increment a sent-prompt total. Repeated attempts count again. Existing detection totals are retained; the new prompt totals start at zero because legacy secret totals cannot be converted reliably. Send totals indicate the website send control was activated; they are not delivery acknowledgments. There are no secret values, hashes, URLs, timestamps, event logs, or remote analytics. These counters are informational and are not an enterprise audit trail.
+The dashboard stores three aggregate numeric totals on the device: detected secret occurrences, prompts forwarded after Mask, and prompts forwarded unchanged after Send. Each sending action increments one prompt even when it contains multiple secrets. Saving custom fields, failed editor updates, and an unavailable Send control do not increment a sent-prompt total. Repeated attempts count again. Existing detection totals are retained; the new prompt totals start at zero because legacy secret totals cannot be converted reliably. Send totals indicate the website send control was activated; they are not delivery acknowledgments. Counters contain no prompt content and are informational, not an enterprise audit trail.
+
+## Local unmasked-send History
+
+The full-tab sidebar includes History. Only prompts forwarded unchanged through the review's Send choice are recorded, with the complete prompt (including its secrets), detected count, time, site, and sanitized supported conversation link. Masked prompts, ordinary messages, Edit, and unsuccessful send activation do not create records. History begins with this update; there is no import of existing chats. Records indicate send attempts rather than provider delivery confirmation.
+
+Records use extension-origin IndexedDB, separate from preferences and counters. Only the extension dashboard can list or delete them. They are local, unencrypted by CkretGuard, and not synced or uploaded. Users can delete entries individually or clear all History; this does not reset counts or delete provider messages. No automatic retention period is imposed; records persist until deleted or extension data is removed, subject to browser storage limits. A failed write shows a notice and does not truncate the prompt. Evaluate this deliberate retention of raw credentials against your organization's requirements before deployment. This user-controlled history is not an immutable or authenticated audit service.
 
 ## Before broad rollout
 

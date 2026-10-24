@@ -7,7 +7,7 @@ const destination = path.join(root, 'dist');
 await rm(destination, { recursive: true, force: true });
 await mkdir(destination, { recursive: true });
 await cp(path.join(root, 'extension'), destination, { recursive: true });
-for (const name of ['core', 'policy', 'stats', 'adapters', 'content']) {
+for (const name of ['core', 'policy', 'stats', 'history', 'adapters', 'content']) {
   await cp(path.join(root, 'src', `${name}.js`), path.join(destination, `${name}.js`));
 }
 

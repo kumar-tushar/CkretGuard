@@ -5,8 +5,19 @@
   <title>CkretGuard · Protection</title><link rel="icon" href="icons/ckretguard-48.png"><link rel="stylesheet" href="fonts.css"><link rel="stylesheet" href="composer.css">
 </head>
 <body>
+  <aside id="sidebar" class="sidebar" hidden>
+    <p class="sidebar-label">Your workspace</p>
+    <nav aria-label="Main navigation">
+      <a href="#home" aria-current="page"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="m3 10 9-7 9 7v10H3Z"/><path d="M9 20v-8h6v8"/></svg>Home</a>
+      <a href="#history"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M3 11a9 9 0 1 1 2.6 7M3 4v7h7M12 7v5l3 2"/></svg>History</a>
+      <a href="#privacy"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="m12 3 8 3v6c0 4-5 7-8 9-3-2-8-5-8-9V6Z"/><path d="m8 12 3 3 5-6"/></svg>Privacy Policy</a>
+      <a href="#contact"><svg aria-hidden="true" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="m3 7 9 6 9-6"/></svg>Contact Us</a>
+    </nav>
+    <p class="sidebar-footer">CkretGuard by Orenthic</p>
+  </aside>
   <main>
     <header><span class="brand-icon" aria-hidden="true"></span><div><h1>CkretGuard<span>Local prompt guard</span></h1></div></header>
+    <div id="home-view" class="view">
     <div class="coverage" id="coverage" role="status" hidden></div>
     <section class="intro"><h2>Ask freely. Keep secrets private.</h2></section>
     <section class="analytics" aria-label="Protection activity">
@@ -46,8 +57,28 @@
       </div>
       <p id="settings-status" role="status" aria-live="polite"></p>
     </div></details>
-    <footer><strong>CkretGuard by Orenthic</strong><p>Local scanning. No server. No prompt history.</p><p>On supported chat pages, detected credentials pause sending with Send, Edit, and Mask choices. Mask replaces detected values with xxxxx and sends the masked prompt. Websites can see text typed into their pages. Files, images, voice, and other apps are outside this version’s coverage. No detector finds every secret.</p><button id="expand" class="text-button">Open in a full tab ↗</button></footer>
+    <footer><strong>CkretGuard by Orenthic</strong><p>Local scanning. Unmasked sends are saved to History on this device.</p><p>On supported chat pages, detected credentials pause sending with Send, Edit, and Mask choices. Mask replaces detected values with xxxxx and sends the masked prompt. Websites can see text typed into their pages. Files, images, voice, and other apps are outside this version’s coverage. No detector finds every secret.</p><button id="expand" class="text-button">Open in a full tab ↗</button></footer>
+    </div>
+    <section id="history-view" class="view page-view" aria-labelledby="history-title" hidden>
+      <div class="page-heading"><div><h2 id="history-title" tabindex="-1">History</h2><p>Prompts you sent with detected secrets left unmasked.</p></div><button id="clear-history" class="secondary" type="button" hidden>Clear history</button></div>
+      <p class="history-note">Full prompts, including their secrets, are saved only on this device. Delete entries after rotating any exposed credentials. Entries record send attempts; delivery is not confirmed.</p>
+      <p id="history-status" role="status" aria-live="polite"></p>
+      <ul id="history-list" class="history-list" aria-label="Unmasked prompt history"></ul>
+    </section>
+    <section id="privacy-view" class="view page-view" aria-labelledby="privacy-title" hidden>
+      <h2 id="privacy-title" tabindex="-1">Privacy Policy</h2>
+      <div class="workspace policy-copy">
+        <h3>What stays on your device</h3><p>CkretGuard scans prompts locally. Settings, custom field names, and activity totals stay in this browser. When you choose Send for a prompt with detected secrets, History saves the complete unmasked prompt, detected count, chat site, conversation link when available, and time.</p>
+        <h3>What History includes</h3><p>Only unmasked prompts submitted through CkretGuard’s Send choice are saved. Masked prompts, ordinary messages, edited drafts, and cancelled sends are not saved. History begins with this update; earlier prompts cannot be recovered. An entry records a send attempt, not confirmation that the chat service received it.</p>
+        <h3>Storage and deletion</h3><p>History is stored in this extension’s local database. It is not synced or uploaded by CkretGuard, and CkretGuard does not encrypt it. Entries stay until you delete them, clear extension data, or uninstall the extension, subject to browser storage limits. You can delete one entry or clear History. Deleting History does not change activity totals or remove messages already shared with a chat service.</p>
+        <h3>Coverage</h3><p>CkretGuard has no server or remote analytics. The chat website can read text entered into its own page before you send it. Protection covers recognized ChatGPT and Claude text inputs and send controls. Files, images, voice, other apps, and existing conversations are outside its scanning coverage. Detection can miss secrets.</p>
+      </div>
+    </section>
+    <section id="contact-view" class="view page-view" aria-labelledby="contact-title" hidden>
+      <h2 id="contact-title" tabindex="-1">Contact Us</h2>
+      <div class="workspace policy-copy"><h3>Get in touch with Orenthic</h3><p>For help, feedback, or feature requests, visit CkretGuard’s GitHub issues.</p><a class="contact-link" href="https://github.com/kumar-tushar/CkretGuard/issues" target="_blank" rel="noopener noreferrer">Contact us on GitHub ↗</a><p>Issues are public. Please leave out secret values and private prompts.</p></div>
+    </section>
   </main>
-  <script src="core.js"></script><script src="policy.js"></script><script src="stats.js"></script><script src="composer.js"></script>
+  <script src="core.js"></script><script src="policy.js"></script><script src="stats.js"></script><script src="history.js"></script><script src="composer.js"></script><script src="dashboard.js"></script>
 </body>
 </html>

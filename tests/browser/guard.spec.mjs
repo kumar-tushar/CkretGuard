@@ -64,6 +64,9 @@ test.afterEach(async () => {
   const worker=context.serviceWorkers()[0];
   if (worker) await worker.evaluate(()=>pending);
   if (composer) {
+    await composer.evaluate(()=>SecretShieldHistory.request('clear'));
+    await composer.evaluate(()=>{location.hash='home';});
+    await expect(composer.locator('#home-view')).toBeVisible();
     await composer.evaluate(()=>chrome.storage.local.clear());
     await expect(composer.locator('#sensitive-names')).toBeEnabled();
     await expect(composer.locator('#saved-fields li')).toHaveCount(0);
@@ -339,10 +342,11 @@ for (const host of ['chatgpt.com','claude.ai']) for (const action of ['Send','Ma
   await page.keyboard.up('Enter');
   expect(await page.evaluate(()=>window.submitted)).toEqual([expected]);
   await expect.poll(activity).toEqual({detected:2,maskedPrompts:action==='Mask'?1:0,unmaskedPrompts:action==='Send'?1:0});
+  await expect.poll(()=>composer.evaluate(async()=>(await SecretShieldHistory.request('list')).length)).toBe(action==='Send'?1:0);
   await page.close();
 });
 
-for (const host of ['chatgpt.com','claude.ai']) test(`${host}: custom field values trigger Edit, Send, and Mask without storing values`, async () => {
+for (const host of ['chatgpt.com','claude.ai']) test(`${host}: custom field values trigger Edit, Send, and Mask without storing values in preferences`, async () => {
   await addFields(['dataset1','project_code']);
   const page=await chat(host); const editor=page.locator('textarea,[contenteditable]');
   const plain='dataset10 = fictional-public-123';

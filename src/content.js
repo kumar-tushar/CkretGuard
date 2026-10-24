@@ -124,6 +124,13 @@
     return true;
   }
 
+  async function recordHistory(current) {
+    try {
+      const result = await chrome.runtime.sendMessage({ type: 'ckretguard-history', action: 'record', prompt: current.text, count: current.count });
+      if (!result?.ok) throw new Error();
+    } catch { show('Send was activated, but this prompt could not be saved to History.'); }
+  }
+
   async function releaseOriginal(current) {
     if (review !== current || current.closing) return;
     try {
@@ -139,8 +146,10 @@
         return;
       }
       closeReview(false);
-      if (submitDraft(current, true)) void globalThis.SecretShieldStats?.record('unmaskedPrompts');
-      else show('Send is not ready. Your draft is still in the input box.');
+      if (submitDraft(current, true)) {
+        void globalThis.SecretShieldStats?.record('unmaskedPrompts');
+        void recordHistory(current);
+      } else show('Send is not ready. Your draft is still in the input box.');
     } catch {
       approval = null;
       if (review === current) closeReview();
@@ -190,7 +199,7 @@
     dialog.querySelector('.caption').textContent = `${count === 1 ? 'secret' : 'secrets'} detected`;
     const send = dialog.querySelector('.send');
     if (policy.mode === 'block') send.remove();
-    const current = { host, dialog, editor, text, generation, closing: false };
+    const current = { host, dialog, editor, text, count, generation, closing: false };
     review = current;
     if (policy.mode !== 'block') send.addEventListener('click', () => releaseOriginal(current));
     dialog.querySelector('.edit').addEventListener('click', async () => {
