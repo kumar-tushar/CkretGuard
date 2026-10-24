@@ -953,7 +953,7 @@ test('the 50th saved field hides entry and deleting one restores it', async () =
   await page.close();
 });
 
-test('saved fields stay visible as compact tags and controls use brand hover colors', async () => {
+test('saved fields use full-width rows and controls use brand hover colors', async () => {
   await composer.evaluate(()=>chrome.storage.local.set({policy:{sensitiveNames:Array.from({length:7},(_,i)=>'dataset'+i)}}));
   await expect(composer.locator('#field-count')).toHaveText('7 custom fields saved.');
   await expect(composer.locator('#saved-fields-panel summary')).toHaveCount(0);
@@ -967,13 +967,20 @@ test('saved fields stay visible as compact tags and controls use brand hover col
   await expect(composer.locator('#save-fields')).toHaveCSS('background-color','rgb(69, 214, 200)');
   await expect(composer.locator('#save-fields')).toHaveCSS('color','rgb(24, 24, 24)');
   const list=await composer.locator('#saved-fields').boundingBox();
+  let previous;
   for (const row of await composer.locator('#saved-fields li').all()) {
     const name=await row.locator('span').boundingBox();
     const button=await row.locator('button').boundingBox();
+    const icon=await row.locator('svg').boundingBox();
     const box=await row.boundingBox();
     expect(name.x+name.width).toBeLessThan(button.x);
     expect(Math.abs(box.x+box.width-button.x-button.width-8)).toBeLessThan(1);
-    expect(box.width).toBeLessThan(list.width);
+    expect(box.width).toBe(list.width);
+    expect(icon.width).toBe(12);
+    expect(icon.height).toBe(12);
+    expect(Math.abs(icon.y+icon.height/2-name.y-name.height/2)).toBeLessThan(1);
+    if (previous) expect(box.y-previous.y-previous.height).toBe(8);
+    previous=box;
     expect(box.height).toBeLessThanOrEqual(34);
     await expect(row).toHaveCSS('border-top-width','0px');
     await expect(row).toHaveCSS('background-image','none');
