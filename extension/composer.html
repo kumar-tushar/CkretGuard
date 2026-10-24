@@ -16,7 +16,7 @@
     <p class="sidebar-footer">CkretGuard by Orenthic</p>
   </aside>
   <main>
-    <header><span class="brand-icon" aria-hidden="true"></span><div><h1>CkretGuard<span>Local prompt guard</span></h1></div></header>
+    <header><span class="brand-icon" aria-hidden="true"></span><div><h1>CkretGuard<span>Local prompt guard</span></h1></div><button id="expand" class="text-button" type="button" aria-label="Open in full mode"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2h4l.6 3.1 2 .9 2.8-1 2 3.5-2.2 2v3l2.2 2-2 3.5-2.8-1-2 .9L14 22h-4l-.6-3.1-2-.9-2.8 1-2-3.5 2.2-2v-3l-2.2-2 2-3.5 2.8 1 2-.9Z"/><circle cx="12" cy="12" r="3"/></svg></button></header>
     <div id="home-view" class="view">
     <div class="coverage" id="coverage" role="status" hidden></div>
     <section class="intro"><h2>Ask freely. Keep secrets private.</h2></section>
@@ -57,7 +57,7 @@
       </div>
       <p id="settings-status" role="status" aria-live="polite"></p>
     </div></details>
-    <footer><strong>CkretGuard by Orenthic</strong><p>Local scanning. Unmasked sends are saved to History on this device.</p><p>On supported chat pages, detected credentials pause sending with Send, Edit, and Mask choices. Mask replaces detected values with xxxxx and sends the masked prompt. Websites can see text typed into their pages. Files, images, voice, and other apps are outside this version’s coverage. No detector finds every secret.</p><button id="expand" class="text-button">Open in a full tab ↗</button></footer>
+    <footer><strong>CkretGuard by Orenthic</strong><p>Local scanning. Unmasked sends are saved to History on this device.</p><p>On supported chat pages, detected credentials pause sending with Send, Edit, and Mask choices. Mask replaces detected values with xxxxx and sends the masked prompt. Websites can see text typed into their pages. Files, images, voice, and other apps are outside this version’s coverage. No detector finds every secret.</p></footer>
     </div>
     <section id="history-view" class="view page-view" aria-labelledby="history-title" hidden>
       <div class="page-heading"><div><h2 id="history-title" tabindex="-1">History</h2><p>Prompts you sent with detected secrets left unmasked.</p></div><button id="clear-history" class="secondary" type="button" hidden>Clear history</button></div>
