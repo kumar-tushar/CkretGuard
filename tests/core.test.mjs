@@ -45,6 +45,11 @@ test('rushed and pasted credential formatting masks complete values without losi
     ['client\u202fsecret\u00a0=\u00a0fake-narrow-space-123','client\u202fsecret\u00a0=\u00a0xxxxx'],
     ['client secret：fake-colon-123','client secret：xxxxx'],
     ['apiToken＝fake-equals-123','apiToken＝xxxxx'],
+    ['password:\nclient_id: fake-client-123','password:\nclient_id: xxxxx'],
+    ['password:    \n client_secret: fake-secret-456','password:    \n client_secret: xxxxx'],
+    ['api_key=\nclient_secret=fake-secret-456','api_key=\nclient_secret=xxxxx'],
+    ['password:\n"client_secret": "fake-secret-456"','password:\n"client_secret": "xxxxx"'],
+    ['password:\n"client_secret=fake-secret-456"','password:\n"xxxxx"'],
     ['⚡client-secret=fake-one-123;password="fake two 456"','⚡client-secret=xxxxx;password="xxxxx"'],
   ];
   for(const [input,expected] of cases) {

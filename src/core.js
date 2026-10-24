@@ -62,7 +62,10 @@
       ...policy.sensitiveNames.map(escape)];
     // Prefixes cover environment variable names such as STRIPE_SECRET_KEY.
     const label = `(?<![\\w-])(?:[a-zA-Z][a-zA-Z0-9]*[_-])*?(?:${sensitive.join('|')})(?![\\w-])`;
-    const assignment = new RegExp(`(${label})["'”’]?${horizontal}*(?::|=|：|＝|\\bis\\b)${horizontal}*(?:(?:\\r\\n|[\\r\\n])${horizontal}*)?(?:${valuePattern})`, 'dgi');
+    const separator = '(?::|=|：|＝|\\bis\\b)';
+    const followingField = `(?:${label}|["'“‘]${label}["'”’])${horizontal}*${separator}`;
+    // An empty field must not consume another assignment on the following line.
+    const assignment = new RegExp(`(${label})["'”’]?${horizontal}*${separator}${horizontal}*(?:(?:\\r\\n|[\\r\\n])${horizontal}*(?!${followingField}))?(?:${valuePattern})`, 'dgi');
     for (const match of text.matchAll(assignment)) {
       const group = match.findIndex((value, index) => index >= 2 && value !== undefined);
       const value = match[group];

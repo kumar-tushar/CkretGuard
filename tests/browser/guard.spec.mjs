@@ -291,6 +291,8 @@ for (const host of ['chatgpt.com','claude.ai']) test(`${host}: rushed and pasted
       'Authorization: Bearer "xxxxx"\nAuthorization: Basic ‘xxxxx’',2],
     ['clientSecret＝fake-fullwidth-123\npassword=\n"fake following line"',
       'clientSecret＝xxxxx\npassword=\n"xxxxx"',2],
+    ['password:\nclient_secret: fake-after-empty-123\napi_key=\n"client_id": "fake-following-id-456"',
+      'password:\nclient_secret: xxxxx\napi_key=\n"client_id": "xxxxx"',2],
   ];
   const sent=[];
   for(const [original,masked,count] of cases) {
