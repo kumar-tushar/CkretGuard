@@ -8,7 +8,7 @@ CkretGuard runs a deterministic scanner on your device. It detects common API ke
 
 ## Try it
 
-The built extension is in `dist/`. Or build it from source with Node.js 22+:
+Build the extension into `dist/` with Node.js **24 LTS**. `.nvmrc` selects Node 24, and npm rejects other major versions. If you use nvm, run `nvm install` and `nvm use` first:
 
 ```sh
 npm ci
@@ -52,10 +52,13 @@ For deployment controls, see [enterprise guidance](docs/ENTERPRISE.md). For comp
 
 ```sh
 npm test                         # scanner, policies, privacy and CLI contracts
-npx playwright install chromium  # once on a new machine
+npx playwright install --with-deps chromium # once on a new machine
 npm run test:browser              # real unpacked extension, routed synthetic sites
+npm run check                     # all unit and browser tests
 npm run package                   # both suites, Chrome ZIP, companion plugin ZIP, SHA-256 manifest
 ```
+
+GitHub Actions runs the unit tests and the complete Playwright suite on every push and pull request, with a manual run option. Like AjentGuard, it uses Node from `.nvmrc`, `npm ci`, Playwright's bundled Chromium, and one test worker on Ubuntu. Failure screenshots and error context are available as `playwright-diagnostics` artifacts for seven days.
 
 Browser fixtures resemble the supported textarea and contenteditable editors. Tests observe outgoing fixture POST bodies and cover the review choices: original text is sent only after **Send**, **Edit** preserves the draft without sending, and **Mask** automatically sends only the masked prompt once. No test sends requests to a real AI service or uses real credentials. Passing these fixtures does not verify today's live provider DOM or organization-managed deployment. Manual release checks remain necessary.
 

@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "description": "Local prompt redaction for ChatGPT and Claude in Chrome",
-  "engines": { "node": ">=22" },
+  "engines": { "node": "24.x" },
   "scripts": {
     "build": "node scripts/build.mjs",
     "test": "node --test tests/*.test.mjs",

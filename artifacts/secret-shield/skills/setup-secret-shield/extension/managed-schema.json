@@ -1,9 +1,0 @@
-{
-  "$schema": "http://json-schema.org/draft-03/schema#",
-  "type": "object",
-  "properties": {
-    "mode": { "type": "string", "enum": ["redact", "block"], "title": "Prompt handling", "description": "Redact offers Send, Edit, and Mask when credentials are detected. Block shows only Edit and Mask and prevents original sending." },
-    "protectClientIds": { "type": "boolean", "title": "Protect named client IDs", "description": "Also mask values assigned to client_id and client ID labels." },
-    "sensitiveNames": { "type": "array", "maxItems": 50, "items": { "type": "string" }, "title": "Additional sensitive field names", "description": "Up to 50 literal field names (2–64 letters, digits, spaces, underscores or hyphens). No secret values or regular expressions." }
-  }
-}

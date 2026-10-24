@@ -1,14 +1,11 @@
 import { test, expect, chromium } from '@playwright/test';
-import { createHash } from 'node:crypto';
 import { readFile, mkdir } from 'node:fs/promises';
 import path from 'node:path';
 
 const root = path.resolve('.');
 const extension = path.join(root, 'dist');
-const extensionId = [...createHash('sha256').update(extension).digest().subarray(0,16)]
-  .map(byte => String.fromCharCode(97+(byte>>4), 97+(byte&15))).join('');
 const key = 'sk-proj-' + 'SyntheticOnly9_'.repeat(5);
-let context, composer;
+let context, composer, extensionId;
 function fixture(kind = 'textarea', unknown = false, delayed = false) {
   const editor = kind === 'textarea' ? `<textarea ${unknown ? 'id="unknown"' : 'id="prompt-textarea"'}></textarea>` : kind === 'markdown' ?
     '<div contenteditable="true" aria-multiline="true" role="textbox" data-composer-markdown="" aria-label="Ask ChatGPT" data-virtualkeyboard="true" class="ProseMirror" style="white-space:pre-wrap;min-height:100px;border:1px solid"></div>' :
@@ -47,6 +44,8 @@ function fixture(kind = 'textarea', unknown = false, delayed = false) {
 test.beforeAll(async () => {
   context = await chromium.launchPersistentContext('', {channel:'chromium',headless:true,reducedMotion:'reduce',
     args:[`--disable-extensions-except=${extension}`,`--load-extension=${extension}`]});
+  const worker = context.serviceWorkers()[0] ?? await context.waitForEvent('serviceworker', {timeout:10000});
+  extensionId = new URL(worker.url()).hostname;
   // Nothing reaches the actual AI services: these are local DOM/API contract fixtures.
   await context.route(/^https:\/\/(?:chatgpt\.com|claude\.ai)\//, async route => {
     if (route.request().method() === 'POST') await route.fulfill({status:200,body:'ok'});
