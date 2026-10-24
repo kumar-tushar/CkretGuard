@@ -30,7 +30,6 @@
     $('field-help').textContent = full ? 'You can add maximum 50 fields.' : 'Add field names whose values you want to protect.';
     $('field-count').textContent = `${names.length} custom field${names.length === 1 ? '' : 's'} saved.`;
     $('saved-fields-panel').hidden = names.length === 0;
-    if (!names.length) $('saved-fields-panel').open = false;
     $('saved-fields').replaceChildren();
     for (const name of names) {
       const item = document.createElement('li');

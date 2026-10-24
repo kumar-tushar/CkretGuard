@@ -164,7 +164,6 @@ test('single-field entry supports Enter and removing one saved field preserves t
   await expect(composer.locator('#saved-fields span')).toHaveText(['dataset1']);
   await expect(composer.locator('#sensitive-names')).toHaveValue('');
   await addFields(['project_code']);
-  await composer.locator('#field-count').click();
   await composer.getByRole('button',{name:'Remove dataset1',exact:true}).click();
   await expect(composer.locator('#saved-fields span')).toHaveText(['project_code']);
   await composer.reload();
@@ -194,7 +193,6 @@ test('field Save requires three characters and routine field changes remain quie
   await expect(input).toHaveValue('');
   await expect(save).toBeDisabled();
   await expect(composer.locator('#field-status')).toHaveText('');
-  await composer.locator('#field-count').click();
   await addFields(['new_dataset']);
   await expect(composer.locator('#saved-fields span')).toHaveText(['new_dataset','abc']);
   await expect(composer.locator('#field-status')).toHaveText('');
@@ -391,7 +389,6 @@ test('clearing custom fields cancels an open review and keeps built-in detection
   const page=await chat(); const editor=page.locator('textarea');
   await editor.fill('dataset1=synthetic-custom-123'); await editor.press('Enter');
   await expect(review(page)).toBeVisible();
-  await composer.locator('#field-count').click();
   await composer.getByRole('button',{name:'Remove dataset1',exact:true}).click();
   await expect(composer.locator('#field-status')).toHaveText('');
   await expect(composer.locator('#saved-fields li')).toHaveCount(0);
@@ -941,8 +938,7 @@ test('the 50th saved field hides entry and deleting one restores it', async () =
   await composer.reload();
   await composer.locator('#fields-title').click();
   await expect(composer.locator('#field-form')).toBeHidden();
-  await expect(composer.locator('#saved-fields')).toBeHidden();
-  await composer.locator('#field-count').click();
+  await expect(composer.locator('#saved-fields')).toBeVisible();
   await composer.getByRole('button',{name:'Remove dataset0',exact:true}).click();
   await expect(composer.locator('#field-count')).toHaveText('49 custom fields saved.');
   await expect(composer.locator('#field-form')).toBeVisible();
@@ -957,11 +953,10 @@ test('the 50th saved field hides entry and deleting one restores it', async () =
   await page.close();
 });
 
-test('saved fields expand into compact rows and controls use brand hover colors', async () => {
+test('saved fields stay visible as compact tags and controls use brand hover colors', async () => {
   await composer.evaluate(()=>chrome.storage.local.set({policy:{sensitiveNames:Array.from({length:7},(_,i)=>'dataset'+i)}}));
   await expect(composer.locator('#field-count')).toHaveText('7 custom fields saved.');
-  await expect(composer.locator('#saved-fields')).toBeHidden();
-  await composer.locator('#field-count').click();
+  await expect(composer.locator('#saved-fields-panel summary')).toHaveCount(0);
   await expect(composer.locator('#saved-fields')).toBeVisible();
   await expect(composer.locator('#saved-fields li')).toHaveCount(7);
   const remove=composer.getByRole('button',{name:'Remove dataset0',exact:true});
@@ -971,17 +966,22 @@ test('saved fields expand into compact rows and controls use brand hover colors'
   await composer.locator('#save-fields').hover();
   await expect(composer.locator('#save-fields')).toHaveCSS('background-color','rgb(69, 214, 200)');
   await expect(composer.locator('#save-fields')).toHaveCSS('color','rgb(24, 24, 24)');
+  const list=await composer.locator('#saved-fields').boundingBox();
   for (const row of await composer.locator('#saved-fields li').all()) {
     const name=await row.locator('span').boundingBox();
     const button=await row.locator('button').boundingBox();
     const box=await row.boundingBox();
     expect(name.x+name.width).toBeLessThan(button.x);
-    expect(Math.abs(button.x+button.width-box.x-box.width)).toBeLessThan(2);
+    expect(Math.abs(box.x+box.width-button.x-button.width-8)).toBeLessThan(1);
+    expect(box.width).toBeLessThan(list.width);
     expect(box.height).toBeLessThanOrEqual(34);
     await expect(row).toHaveCSS('border-top-width','0px');
+    await expect(row).toHaveCSS('background-image','none');
   }
-  await composer.locator('#field-count').click();
+  await composer.locator('#fields-title').click();
   await expect(composer.locator('#saved-fields')).toBeHidden();
+  await composer.locator('#fields-title').click();
+  await expect(composer.locator('#saved-fields')).toBeVisible();
   const page=await chat();
   await page.locator('textarea').fill('api_key=synthetic-hover-123');
   await page.locator('textarea').press('Enter');
@@ -1072,8 +1072,7 @@ test('settings preserve custom fields and fit the toolbar dashboard', async () =
   await expect(composer.locator('#saved-fields span')).toHaveText(['internal_code','dataset1']);
   await expect(composer.locator('input[name=mode]:checked')).toHaveValue('block');
   await expect(composer.locator('#client-ids')).not.toBeChecked();
-  await expect(composer.locator('#saved-fields')).toBeHidden();
-  await composer.locator('#field-count').click();
+  await expect(composer.locator('#saved-fields')).toBeVisible();
   for (const width of [410,661,780]) {
     await composer.setViewportSize({width,height:1000});
     expect(await composer.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
