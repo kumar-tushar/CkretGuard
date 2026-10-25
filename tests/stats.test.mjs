@@ -13,7 +13,7 @@ function store(initial, failFirstWrite = false) {
   const saved = initial ? { activity: initial } : {}, writes = [];
   const context = vm.createContext({
     chrome: {
-      runtime: { id: 'test-extension', onMessage: { addListener: value => { listener = value; } } },
+      runtime: { id: 'test-extension', onInstalled: { addListener: () => {} }, onMessage: { addListener: value => { listener = value; } } },
       storage: { local: {
         get: async key => { await new Promise(setImmediate); return { [key]: structuredClone(saved[key]) }; },
         set: async value => {

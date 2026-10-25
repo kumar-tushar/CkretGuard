@@ -13,7 +13,7 @@ function harness(cleanup = false) {
   const messages = [];
   const cleanups = [], alarms = [];
   const context = vm.createContext({ URL, crypto: webcrypto,
-    chrome: { runtime: { id: 'test-extension', onMessage: { addListener: value => { listener = value; } },
+    chrome: { runtime: { id: 'test-extension', onInstalled: { addListener: () => {} }, onMessage: { addListener: value => { listener = value; } },
       sendMessage: async message => { messages.push(message); return { ok: true, entries: [] }; } } },
     importScripts: () => {},
   });

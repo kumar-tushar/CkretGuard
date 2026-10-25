@@ -3,6 +3,12 @@
   const { getAdapter, getEditors, isVisible, readEditor, writeEditor } = SecretShieldAdapters;
   const adapter = getAdapter(location.hostname);
   if (!adapter) return;
+  globalThis.SecretShieldContent?.();
+  const lifecycle = new AbortController();
+  const capture = { capture: true, signal: lifecycle.signal };
+  const reconnectEvent = 'ckretguard-reconnect';
+  const iconUrl = chrome.runtime.getURL('icons/orbit-pointer.png');
+  const reconnectMessage = 'Extension connection lost. Refresh this chat tab before sending.';
   const fontFamily = '"CkretGuard DM Sans", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
   const noticeDuration = 5000;
   let policy = null, policyError = false, generation = 0;
@@ -10,7 +16,13 @@
   let notice = null, noticeTimer = null, pendingNotice = '';
   let review = null, approval = null, pendingSend = null;
 
+  function runtimeAvailable() {
+    try { return Boolean(chrome.runtime?.id); }
+    catch { return false; }
+  }
+
   function show(message) {
+    if (!runtimeAvailable()) message = reconnectMessage;
     pendingNotice = message;
     if (!document.body) return;
     pendingNotice = '';
@@ -20,7 +32,7 @@
       host.id = 'secret-shield-notice';
       const shadow = host.attachShadow({ mode: 'closed' });
       const style = document.createElement('style');
-      style.textContent = `:host{all:initial;position:fixed;bottom:40px;right:20px;z-index:2147483647;max-width:min(390px,calc(100vw - 40px))}div{position:relative;overflow:hidden;display:flex;align-items:flex-start;gap:10px;font:13px/1.5 ${fontFamily};color:#dfdfdf;background:rgb(24 24 24 / .55);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);border:1px solid #ffffff28;border-radius:12px;padding:14px 18px;box-shadow:0 8px 30px #0003;white-space:pre-wrap}strong{color:#45d6c8;font-weight:500}.brand-icon{flex:0 0 20px;width:20px;height:20px;background:#45d6c8;mask:url("${chrome.runtime.getURL('icons/orbit-pointer.png')}") center/contain no-repeat}.notice-progress{position:absolute;top:0;left:0;width:100%;height:3px;background:#45d6c8;transform-origin:left;pointer-events:none}`;
+      style.textContent = `:host{all:initial;position:fixed;bottom:40px;right:20px;z-index:2147483647;max-width:min(390px,calc(100vw - 40px))}div{position:relative;overflow:hidden;display:flex;align-items:flex-start;gap:10px;font:13px/1.5 ${fontFamily};color:#dfdfdf;background:rgb(24 24 24 / .55);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);border:1px solid #ffffff28;border-radius:12px;padding:14px 18px;box-shadow:0 8px 30px #0003;white-space:pre-wrap}strong{color:#45d6c8;font-weight:500}.brand-icon{flex:0 0 20px;width:20px;height:20px;background:#45d6c8;mask:url("${iconUrl}") center/contain no-repeat}.notice-progress{position:absolute;top:0;left:0;width:100%;height:3px;background:#45d6c8;transform-origin:left;pointer-events:none}`;
       const text = document.createElement('div');
       text.setAttribute('role', 'status');
       text.setAttribute('aria-live', 'polite');
@@ -59,6 +71,15 @@
     return target instanceof Element ? target.closest(adapter.editors) : null;
   }
   function denyUnavailable(event) {
+    if (!runtimeAvailable()) {
+      stop(event);
+      policy = null;
+      approval = null;
+      pendingSend = null;
+      closeReview(false);
+      show(reconnectMessage);
+      return true;
+    }
     if (policy) return false;
     stop(event);
     show(policyError ? 'Policy unavailable. Send is paused. Reload the extension and this tab.' : 'Loading local policy. Send is paused; try again shortly.');
@@ -77,7 +98,7 @@
 
   function reviewIsCurrent(current) {
     const editors = getEditors(adapter);
-    return review === current && policy && current.generation === generation &&
+    return runtimeAvailable() && review === current && policy && current.generation === generation &&
       current.editor.isConnected && readEditor(current.editor) === current.text &&
       editors.length === 1 && editors[0] === current.editor;
   }
@@ -101,7 +122,7 @@
 
   function submitDraft(current, original) {
     const editors = getEditors(adapter);
-    if (!policy || current.generation !== generation || editors.length !== 1 ||
+    if (!runtimeAvailable() || !policy || current.generation !== generation || editors.length !== 1 ||
         editors[0] !== current.editor || readEditor(current.editor) !== current.text ||
         (original ? policy.mode === 'block' : pendingSend !== current || SecretShieldCore.scan(current.text, policy, current.text.length).length)) {
       throw new Error('Draft or policy changed');
@@ -172,7 +193,7 @@
       dialog::backdrop{background:#0003}
       .brand-row{display:flex;align-items:center;justify-content:space-between;gap:12px}
       .brand{color:#45d6c8;font-size:12px;font-weight:500;letter-spacing:1.7px;white-space:pre-wrap}
-      .brand-icon{display:block;flex:0 0 24px;width:24px;height:24px;background:#45d6c8;mask:url("${chrome.runtime.getURL('icons/orbit-pointer.png')}") center/contain no-repeat}
+      .brand-icon{display:block;flex:0 0 24px;width:24px;height:24px;background:#45d6c8;mask:url("${iconUrl}") center/contain no-repeat}
       h2{font-size:20px;line-height:1.25;letter-spacing:-.6px;margin:20px 0 12px}
       .count{color:#ff6b6b}
       .actions{display:flex;flex-wrap:wrap;gap:9px;margin-top:28px}
@@ -284,33 +305,33 @@
     if (suppressEnter && event.repeat) { stop(event); return; }
     const editor = editorFrom(event.target);
     if (editor) suppressEnter = guard(event, [editor]);
-  }, true);
+  }, capture);
   window.addEventListener('keyup', event => {
     if (event.key === 'Enter' && suppressEnter) { stop(event); suppressEnter = false; }
-  }, true);
+  }, capture);
   window.addEventListener('pointerdown', event => {
     const button = event.target instanceof Element ? event.target.closest(adapter.send) : null;
     if (!button) return;
     suppressClick = guard(event, getEditors(adapter)) ? button : null;
-  }, true);
+  }, capture);
   window.addEventListener('click', event => {
     const button = event.target instanceof Element ? event.target.closest(adapter.send) : null;
     if (!button) return;
     if (suppressClick === button && !approval) { suppressClick = null; stop(event); return; }
     guard(event, getEditors(adapter));
-  }, true);
+  }, capture);
   window.addEventListener('submit', event => {
     if (event.target instanceof Element &&
         (event.target.querySelector(adapter.editors) || event.target.querySelector(adapter.send))) {
       guard(event, getEditors(adapter));
     }
-  }, true);
+  }, capture);
   window.addEventListener('input', event => {
     const editor = editorFrom(event.target);
     if (editor && review?.editor === editor && readEditor(editor) !== review.text) closeReview(false);
     if (editor && approval?.editor === editor && readEditor(editor) !== approval.text) approval = null;
     if (editor && pendingSend?.editor === editor && readEditor(editor) !== pendingSend.text) pendingSend = null;
-  }, true);
+  }, capture);
 
   async function refreshPolicy() {
     const request = ++generation;
@@ -325,13 +346,33 @@
       if (request === generation) { policyError = true; show('Policy unavailable. Send is paused.'); }
     }
   }
-  chrome.storage.onChanged.addListener((changes, area) => {
+  const onPolicyChanged = (changes, area) => {
     if (area === 'managed' || (area === 'local' && Object.hasOwn(changes, 'policy'))) void refreshPolicy();
-  });
-  chrome.runtime.onMessage.addListener((message, _sender, reply) => {
+  };
+  const onCoverage = (message, _sender, reply) => {
     if (message?.type !== 'coverage') return;
-    reply({ site: adapter.name, ready: Boolean(policy), error: policyError, editors: getEditors(adapter).length });
-  });
-  document.addEventListener('DOMContentLoaded', () => { if (pendingNotice) show(pendingNotice); }, { once: true });
+    reply({ site: adapter.name, ready: runtimeAvailable() && Boolean(policy), error: policyError, editors: getEditors(adapter).length });
+  };
+  function dispose() {
+    ++generation;
+    policy = null;
+    approval = null;
+    pendingSend = null;
+    pendingNotice = '';
+    lifecycle.abort();
+    closeReview(false);
+    clearTimeout(noticeTimer);
+    notice?.remove();
+    notice = null;
+    try { chrome.storage.onChanged.removeListener(onPolicyChanged); } catch {}
+    try { chrome.runtime.onMessage.removeListener(onCoverage); } catch {}
+  }
+  globalThis.SecretShieldContent = dispose;
+  // Reloaded extensions have a new isolated world; only disconnected guards accept this handoff.
+  window.dispatchEvent(new Event(reconnectEvent));
+  window.addEventListener(reconnectEvent, () => { if (!runtimeAvailable()) dispose(); }, { signal: lifecycle.signal });
+  chrome.storage.onChanged.addListener(onPolicyChanged);
+  chrome.runtime.onMessage.addListener(onCoverage);
+  document.addEventListener('DOMContentLoaded', () => { if (pendingNotice) show(pendingNotice); }, { once: true, signal: lifecycle.signal });
   void refreshPolicy();
 })();

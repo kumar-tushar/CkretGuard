@@ -1130,7 +1130,7 @@ async function noticeHarness(host='chatgpt.com', deferred=false) {
       if (window.policyUnavailable) throw new Error('synthetic storage failure');
       return {};
     }},managed:{get:async()=>({})},onChanged:{addListener:listener=>{window.policyChanged=listener;}}},
-      runtime:{getURL:file=>`chrome-extension://test/${file}`,onMessage:{addListener:listener=>{window.coverageListener=listener;}}}};
+      runtime:{id:'test-extension',getURL:file=>`chrome-extension://test/${file}`,onMessage:{addListener:listener=>{window.coverageListener=listener;}}}};
     if (deferred) {window.noticeBody=document.body;document.body.remove();}
   },deferred);
   for (const name of ['core','policy','adapters','content']) await page.addScriptTag({content:await readFile(path.join(root,'src',name+'.js'),'utf8')});
@@ -1204,7 +1204,7 @@ for (const state of ['pending','unavailable','invalid']) test(`${state} policy b
   await page.goto('https://chatgpt.com/');
   await page.evaluate(state=>{
     const get=()=>state==='pending'?new Promise(()=>{}):state==='invalid'?Promise.resolve({policy:{mode:'allow-all'}}):Promise.reject(new Error('unreadable'));
-    window.chrome={storage:{local:{get},managed:{get:async()=>({})},onChanged:{addListener:()=>{}}},runtime:{getURL:file=>`chrome-extension://test/${file}`,onMessage:{addListener:()=>{}}}};
+    window.chrome={storage:{local:{get},managed:{get:async()=>({})},onChanged:{addListener:()=>{}}},runtime:{id:'test-extension',getURL:file=>`chrome-extension://test/${file}`,onMessage:{addListener:()=>{}}}};
   },state);
   for(const name of ['core','policy','adapters','content']) await page.addScriptTag({content:await readFile(path.join(root,'src',name+'.js'),'utf8')});
   await page.locator('textarea').fill('ordinary prompt');await page.locator('textarea').press('Enter');

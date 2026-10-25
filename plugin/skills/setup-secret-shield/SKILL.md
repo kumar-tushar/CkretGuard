@@ -22,6 +22,8 @@ In a local execution environment, locate this skill's `extension` directory and 
 3. Pin CkretGuard and reload existing ChatGPT/Claude browser tabs.
 4. Open CkretGuard and expand Custom secret fields. Type a field name such as dataset_key and click Save. Saved names appear automatically below the plain count, one per row, with a remove button on the right. Repeat to add up to 50 fields; at the limit the input is hidden until a field is removed. Add field names only, never secret values.
 
+Existing tabs need one refresh when adopting the recovery-enabled build from an older version. Later extension updates and reloads reconnect supported tabs automatically without navigating, changing, or submitting their drafts. Any pending review must be opened again under the current policy. Recovery uses the scripting permission on the same three supported chat origins. If site access is restricted or reconnection fails, a disconnected guard blocks recognized sending and shows a refresh notice. Do not claim recovery when the extension is disabled or site access is withheld.
+
 If the host cannot expose local package files, explain that the browser extension must be downloaded/extracted onto the user's computer using a host-supported file delivery mechanism. Do not invent a download URL, claim installation, or copy the package to a cloud scanner. The extension is not automatically installed in Chrome by installing this AI plugin.
 
 Do not modify browser profiles, install extensions, change site access, or alter organization policy as part of explaining setup unless the user explicitly requests those steps and the host supports them.

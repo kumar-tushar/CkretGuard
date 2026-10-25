@@ -9,7 +9,7 @@ function harness(initial = {}, managed = {}) {
   let listener, fail = false;
   const saved = { policy: initial };
   const context = vm.createContext({URL, chrome:{
-    runtime:{id:'test-extension',onMessage:{addListener:value=>{listener=value;}}},
+    runtime:{id:'test-extension',onInstalled: { addListener: () => {} }, onMessage:{addListener:value=>{listener=value;}}},
     storage:{local:{get:async()=>{await new Promise(setImmediate);return structuredClone(saved);},
       set:async value=>{await new Promise(setImmediate);if(fail)throw new Error('write failed');Object.assign(saved,structuredClone(value));}},
       managed:{get:async()=>structuredClone(managed)}}},

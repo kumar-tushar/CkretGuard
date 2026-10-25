@@ -20,6 +20,8 @@ npm run build
 3. Pin CkretGuard and reload existing ChatGPT / Claude tabs.
 4. Open the extension and expand **Custom secret fields**. Enter a field name such as `dataset_key` and choose **Save**. Saved names appear below the count, one per row, with a remove button on the right. At 50 fields, the input is hidden until a field is removed. For example, adding `dataset1` protects values assigned to that field.
 
+After moving from an older build to this recovery-enabled build, refresh existing chat tabs once. Subsequent extension updates and reloads reconnect the guard in supported open tabs without navigating the page, changing the draft, or submitting it. An open review is discarded and the next send reviews the current draft again. The `scripting` permission and explicit host permissions cover only the same three supported chat origins. Restricted site access or a failed reconnection may still require a tab refresh; a disconnected guard blocks recognized sending and displays a refresh notice.
+
 In recognized website inputs, clicking Send or pressing Enter scans the draft. If credentials are detected, the original send is canceled and a single headline shows the exact detected occurrence count (for example, “2 secrets detected”). The number is red. The dialog provides three choices:
 
 - **Send** sends the original draft unchanged for this one attempt.

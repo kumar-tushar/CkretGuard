@@ -1,6 +1,21 @@
 'use strict';
 importScripts('core.js', 'policy.js', 'stats.js', 'history.js');
 
+chrome.runtime.onInstalled.addListener(async () => {
+  try {
+    for (const script of chrome.runtime.getManifest().content_scripts) {
+      const tabs = await chrome.tabs.query({ url: script.matches });
+      await Promise.allSettled(tabs.filter(tab => Number.isInteger(tab.id)).map(async tab => {
+        const target = { tabId: tab.id };
+        await Promise.allSettled([
+          chrome.scripting.executeScript({ target, files: script.js, injectImmediately: true }),
+          ...(script.css?.length ? [chrome.scripting.insertCSS({ target, files: script.css })] : []),
+        ]);
+      }));
+    }
+  } catch { /* Closed tabs and restricted site access must not break the worker. */ }
+});
+
 // Serialize policy, activity, and History changes across views.
 let pending = Promise.resolve();
 chrome.runtime.onMessage.addListener((message, sender, reply) => {
