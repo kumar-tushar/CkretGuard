@@ -11,6 +11,7 @@
   const reconnectMessage = 'Extension connection lost. Refresh this chat tab before sending.';
   const fontFamily = '"CkretGuard DM Sans", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
   const noticeDuration = 5000;
+  const sendWait = 3000;
   let policy = null, policyError = false, generation = 0;
   let suppressClick = null, suppressEnter = false;
   let notice = null, noticeTimer = null, pendingNotice = '';
@@ -22,6 +23,7 @@
   }
 
   function show(message) {
+    if (lifecycle.signal.aborted) return;
     if (!runtimeAvailable()) message = reconnectMessage;
     pendingNotice = message;
     if (!document.body) return;
@@ -67,6 +69,10 @@
   }
 
   function stop(event) { event.preventDefault(); event.stopImmediatePropagation(); }
+  function clearApproval() {
+    clearTimeout(approval?.timer);
+    approval = null;
+  }
   function editorFrom(target) {
     return target instanceof Element ? target.closest(adapter.editors) : null;
   }
@@ -74,7 +80,7 @@
     if (!runtimeAvailable()) {
       stop(event);
       policy = null;
-      approval = null;
+      clearApproval();
       pendingSend = null;
       closeReview(false);
       show(reconnectMessage);
@@ -122,27 +128,45 @@
 
   function submitDraft(current, original) {
     const editors = getEditors(adapter);
-    if (!runtimeAvailable() || !policy || current.generation !== generation || editors.length !== 1 ||
-        editors[0] !== current.editor || readEditor(current.editor) !== current.text ||
-        (original ? policy.mode === 'block' : pendingSend !== current || SecretShieldCore.scan(current.text, policy, current.text.length).length)) {
+    if (!runtimeAvailable() || !policy || current.generation !== generation || pendingSend !== current ||
+        (original ? policy.mode === 'block' : SecretShieldCore.scan(current.text, policy, current.text.length).length)) {
+      throw new Error('Draft or policy changed');
+    }
+    // Frameworks may replace a masked editor while committing the same input transaction.
+    if (!original && !current.editor.isConnected) {
+      if (editors.length === 0) return false;
+      if (editors.length === 1 && readEditor(editors[0]) === current.text) current.editor = editors[0];
+    }
+    if (editors.length !== 1 || editors[0] !== current.editor || readEditor(current.editor) !== current.text) {
       throw new Error('Draft or policy changed');
     }
     const form = current.editor.closest('form');
     const buttons = [...document.querySelectorAll(adapter.send)].filter(button =>
       isVisible(button) && (!form || form.contains(button) || button.form === form));
-    if (buttons.length > 1 || (original && buttons.length === 0 && !(form instanceof HTMLFormElement))) {
-      throw new Error('Send control unavailable');
-    }
-    if (!original && buttons.length === 0) return false;
+    if (buttons.length > 1) throw new Error('Send control unavailable');
+    if (buttons.length === 0 && !(form instanceof HTMLFormElement && current.submitForm === form)) return false;
     if (buttons.length === 1 && (buttons[0].disabled || buttons[0].getAttribute('aria-disabled') === 'true')) return false;
-    // Approval is bound to this unchanged draft and this synchronous send gesture.
-    approval = { editor: current.editor, text: current.text, generation, original,
-      clicked: false, submitted: false };
+    // Allow one click and its form submission, including a deferred framework callback.
+    clearApproval();
+    const allowed = { editor: current.editor, text: current.text, generation, original,
+      button: buttons[0], form, clicked: false, submitted: false, expires: performance.now() + sendWait };
+    approval = allowed;
+    allowed.timer = setTimeout(() => { if (approval === allowed) clearApproval(); }, sendWait);
     try {
       if (buttons.length === 1) buttons[0].click();
       else form.requestSubmit();
-    } finally { approval = null; }
+      if (!allowed.clicked && !allowed.submitted) throw new Error('Send was not activated');
+    } catch (error) { clearApproval(); throw error; }
     return true;
+  }
+
+  async function waitForSend(current, original) {
+    const deadline = performance.now() + sendWait;
+    do {
+      await new Promise(resolve => setTimeout(resolve, 25));
+      if (submitDraft(current, original)) return true;
+    } while (performance.now() < deadline);
+    return false;
   }
 
   async function recordHistory(current) {
@@ -167,20 +191,21 @@
         return;
       }
       closeReview(false);
-      if (submitDraft(current, true)) {
+      pendingSend = current;
+      if (await waitForSend(current, true)) {
         void globalThis.SecretShieldStats?.record('unmaskedPrompts');
         void recordHistory(current);
       } else show('Send is not ready. Your draft is still in the input box.');
     } catch {
-      approval = null;
       if (review === current) closeReview();
       show('Could not activate Send. Your draft is still in the input box.');
-    }
+    } finally { if (pendingSend === current) pendingSend = null; }
   }
 
-  function openReview(editor, text, count) {
+  function openReview(editor, text, count, submitForm) {
     if (review?.editor === editor && review.text === text && review.generation === generation) return;
     closeReview(false);
+    clearApproval();
     pendingSend = null;
     const host = document.createElement('div');
     host.id = 'ckretguard-review';
@@ -220,7 +245,7 @@
     dialog.querySelector('.caption').textContent = `${count === 1 ? 'secret' : 'secrets'} detected`;
     const send = dialog.querySelector('.send');
     if (policy.mode === 'block') send.remove();
-    const current = { host, dialog, editor, text, count, generation, closing: false };
+    const current = { host, dialog, editor, text, count, generation, submitForm, closing: false };
     review = current;
     if (policy.mode !== 'block') send.addEventListener('click', () => releaseOriginal(current));
     dialog.querySelector('.edit').addEventListener('click', async () => {
@@ -243,16 +268,12 @@
         }
         const result = SecretShieldCore.redact(current.text, policy, current.text.length);
         closeReview(false);
-        writeEditor(editor, result.text);
-        masked = { editor, text: result.text, generation: current.generation };
+        writeEditor(editor, result.text, result.findings);
+        masked = { editor, text: result.text, generation: current.generation, submitForm: current.submitForm };
         pendingSend = masked;
-        // Let the host editor process input, then use its current enabled Send control.
-        for (let attempt = 0; attempt < 40; attempt++) {
-          await new Promise(resolve => setTimeout(resolve, 25));
-          if (submitDraft(masked, false)) {
-            void globalThis.SecretShieldStats?.record('maskedPrompts');
-            return;
-          }
+        if (await waitForSend(masked, false)) {
+          void globalThis.SecretShieldStats?.record('maskedPrompts');
+          return;
         }
         show('The masked draft is ready, but Send is unavailable. It has not been sent.');
       } catch {
@@ -275,6 +296,7 @@
   function guard(event, editors) {
     if (denyUnavailable(event)) return true;
     if (editors.length !== 1) {
+      clearApproval();
       stop(event);
       show('Chat input could not be identified uniquely. Reload the chat tab before sending.');
       return true;
@@ -282,16 +304,34 @@
     try {
       const editor = editors[0];
       const text = readEditor(editor);
-      if (approval && approval.editor === editor && approval.text === text &&
-          approval.generation === generation && (!approval.original || policy.mode !== 'block')) {
-        if (event.type === 'click' && !approval.clicked) { approval.clicked = true; return false; }
-        if (event.type === 'submit' && !approval.submitted) { approval.submitted = true; return false; }
+      if (approval) {
+        if (approval.expires > performance.now() && approval.editor === editor &&
+            approval.generation === generation && (!approval.original || policy.mode !== 'block')) {
+          // Sites often clear the draft immediately after the first accepted submission.
+          if (approval.submitted && !text.trim() && event.type === 'submit' && event.target === approval.form) {
+            stop(event);
+            return true;
+          }
+          if (approval.text === text) {
+            if (event.type === 'click' && !approval.clicked && !approval.submitted &&
+                event.target instanceof Element && event.target.closest(adapter.send) === approval.button) {
+              approval.clicked = true;
+              return false;
+            }
+            if (event.type === 'submit' && event.target === approval.form) {
+              if (approval.submitted) { stop(event); return true; }
+              approval.submitted = true;
+              return false;
+            }
+          }
+        }
+        clearApproval();
       }
       if (pendingSend?.editor === editor) { stop(event); return true; }
       const result = SecretShieldCore.redact(text, policy, text.length);
       if (!result.count) return false;
       stop(event);
-      openReview(editor, text, result.count);
+      openReview(editor, text, result.count, event.type === 'submit' ? event.target : null);
       return true;
     } catch {
       stop(event);
@@ -317,7 +357,7 @@
   window.addEventListener('click', event => {
     const button = event.target instanceof Element ? event.target.closest(adapter.send) : null;
     if (!button) return;
-    if (suppressClick === button && !approval) { suppressClick = null; stop(event); return; }
+    if (suppressClick === button && (!approval || approval.clicked)) { suppressClick = null; stop(event); return; }
     guard(event, getEditors(adapter));
   }, capture);
   window.addEventListener('submit', event => {
@@ -329,14 +369,15 @@
   window.addEventListener('input', event => {
     const editor = editorFrom(event.target);
     if (editor && review?.editor === editor && readEditor(editor) !== review.text) closeReview(false);
-    if (editor && approval?.editor === editor && readEditor(editor) !== approval.text) approval = null;
+    if (editor && approval?.editor === editor && readEditor(editor) !== approval.text &&
+        !(approval.submitted && !readEditor(editor).trim())) clearApproval();
     if (editor && pendingSend?.editor === editor && readEditor(editor) !== pendingSend.text) pendingSend = null;
   }, capture);
 
   async function refreshPolicy() {
     const request = ++generation;
     policy = null;
-    approval = null;
+    clearApproval();
     pendingSend = null;
     closeReview(false);
     try {
@@ -356,7 +397,7 @@
   function dispose() {
     ++generation;
     policy = null;
-    approval = null;
+    clearApproval();
     pendingSend = null;
     pendingNotice = '';
     lifecycle.abort();

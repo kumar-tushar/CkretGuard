@@ -39,6 +39,7 @@ for (const host of ['chatgpt.com', 'chat.openai.com', 'claude.ai']) test(`${host
     const navigation = await page.evaluate(() => performance.timeOrigin);
     const editor = page.locator('textarea,[contenteditable]');
     const dialog = page.getByRole('dialog');
+    const submitted = [];
     for (const cycle of [0, 1]) {
       const draft = `openai_api_key = xxxxxxxxxx\ndataset_key = synthetic-reload-${cycle}-123`;
       await editor.fill(draft);
@@ -67,9 +68,10 @@ for (const host of ['chatgpt.com', 'chat.openai.com', 'claude.ai']) test(`${host
       }
       await editor.press('Enter');
       await expect(dialog).toBeVisible();
-      await dialog.getByRole('button', { name: 'Mask', exact: true }).click();
-      await expect.poll(() => page.evaluate(() => window.submitted)).toEqual(Array(cycle + 1).fill('openai_api_key = xxxxxxxxxx\ndataset_key = xxxxxxxxxx'));
-      await expect.poll(() => worker.evaluate(async () => (await chrome.storage.local.get('activity')).activity)).toEqual({ detected: cycle * 2 + 2, maskedPrompts: cycle + 1, unmaskedPrompts: 0 });
+      await dialog.getByRole('button', { name: cycle === 0 ? 'Mask' : 'Send', exact: true }).click();
+      submitted.push(cycle === 0 ? 'openai_api_key = xxxxxxxxxx\ndataset_key = xxxxxxxxxx' : draft);
+      await expect.poll(() => page.evaluate(() => window.submitted)).toEqual(submitted);
+      await expect.poll(() => worker.evaluate(async () => (await chrome.storage.local.get('activity')).activity)).toEqual({ detected: cycle * 2 + 2, maskedPrompts: 1, unmaskedPrompts: cycle });
       const policy = await worker.evaluate(async () => (await chrome.storage.local.get('policy')).policy);
       expect(policy).toEqual({ mode: 'redact', protectClientIds: false, sensitiveNames: ['dataset_key'] });
     }

@@ -193,6 +193,7 @@ test('failed or invalidated sends never enter History', async () => {
   await page.locator('[data-testid=send-button]').evaluate(button => { button.disabled = true; });
   await review(page).getByRole('button', { name: 'Send', exact: true }).click();
   await expect(review(page)).toBeHidden();
+  await expect(page.locator('#secret-shield-notice')).toBeVisible();
   expect(await entries()).toEqual([]);
   await page.locator('[data-testid=send-button]').evaluate(button => { button.disabled = false; });
   await clickSend(page);

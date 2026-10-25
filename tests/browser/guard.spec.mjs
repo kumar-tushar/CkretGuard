@@ -409,6 +409,7 @@ test('unsuccessful Send and Mask choices do not record successful outcomes', asy
   await page.locator('[data-testid="send-button"]').evaluate(button=>{button.disabled=true;});
   await review(page).getByRole('button',{name:'Send',exact:true}).click();
   await expect(review(page)).toBeHidden();
+  await expect(page.locator('#secret-shield-notice')).toBeVisible();
   await expect.poll(activity).toEqual({detected:1,maskedPrompts:0,unmaskedPrompts:0});
   await page.locator('[data-testid="send-button"]').evaluate(button=>{button.disabled=false;});
   await editor.press('Enter');
@@ -513,6 +514,57 @@ for (const host of ['chatgpt.com','claude.ai']) {
     await page.close();
   });
 }
+for (const host of ['chatgpt.com','claude.ai']) test(`${host}: Mask preserves rich-editor paragraphs, blank lines and surrounding text`, async () => {
+  const page=await chat(host,host==='chatgpt.com'?'markdown':'');
+  const editor=page.locator('[contenteditable]');
+  const cases=[
+    {html:'<p>openai_api_key = xxxxxxxxxx</p><p>openai_api_key = synthetic-paragraph-123</p>',values:['synthetic-paragraph-123'],paragraphs:2},
+    {html:'<p><strong>Keep this style.</strong></p><p>client_secret = synthetic-first-123</p><p><br></p><p>  password = "synthetic second 456"</p><p>Keep   these spaces.</p>',values:['synthetic-first-123','synthetic second 456'],paragraphs:5,styled:true},
+    {html:'<p>Before 🧪</p><p><br></p><p>client_secret = synthetic-<em>inline</em>-123</p><p>After</p>',values:['synthetic-inline-123'],paragraphs:4},
+    {html:'<p>Before</p><p>-----BEGIN RSA PRIVATE KEY-----</p><p>SYNTHETIC-PRIVATE-MATERIAL</p><p>-----END RSA PRIVATE KEY-----</p><p>After</p>',values:null,paragraphs:3},
+    {html:'<p>api_key = synthetic-repeat-123</p><p>Repeat synthetic-repeat-123 here.</p>',values:['synthetic-repeat-123'],paragraphs:2},
+  ];
+  const submitted=[];
+  for(const item of cases) {
+    await editor.evaluate((element,html)=>{element.innerHTML=html;element.dispatchEvent(new InputEvent('input',{bubbles:true}));},item.html);
+    const original=await editorText(editor);
+    const expected=item.values?item.values.reduce((text,value)=>text.replaceAll(value,'xxxxxxxxxx'),original):original.replace(/-----BEGIN RSA PRIVATE KEY-----[\s\S]*?-----END RSA PRIVATE KEY-----/,'xxxxxxxxxx');
+    await editor.press('Enter');
+    await expect(review(page)).toBeVisible();
+    const sent=page.waitForRequest(request=>request.method()==='POST');
+    await review(page).getByRole('button',{name:'Mask',exact:true}).click();
+    expect((await sent).postData()).toBe(expected);
+    await expect.poll(()=>editorText(editor)).toBe(expected);
+    submitted.push(expected);
+    expect(await page.evaluate(()=>window.submitted)).toEqual(submitted);
+    await expect(editor.locator('p')).toHaveCount(item.paragraphs);
+    if(item.styled) await expect(editor.locator('strong')).toHaveText('Keep this style.');
+    await expect(page.locator('#secret-shield-notice')).toHaveCount(0);
+  }
+  await expect.poll(activity).toEqual({detected:7,maskedPrompts:5,unmaskedPrompts:0});
+  await page.close();
+});
+
+for (const host of ['chatgpt.com','claude.ai']) test(`${host}: a rejected rich-editor replacement never sends a partially masked prompt`, async () => {
+  const page=await chat(host,host==='chatgpt.com'?'markdown':'');
+  const editor=page.locator('[contenteditable]');
+  await editor.evaluate(element=>{
+    const original='<p>api_key=synthetic-first-123</p><p>password=synthetic-second-456</p>';
+    element.innerHTML=original;
+    element.dispatchEvent(new InputEvent('input',{bubbles:true}));
+    element.addEventListener('input',()=>{element.innerHTML=original;window.current=element.innerText;});
+  });
+  const original=await editorText(editor);
+  await editor.press('Enter');
+  await expect(review(page)).toBeVisible();
+  await review(page).getByRole('button',{name:'Mask',exact:true}).click();
+  await expect(page.locator('#secret-shield-notice')).toBeVisible();
+  expect(await editorText(editor)).toBe(original);
+  expect(await page.evaluate(()=>window.submitted)).toEqual([]);
+  await expect.poll(activity).toEqual({detected:2,maskedPrompts:0,unmaskedPrompts:0});
+  await page.close();
+});
+
 for (const gesture of ['Enter','send button']) {
   test(`ChatGPT markdown editor: ${gesture} cancels the first secret-bearing send`, async () => {
     const page=await chat('chatgpt.com','markdown');
@@ -537,7 +589,7 @@ test('pointer and click open one review and its Send approval submits once', asy
   await expect(editor).toHaveValue(`Fix ${key}`);
   await expect(review(page)).toHaveCount(1);
   await review(page).getByRole('button',{name:'Send',exact:true}).click();
-  expect(await page.evaluate(()=>window.submitted)).toEqual([`Fix ${key}`]);
+  await expect.poll(()=>page.evaluate(()=>window.submitted)).toEqual([`Fix ${key}`]);
   await page.close();
 });
 test('review counts detected occurrences once when scanner matches overlap', async () => {

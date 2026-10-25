@@ -30,6 +30,14 @@ The full-tab sidebar includes History. Only prompts forwarded unchanged through 
 
 Records use extension-origin IndexedDB, separate from preferences and counters. Only the extension dashboard can list or delete them. They are local, unencrypted by CkretGuard, and not synced or uploaded. Users can delete entries individually or clear all History; this does not reset counts or delete provider messages. History retains the last 90 days. Older records are physically deleted before History operations, on worker startup, and by hourly local cleanup while Chrome is running. Browser storage limits and earlier user deletion also apply. Listings transfer paged metadata only; prompt text is loaded in bounded chunks on expansion. A failed write shows a notice and does not truncate the prompt. Evaluate this deliberate retention of raw credentials against your organization's requirements before deployment. This user-controlled history is not an immutable or authenticated audit service.
 
+## Detection accuracy boundaries
+
+The current rules can flag ordinary prose: `Explain the basic authentication flow.` matches the bare Basic-token rule, and `The key is to retry with exponential backoff.` matches the generic `key is value` rule. These are false positives for those prompts. The scanner does not infer intent from natural language.
+
+Separator-free phrases such as `client secret synthetic-example-123`, grouped labels followed by values such as `client id and client secret are` on subsequent lines, and arbitrary unlabeled values are not recognized by the named-field rules. These formats may therefore pass without a warning unless another detector recognizes the value. Configure literal custom field names where appropriate; doing so does not add natural-language parsing or encoded-secret detection.
+
+Passing the browser and scanner regression suites verifies their tested contracts. It does not establish a measured enterprise false-positive/false-negative rate, current live-provider compatibility, or complete secret coverage. Calibrate these rules against representative synthetic customer prompts and explicit protection requirements before deployment.
+
 ## Before broad rollout
 
 1. Test the unpacked pilot on disposable Chrome profiles against the actual current ChatGPT and Claude editors. Use synthetic tokens. Check textarea/contenteditable, send click, Enter, keyboard activation, paste, multilingual UI, edits, navigation, model changes, and rich text. Verify **Send** submits the original only after explicit selection, **Edit** leaves the original draft without sending, and **Mask** automatically submits the masked prompt exactly once after validation. Check the detected occurrence count and verify changed drafts or policies cannot reuse a prior approval. Confirm provider request bodies match the user's selected choice and managed Block mode prevents original sending. Test supported Chrome versions and operating systems.
