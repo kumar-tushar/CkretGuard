@@ -1262,7 +1262,7 @@ test('two extension views preserve simultaneous field additions and independent 
     await composer.locator('#sensitive-names').fill('first_field');
     await other.locator('#sensitive-names').fill('second_field');
     await Promise.all([composer,other].map(page=>page.locator('#field-form').evaluate(form=>form.requestSubmit())));
-    await expect.poll(()=>composer.evaluate(async()=>(await chrome.storage.local.get('policy')).policy.sensitiveNames.slice().sort())).toEqual(['first_field','second_field']);
+    await expect.poll(()=>composer.evaluate(async()=>((await chrome.storage.local.get('policy')).policy?.sensitiveNames ?? []).slice().sort())).toEqual(['first_field','second_field']);
     await expect(composer.locator('#sensitive-names')).toHaveValue('');
     await expect(other.locator('#sensitive-names')).toHaveValue('');
     await other.locator('#protection-settings').evaluate(element=>{element.open=true;});
