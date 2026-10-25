@@ -146,7 +146,9 @@
       const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
       if (!tab?.id) throw new Error();
       const state = await chrome.tabs.sendMessage(tab.id, { type: 'coverage' });
-      $('coverage').textContent = state.ready && state.editors === 1 ? `${state.site} input recognized · prompt guard ready. Coverage is limited to supported input and send controls.` : `${state.site} · guard unavailable or input not recognized. Reload the chat tab before sending.`;
+      const ready = state.ready && state.editors === 1;
+      $('coverage').textContent = ready ? `${state.site} input recognized · prompt guard ready.` : `${state.site} · guard unavailable or input not recognized. Reload the chat tab before sending.`;
+      if (ready) $('coverage').append(document.createElement('br'), 'Coverage is limited to supported input and send controls.');
       $('coverage').hidden = false;
     } catch { $('coverage').textContent = ''; $('coverage').hidden = true; }
   }
