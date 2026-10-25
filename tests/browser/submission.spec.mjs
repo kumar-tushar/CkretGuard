@@ -97,8 +97,13 @@ for (const host of ['chatgpt.com', 'claude.ai']) {
       let submissions = 0;
       for (const [index, item] of credentialCases.slice(start, start + 12).entries()) {
         await test.step(item.name, async () => {
+          const original = item.input.replace(/\r\n/g, '\n'), masked = item.masked.replace(/\r\n/g, '\n');
           await state.page.evaluate(() => { window.options = {}; });
-          await state.editor.fill(item.input);
+          await state.editor.evaluate((editor, text) => {
+            editor.textContent = text;
+            editor.dispatchEvent(new InputEvent('input', { bubbles: true }));
+          }, original);
+          expect(await state.editor.innerText()).toBe(original);
           await expect(state.page.getByRole('button', { name: 'Send message', exact: true })).toBeEnabled();
           if (index % 3 === 0) await state.editor.press('Enter');
           else if (index % 3 === 1) await state.editor.evaluate(editor => editor.closest('form').requestSubmit());
@@ -115,11 +120,11 @@ for (const host of ['chatgpt.com', 'claude.ai']) {
           else await choice.press(index % 3 === 1 ? 'Enter' : ' ');
           if (action === 'Edit') {
             await expect(review(state.page)).toBeHidden();
-            expect(await state.editor.innerText()).toBe(item.input);
+            expect(await state.editor.innerText()).toBe(original);
             expect(state.requests).toEqual([]);
             await expect(state.editor).toBeFocused();
           } else {
-            await checkSent(state, action === 'Send' ? item.input : item.masked, ++submissions);
+            await checkSent(state, action === 'Send' ? original : masked, ++submissions);
           }
         });
       }
@@ -133,6 +138,27 @@ for (const host of ['chatgpt.com', 'claude.ai']) {
       await state.editor.press('Enter');
       await checkSent(state, input, index + 1);
     }
+  });
+
+  test(`${host}: grouped client-ID opt-out preserves alignment while Mask protects the secret`, async () => {
+    const state = await chat(host);
+    await worker.evaluate(() => chrome.storage.local.set({ policy: { protectClientIds: false } }));
+    await state.editor.fill('client id and client secret:\nsynthetic-public-id-123\nsynthetic-private-secret-456');
+    await state.editor.press('Enter');
+    await expect(review(state.page).getByRole('heading')).toHaveText('1 secret detected');
+    await review(state.page).getByRole('button', { name: 'Mask', exact: true }).click();
+    await checkSent(state, 'client id and client secret:\nsynthetic-public-id-123\nxxxxxxxxxx');
+  });
+
+  test(`${host}: incomplete grouped values block sending without partially masking`, async () => {
+    const state = await chat(host);
+    const original = 'client id and client secret are\nsynthetic-only-one-123';
+    await state.editor.fill(original);
+    await state.editor.press('Enter');
+    await expect(state.page.locator('#secret-shield-notice')).toBeVisible();
+    expect(state.requests).toEqual([]);
+    expect(await state.editor.innerText()).toBe(original);
+    await expect(review(state.page)).toBeHidden();
   });
 
   for (const action of ['Send', 'Mask']) test(`${host}: ${action} waits for a temporarily removed click-only Send control`, async () => {

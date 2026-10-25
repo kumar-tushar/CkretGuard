@@ -46,14 +46,6 @@
     matchAll(/-----BEGIN ([A-Z0-9 ]*PRIVATE KEY)-----[\s\S]*?(?:-----END \1-----|$)/g, 'private-key');
     matchAll(/(?<![\w-])(?:sk-(?:(?:proj|svcacct)-|ant-(?:api03|admin01)-)?[A-Za-z0-9_-]{20,}|AIza[A-Za-z0-9_-]{35}|gh[pousr]_[A-Za-z0-9]{20,}|github_pat_[A-Za-z0-9_]{20,}|xox[baprs]-[A-Za-z0-9-]{15,}|(?:AKIA|ASIA)[A-Z0-9]{16}|(?:sk|rk)_(?:live|test)_[A-Za-z0-9]{16,}|SG\.[A-Za-z0-9_-]{16,}\.[A-Za-z0-9_-]{20,})(?![\w-])/g, 'provider-key');
     matchAll(/(?<![\w-])eyJ[A-Za-z0-9_-]{6,}\.[A-Za-z0-9_-]{6,}\.[A-Za-z0-9_-]{8,}(?![\w-])/g, 'jwt');
-    const authorizationSchemes = new Set();
-    const authorization = new RegExp(`\\b(Bearer|Basic)\\s+(?:${valuePattern})`, 'dgi');
-    for (const match of text.matchAll(authorization)) {
-      const group = match.findIndex((value, index) => index >= 2 && value !== undefined);
-      const [start, end] = match.indices[group];
-      add(start, end, 'authorization');
-      authorizationSchemes.add(match.index + match[1].length);
-    }
     matchAll(/\b[a-z][a-z0-9+.-]*:\/\/[^\s/:@]+:([^\s/@]+)@/gi, 'connection-password', 1);
     // Built-in word boundaries accept joined, spaced, underscore and hyphen spellings.
     // Custom fields remain escaped literal labels.
@@ -64,9 +56,73 @@
     const label = `(?<![\\w-])(?:[a-zA-Z][a-zA-Z0-9]*[_-])*?(?:${sensitive.join('|')})(?![\\w-])`;
     const separator = '(?::|=|：|＝|\\bis\\b)';
     const followingField = `(?:${label}|["'“‘\x60]+${label}["'”’\x60]+)${horizontal}*${separator}`;
+    const authorizationSchemes = new Set();
+    const authorization = new RegExp(`(?:\\b((?:[a-zA-Z][a-zA-Z0-9]*[_-])*authorization)["'”’\x60]*${horizontal}*(?::|=|：|＝|\\bis\\b)\\s*["'“‘\x60]*\\s*)?\\b(Bearer|Basic)\\s+(?:${valuePattern})`, 'dgi');
+    const nextAssignment = new RegExp(`^(?:${followingField})`, 'i');
+    for (const match of text.matchAll(authorization)) {
+      const group = match.findIndex((value, index) => index >= 3 && value !== undefined);
+      const value = match[group];
+      // A header explicitly identifies credentials; bare schemes need token evidence.
+      let basicCredential = false;
+      if (!match[1] && /^basic$/i.test(match[2])) {
+        try { basicCredential = atob(value).includes(':'); } catch {}
+      }
+      const bareToken = /^[A-Za-z0-9._~+/-]+=*$/.test(value) &&
+        (/[0-9_~+/=]/.test(value) || value.replace(/[.!?]+$/, '').length >= 20);
+      if (!match[1] && !basicCredential && !bareToken && group === match.length - 1) continue;
+      if (match[1] && nextAssignment.test(value)) throw new ScanError();
+      const [start, end] = match.indices[group];
+      add(start, end, 'authorization');
+      authorizationSchemes.add(match.indices[2][1]);
+    }
+    // Read ordered value lines only after an explicit list of recognized labels.
+    // Include opted-out client IDs while parsing so later values never shift positions.
+    const groupedNames = [...new Set([...policy.sensitiveNames.map(escape).sort((a, b) => b.length - a.length),
+      ...sensitive, 'client(?:' + horizontal + '|[_-])*id'])];
+    const groupedLabel = `(?<![\\w-])(?:[a-zA-Z][a-zA-Z0-9]*[_-])*?(?:${groupedNames.join('|')})(?![\\w-])`;
+    const wrappedLabel = `["'“‘\x60]*${groupedLabel}["'”’\x60]*`;
+    const join = `${horizontal}*(?:,${horizontal}*(?:(?:and|&)${horizontal}+)?|and${horizontal}+|&${horizontal}*)`;
+    const groupedHeader = new RegExp(`^${horizontal}*(?:(?:my|our|the)${horizontal}+)?(${wrappedLabel}(?:${join}${wrappedLabel})+)${horizontal}*(?:are${horizontal}*[:=：＝]?|[:=：＝])${horizontal}*$`, 'i');
+    const enabledLabel = new RegExp(`^(?:${label})$`, 'i');
+    const blankLines = new RegExp(`(?:${horizontal}*(?:\\r\\n|[\\r\\n]))*`, 'y');
+    const groupedValue = new RegExp(`${horizontal}*(?:(?:[-*]|\\d+[.)])${horizontal}+)?(?:${valuePattern})${horizontal}*[,;]?${horizontal}*(?:\\r\\n|[\\r\\n]|$)`, 'dy');
+    const groupedHeaders = [];
+    for (const line of text.matchAll(/[^\r\n]+/g)) {
+      const header = groupedHeader.exec(line[0]);
+      if (!header) continue;
+      const fields = [...header[1].matchAll(new RegExp(`${groupedLabel}(?=["'”’\x60]*(?:${join}|${horizontal}*$))`, 'gi'))];
+      if (!fields.some(field => enabledLabel.test(field[0]))) continue;
+      if (fields.length > MAX_CUSTOM_FIELDS) throw new ScanError();
+      groupedHeaders.push({ start: line.index, end: line.index + line[0].length });
+      let cursor = line.index + line[0].length;
+      const newline = /^(?:\r\n|[\r\n])/.exec(text.slice(cursor, cursor + 2));
+      if (!newline) continue;
+      cursor += newline[0].length;
+      const values = [];
+      for (const field of fields) {
+        blankLines.lastIndex = cursor;
+        blankLines.exec(text);
+        cursor = blankLines.lastIndex;
+        groupedValue.lastIndex = cursor;
+        const value = groupedValue.exec(text);
+        if (!value || nextAssignment.test(value[0].trimStart())) {
+          if (values.length) throw new ScanError();
+          break;
+        }
+        const group = value.findIndex((item, index) => index >= 1 && item !== undefined);
+        values.push({ field: field[0], range: value.indices[group] });
+        cursor = groupedValue.lastIndex;
+      }
+      if (values.length === fields.length) for (const value of values) {
+        if (enabledLabel.test(value.field)) add(...value.range, 'named-secret');
+      }
+    }
     // An empty field must not consume another assignment on the following line.
     const assignment = new RegExp(`(${label})["'”’\x60]*${horizontal}*${separator}${horizontal}*(?:(?:\\r\\n|[\\r\\n])${horizontal}*(?!${followingField}))?(?:${valuePattern})`, 'dgi');
+    let headerIndex = 0;
     for (const match of text.matchAll(assignment)) {
+      while (headerIndex < groupedHeaders.length && match.index >= groupedHeaders[headerIndex].end) headerIndex++;
+      if (headerIndex < groupedHeaders.length && match.index >= groupedHeaders[headerIndex].start) continue;
       const group = match.findIndex((value, index) => index >= 2 && value !== undefined);
       const value = match[group];
       const [start, end] = match.indices[group];
@@ -75,6 +131,10 @@
         if (!authorizationSchemes.has(end)) throw new ScanError();
         continue;
       }
+      // Generic English instructions are not unquoted credential assignments.
+      if (/^(?:key|secret)$/i.test(match[1]) && group === match.length - 1 &&
+          /\bis\b/i.test(text.slice(match.indices[1][1], start)) && /^(?:to|that)$/i.test(value) &&
+          /^\s+[a-z]+(?:\s|[.!?]|$)/i.test(text.slice(end))) continue;
       add(start, end, 'named-secret');
     }
     // Protect repeated occurrences of a detected value without retaining a vault.

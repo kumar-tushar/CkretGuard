@@ -32,9 +32,9 @@ Records use extension-origin IndexedDB, separate from preferences and counters. 
 
 ## Detection accuracy boundaries
 
-The current rules can flag ordinary prose: `Explain the basic authentication flow.` matches the bare Basic-token rule, and `The key is to retry with exponential backoff.` matches the generic `key is value` rule. These are false positives for those prompts. The scanner does not infer intent from natural language.
+The scanner preserves ordinary authentication prose such as `Explain the basic authentication flow.` and generic instructions such as `The key is to retry with exponential backoff.` Explicit authorization headers and quoted assignments remain protected; bare schemes require token evidence or a locally decodable Basic credential. These are deterministic context rules, not natural-language inference.
 
-Separator-free phrases such as `client secret synthetic-example-123`, grouped labels followed by values such as `client id and client secret are` on subsequent lines, and arbitrary unlabeled values are not recognized by the named-field rules. These formats may therefore pass without a warning unless another detector recognizes the value. Configure literal custom field names where appropriate; doing so does not add natural-language parsing or encoded-secret detection.
+Grouped recognized labels followed by one value per line are supported. For example, `client id and client secret are` followed by two value lines maps those values in order. Comma/and/ampersand joins, blank lines, quoted values, and bullet/numbered values are supported, including configured custom labels. Disabling client-ID protection preserves that value's slot while protecting the secret. A partially supplied group blocks recognized sending rather than guessing. Separator-free phrases, arbitrary unlabeled values, misspelled labels, encoded/obfuscated values, and ambiguous grouped formats may still be missed.
 
 Passing the browser and scanner regression suites verifies their tested contracts. It does not establish a measured enterprise false-positive/false-negative rate, current live-provider compatibility, or complete secret coverage. Calibrate these rules against representative synthetic customer prompts and explicit protection requirements before deployment.
 

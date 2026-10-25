@@ -41,6 +41,16 @@ export const credentialCases = [
   { name: 'unclosed quote', input: 'password="synthetic unfinished phrase', masked: `password="${mask}`, count: 1 },
   { name: 'empty assignment followed by another field', input: 'password:\nclient_secret: synthetic-following-123', masked: `password:\nclient_secret: ${mask}`, count: 1 },
   { name: 'URL query parameter', input: 'https://example.invalid/?token=synthetic-query-123&view=1', masked: `https://example.invalid/?token=${mask}&view=1`, count: 1 },
+  { name: 'bare Bearer token', input: 'Use Bearer synthetic-bare-123 for this request.', masked: `Use Bearer ${mask} for this request.`, count: 1 },
+  { name: 'bare Basic credential', input: 'Basic dXNlcjpwYXNz', masked: `Basic ${mask}`, count: 1 },
+  { name: 'grouped client credentials', input: 'client id and client secret are\nFdenirddvj\nGhllgdfjkg', masked: `client id and client secret are\n${mask}\n${mask}`, count: 2 },
+  { name: 'grouped credentials with CRLF', input: 'clienT Id, clienT-secret are:\r\n  synthetic-id-123\r\n  synthetic-secret-456', masked: `clienT Id, clienT-secret are:\r\n  ${mask}\r\n  ${mask}`, count: 2 },
+  { name: 'grouped bullet list', input: 'apiKey & access-token:\n- synthetic-key-123\n- synthetic-token-456', masked: `apiKey & access-token:\n- ${mask}\n- ${mask}`, count: 2 },
+  { name: 'grouped values with blank paragraphs', input: 'my client id and client secret are\n\nsynthetic-app-123\n\nsynthetic-secret-456\nExplain this config.', masked: `my client id and client secret are\n\n${mask}\n\n${mask}\nExplain this config.`, count: 2 },
+  { name: 'grouped numbered values', input: 'api_key, password, and client secret are\n1. synthetic-key-123\n2. "synthetic password phrase"\n3. synthetic-secret-456', masked: `api_key, password, and client secret are\n1. ${mask}\n2. "${mask}"\n3. ${mask}`, count: 3 },
+  { name: 'grouped quoted labels', input: '`client id` and `client secret` are\n"synthetic id phrase"\n“synthetic secret phrase”', masked: `\x60client id\x60 and \x60client secret\x60 are\n"${mask}"\n“${mask}”`, count: 2 },
+  { name: 'grouped secret key', input: 'secret key and password are\nsynthetic-key-123\nsynthetic-password-456', masked: `secret key and password are\n${mask}\n${mask}`, count: 2 },
+  { name: 'grouped custom field', input: 'dataset_key and password are\nsynthetic-dataset-123\nsynthetic-password-456', masked: `dataset_key and password are\n${mask}\n${mask}`, count: 2 },
 ];
 
 export const plainCases = [
@@ -50,4 +60,10 @@ export const plainCases = [
   'api_key=xxxxxxxxxx', 'password=[REDACTED]', 'client_secret=${SERVICE_KEY}',
   'api_key="${SERVICE_KEY}"', 'Use <API_KEY> in the example.',
   'A plain prompt in 日本語 and हिन्दी 🔐.',
+  'Explain the basic authentication flow.', 'Explain bearer authentication.',
+  'The key is to retry with exponential backoff.', 'The secret is to keep trying.',
+  'Basic authentication is an HTTP scheme.', 'Bearer authentication uses an access token.',
+  'Our key is to test carefully.', 'The key is that retries need a delay.',
+  'Client ID and client secret are app credentials.',
+  'client id and client secret are\nrequired for authentication.',
 ];
