@@ -106,7 +106,7 @@ for (const host of ['chatgpt.com', 'chat.openai.com', 'claude.ai']) test(`${host
   await choose(page, original, 'Edit');
   expect(await entries()).toEqual([]);
   await choose(page, original, 'Mask');
-  await expect.poll(() => page.evaluate(() => window.sent)).toEqual(['Ordinary prompt without credentials.', 'api_key=xxxxx\npassword="xxxxx"']);
+  await expect.poll(() => page.evaluate(() => window.sent)).toEqual(['Ordinary prompt without credentials.', 'api_key=xxxxxxxxxx\npassword="xxxxxxxxxx"']);
   expect(await entries()).toEqual([]);
   await choose(page, original, 'Send');
   await expect.poll(async () => (await entries()).length).toBe(1);

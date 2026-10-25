@@ -29,31 +29,31 @@ for (const [name, value] of samples) test(`masks ${name}`, () => {
 
 test('preserves surrounding code and quoted whitespace', () => {
   assert.equal(redact('const apiKey = "not a real secret";\nconsole.log("hello")').text,
-    'const apiKey = "xxxxx";\nconsole.log("hello")');
-  assert.equal(redact('{"clientSecret":"fake\\\"credential-tail"}').text, '{"clientSecret":"xxxxx"}');
+    'const apiKey = "xxxxxxxxxx";\nconsole.log("hello")');
+  assert.equal(redact('{"clientSecret":"fake\\\"credential-tail"}').text, '{"clientSecret":"xxxxxxxxxx"}');
 });
 test('Markdown wrappers around labels and values protect complete credentials', () => {
   for (const quote of ['`','``','```']) {
     for (const label of ['client_secret', `${quote}client_secret${quote}`]) {
       const original=`${label}: ${quote}synthetic markdown secret${quote}`;
-      assert.equal(redact(original).text,`${label}: ${quote}xxxxx${quote}`);
+      assert.equal(redact(original).text,`${label}: ${quote}xxxxxxxxxx${quote}`);
       assert.equal(redact(redact(original).text).count,0);
     }
   }
-  assert.equal(redact('dataset_key: `synthetic-value-123`',{sensitiveNames:['dataset_key']}).text,'dataset_key: `xxxxx`');
+  assert.equal(redact('dataset_key: `synthetic-value-123`',{sensitiveNames:['dataset_key']}).text,'dataset_key: `xxxxxxxxxx`');
   for (const [open,close] of [['``','`'],['`','``'],['``','']]) {
-    assert.equal(redact(`client_secret: ${open}synthetic-unclosed-123${close}`).text,`client_secret: ${open}xxxxx${close}`);
+    assert.equal(redact(`client_secret: ${open}synthetic-unclosed-123${close}`).text,`client_secret: ${open}xxxxxxxxxx${close}`);
   }
   const fenced='client_secret:\n```text\nsynthetic-fenced-123\n```';
-  assert.equal(redact(fenced).text,'client_secret:\n```xxxxx```');
-  assert.equal(redact('password:\n`client_secret`: `synthetic-next-123`').text,'password:\n`client_secret`: `xxxxx`');
+  assert.equal(redact(fenced).text,'client_secret:\n```xxxxxxxxxx```');
+  assert.equal(redact('password:\n`client_secret`: `synthetic-next-123`').text,'password:\n`client_secret`: `xxxxxxxxxx`');
 });
 test('wrapped authorization tokens are masked across line breaks and incomplete schemes block', () => {
   for (const scheme of ['Bearer','Basic']) for (const separator of ['\n','\r\n','\r','\n\n  ']) {
     for (const quote of ['', '"', '`']) {
       const original=`Authorization: ${scheme}${separator}${quote}synthetic-token-123${quote}`;
       const result=redact(original);
-      assert.equal(result.text,`Authorization: ${scheme}${separator}${quote}xxxxx${quote}`);
+      assert.equal(result.text,`Authorization: ${scheme}${separator}${quote}xxxxxxxxxx${quote}`);
       assert.equal(result.count,1);
       assert.equal(redact(result.text).count,0);
     }
@@ -62,23 +62,23 @@ test('wrapped authorization tokens are masked across line breaks and incomplete 
 });
 test('rushed and pasted credential formatting masks complete values without losing surrounding text', () => {
   const cases=[
-    ['client secret:\nfake-nextline-123','client secret:\nxxxxx'],
-    ['API_TOKEN =\r\n\t"fake nextline password"','API_TOKEN =\r\n\t"xxxxx"'],
-    ['password=“fake password 123”','password=“xxxxx”'],
-    ['password=‘fake password 456’','password=‘xxxxx’'],
-    ['api_key="fake-unclosed-123','api_key="xxxxx'],
-    ["client_secret='fake unclosed password","client_secret='xxxxx"],
-    ['password=“fake unclosed password','password=“xxxxx'],
-    ['client\u00a0id:\u00a0fake-nbsp-123','client\u00a0id:\u00a0xxxxx'],
-    ['client\u202fsecret\u00a0=\u00a0fake-narrow-space-123','client\u202fsecret\u00a0=\u00a0xxxxx'],
-    ['client secret：fake-colon-123','client secret：xxxxx'],
-    ['apiToken＝fake-equals-123','apiToken＝xxxxx'],
-    ['password:\nclient_id: fake-client-123','password:\nclient_id: xxxxx'],
-    ['password:    \n client_secret: fake-secret-456','password:    \n client_secret: xxxxx'],
-    ['api_key=\nclient_secret=fake-secret-456','api_key=\nclient_secret=xxxxx'],
-    ['password:\n"client_secret": "fake-secret-456"','password:\n"client_secret": "xxxxx"'],
-    ['password:\n"client_secret=fake-secret-456"','password:\n"xxxxx"'],
-    ['⚡client-secret=fake-one-123;password="fake two 456"','⚡client-secret=xxxxx;password="xxxxx"'],
+    ['client secret:\nfake-nextline-123','client secret:\nxxxxxxxxxx'],
+    ['API_TOKEN =\r\n\t"fake nextline password"','API_TOKEN =\r\n\t"xxxxxxxxxx"'],
+    ['password=“fake password 123”','password=“xxxxxxxxxx”'],
+    ['password=‘fake password 456’','password=‘xxxxxxxxxx’'],
+    ['api_key="fake-unclosed-123','api_key="xxxxxxxxxx'],
+    ["client_secret='fake unclosed password","client_secret='xxxxxxxxxx"],
+    ['password=“fake unclosed password','password=“xxxxxxxxxx'],
+    ['client\u00a0id:\u00a0fake-nbsp-123','client\u00a0id:\u00a0xxxxxxxxxx'],
+    ['client\u202fsecret\u00a0=\u00a0fake-narrow-space-123','client\u202fsecret\u00a0=\u00a0xxxxxxxxxx'],
+    ['client secret：fake-colon-123','client secret：xxxxxxxxxx'],
+    ['apiToken＝fake-equals-123','apiToken＝xxxxxxxxxx'],
+    ['password:\nclient_id: fake-client-123','password:\nclient_id: xxxxxxxxxx'],
+    ['password:    \n client_secret: fake-secret-456','password:    \n client_secret: xxxxxxxxxx'],
+    ['api_key=\nclient_secret=fake-secret-456','api_key=\nclient_secret=xxxxxxxxxx'],
+    ['password:\n"client_secret": "fake-secret-456"','password:\n"client_secret": "xxxxxxxxxx"'],
+    ['password:\n"client_secret=fake-secret-456"','password:\n"xxxxxxxxxx"'],
+    ['⚡client-secret=fake-one-123;password="fake two 456"','⚡client-secret=xxxxxxxxxx;password="xxxxxxxxxx"'],
   ];
   for(const [input,expected] of cases) {
     const result=redact(input);
@@ -91,30 +91,30 @@ test('authorization schemes count once and complete variable placeholders stay u
     const original=`Authorization: ${scheme} synthetic-token-123`;
     const result=redact(original);
     assert.equal(result.count,1,scheme);
-    assert.equal(result.text,`Authorization: ${scheme} xxxxx`);
+    assert.equal(result.text,`Authorization: ${scheme} xxxxxxxxxx`);
     for(const [open,close] of [['"','"'],["'","'"],['“','”'],['‘','’'],['"','']]) {
       const quoted=redact(`Authorization: ${scheme}\u00a0${open}fake-auth-123${close}`);
       assert.equal(quoted.count,1);
-      assert.equal(quoted.text,`Authorization: ${scheme}\u00a0${open}xxxxx${close}`);
+      assert.equal(quoted.text,`Authorization: ${scheme}\u00a0${open}xxxxxxxxxx${close}`);
       assert.equal(redact(quoted.text).count,0);
     }
     const placeholder=`Authorization: ${scheme} "${'${SERVICE_KEY}'}"`;
     assert.equal(redact(placeholder).text,placeholder);
   }
-  for(const value of ['${SERVICE_KEY}','${SERVICE_KEY:-fallback}','$SERVICE_KEY','xxxxx','[REDACTED]']) {
+  for(const value of ['${SERVICE_KEY}','${SERVICE_KEY:-fallback}','$SERVICE_KEY','xxxxxxxxxx','[REDACTED]']) {
     const original=`api_key=${value}`;
     assert.equal(redact(original).text,original,value);
   }
-  assert.equal(redact('api_key=${SERVICE_KEY}-literal-part').text,'api_key=xxxxx');
+  assert.equal(redact('api_key=${SERVICE_KEY}-literal-part').text,'api_key=xxxxxxxxxx');
   assert.equal(redact('client\u00a0id=fake-client-123',{protectClientIds:false}).count,0);
 });
 test('masks generic, natural language, environment, URL and client ID values', () => {
   for (const label of ['key', 'api_key', 'api_token', 'secret key', 'client_id', 'clientSecret', 'password', 'accessToken', 'MY_SERVICE_API_KEY']) {
     const output = redact(`${label} = synthetic-credential-43757`);
-    assert.equal(output.text, `${label} = xxxxx`);
+    assert.equal(output.text, `${label} = xxxxxxxxxx`);
   }
-  assert.equal(redact('my api key is made-up-345').text, 'my api key is xxxxx');
-  assert.equal(redact('https://example.invalid/?token=fictional-45&view=1').text, 'https://example.invalid/?token=xxxxx&view=1');
+  assert.equal(redact('my api key is made-up-345').text, 'my api key is xxxxxxxxxx');
+  assert.equal(redact('https://example.invalid/?token=fictional-45&view=1').text, 'https://example.invalid/?token=xxxxxxxxxx&view=1');
 });
 test('all built-in fields accept case and word-separator variants with the supported assignments', () => {
   for (const field of ['key','api_key','api_token','secret','secret_key','client_secret','access_token','auth_token',
@@ -127,47 +127,47 @@ test('all built-in fields accept case and word-separator variants with the suppo
         const original=label+separator+'tgdd444';
         const result=redact(original);
         assert.equal(result.count,1,original);
-        assert.equal(result.text,label+separator+'xxxxx',original);
+        assert.equal(result.text,label+separator+'xxxxxxxxxx',original);
       }
       const quoted=`{"${label}": "fictional value with spaces"}`;
-      assert.equal(redact(quoted).text,`{"${label}": "xxxxx"}`,quoted);
+      assert.equal(redact(quoted).text,`{"${label}": "xxxxxxxxxx"}`,quoted);
     }
   }
 });
 test('built-in spelling variants retain environment prefixes, boundaries and client-ID policy', () => {
   for (const name of ['MY_API_TOKEN','APP-client-secret','APP_clientSecret','AWS-ACCESS-KEY-ID','aws secret access key']) {
     const original=`${name}=synthetic-variant-123`;
-    assert.equal(redact(original).text,`${name}=xxxxx`,original);
+    assert.equal(redact(original).text,`${name}=xxxxxxxxxx`,original);
   }
   for (const name of ['client id','client_id','client-id','clientId','CLIENTID','clienT  Id','client\tid','CLIENT_- ID']) {
     const original=`${name}=synthetic-client-123`;
-    assert.equal(redact(original).text,`${name}=xxxxx`,original);
+    assert.equal(redact(original).text,`${name}=xxxxxxxxxx`,original);
     assert.equal(redact(original,{protectClientIds:false}).count,0,original);
   }
   for (const original of ['clientidentity=example-value','myClientId=example-value','api-tokenizer=example-value',
     'client\nid=example-value','Explain API keys and access tokens.']) assert.equal(redact(original).count,0,original);
   const policy={sensitiveNames:['project_code']};
-  assert.equal(redact('PROJECT_CODE=synthetic-custom-123',policy).text,'PROJECT_CODE=xxxxx');
+  assert.equal(redact('PROJECT_CODE=synthetic-custom-123',policy).text,'PROJECT_CODE=xxxxxxxxxx');
   for (const name of ['projectCode','project-code','project code']) {
     assert.equal(redact(`${name}=synthetic-custom-123`,policy).count,0,name);
   }
 });
 test('client IDs and custom literal labels follow policy', () => {
   assert.equal(redact('client_id = public-client', { protectClientIds: false }).count, 0);
-  assert.equal(redact('internal_code: private-234', { sensitiveNames: ['internal_code'] }).text, 'internal_code: xxxxx');
+  assert.equal(redact('internal_code: private-234', { sensitiveNames: ['internal_code'] }).text, 'internal_code: xxxxxxxxxx');
   const policy = { sensitiveNames: ['dataset1', 'project code'] };
   assert.equal(redact('{"dataset1":"synthetic-data-123"}\nDATASET1: 2468\nproject code is "alpha beta"', policy).text,
-    '{"dataset1":"xxxxx"}\nDATASET1: xxxxx\nproject code is "xxxxx"');
+    '{"dataset1":"xxxxxxxxxx"}\nDATASET1: xxxxxxxxxx\nproject code is "xxxxxxxxxx"');
   assert.equal(redact('dataset10=public-value-123', policy).count, 0);
-  assert.equal(redact('dataset1=xxxxx', policy).count, 0);
+  assert.equal(redact('dataset1=xxxxxxxxxx', policy).count, 0);
 });
 test('repeated values and overlapping findings are masked without corrupting punctuation', () => {
   const value = 'fictional-key-123';
-  assert.equal(redact(`api_key="${value}" repeat ${value}`).text, 'api_key="xxxxx" repeat xxxxx');
+  assert.equal(redact(`api_key="${value}" repeat ${value}`).text, 'api_key="xxxxxxxxxx" repeat xxxxxxxxxx');
   assert.equal(redact(`api_key="${key}"`).count, 1);
 });
 test('ordinary text and existing redactions are preserved', () => {
-  for (const value of ['Explain how API keys work.', 'const value = 123;', 'password = xxxxx', 'password = [REDACTED]', 'api_key="[REDACTED]"', 'api_key="${SERVICE_KEY}"', 'Use <API_KEY> here.']) {
+  for (const value of ['Explain how API keys work.', 'const value = 123;', 'password = xxxxx', 'password = xxxxxxxxxx', 'password = [REDACTED]', 'api_key="[REDACTED]"', 'api_key="${SERVICE_KEY}"', 'Use <API_KEY> here.']) {
     assert.equal(redact(value).text, value);
   }
 });
@@ -183,7 +183,7 @@ test('an explicit prompt-sized limit scans the complete draft beyond the default
     'api_key=synthetic-middle-456\n'+'plain text '.repeat(100000)+'client_secret=synthetic-end-789';
   const result=redact(original,undefined,original.length);
   assert.equal(result.count,3);
-  assert.equal(result.text,original.replace('synthetic-start-123','xxxxx').replace('synthetic-middle-456','xxxxx').replace('synthetic-end-789','xxxxx'));
+  assert.equal(result.text,original.replace('synthetic-start-123','xxxxxxxxxx').replace('synthetic-middle-456','xxxxxxxxxx').replace('synthetic-end-789','xxxxxxxxxx'));
   assert.equal(scan(original,undefined,original.length).length,3);
   assert.equal(scan(result.text,undefined,result.text.length).length,0);
   assert.throws(()=>redact(original),ScanError);
@@ -197,7 +197,7 @@ test('prompt-sized scanning preserves credentials across the former character bo
     '🛡️ '.repeat(40000)+'repeat synthetic-cross-boundary-123';
   const result=redact(original,undefined,original.length);
   assert.equal(result.count,2);
-  assert.equal(result.text,original.replaceAll('synthetic-cross-boundary-123','xxxxx'));
+  assert.equal(result.text,original.replaceAll('synthetic-cross-boundary-123','xxxxxxxxxx'));
   assert.equal(redact('text '.repeat(220000),undefined,1100000).count,0);
   const excessive=Array.from({length:500},(_,i)=>`api_key="fictional-value-${i}"`).join('\n').repeat(4);
   assert.throws(()=>redact(excessive,undefined,excessive.length),ScanError);
@@ -210,7 +210,7 @@ test('all 50 custom fields are scanned and a 51st field is rejected', () => {
   const text = sensitiveNames.map((name, i) => `${name}=${i + 1}`).join('\n');
   const result = redact(text, policy);
   assert.equal(result.count, MAX_CUSTOM_FIELDS);
-  assert.equal(result.text, sensitiveNames.map(name => `${name}=xxxxx`).join('\n'));
+  assert.equal(result.text, sensitiveNames.map(name => `${name}=xxxxxxxxxx`).join('\n'));
   assert.throws(() => normalizePolicy({sensitiveNames:[...sensitiveNames, 'overflow_field']}), ScanError);
 });
 test('many repeated detections are deduplicated and excessive distinct scan work rejects', () => {

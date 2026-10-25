@@ -116,7 +116,7 @@ for (const host of ['chatgpt.com','claude.ai']) test(`${host}: activity counts r
   await expect.poll(activity).toEqual({detected:5,maskedPrompts:0,unmaskedPrompts:0});
   await review(page).getByRole('button',{name:'Mask',exact:true}).click();
   await expect.poll(activity).toEqual({detected:5,maskedPrompts:1,unmaskedPrompts:0});
-  await expect.poll(()=>page.evaluate(()=>window.submitted)).toEqual(['api_key=xxxxx\npassword=xxxxx']);
+  await expect.poll(()=>page.evaluate(()=>window.submitted)).toEqual(['api_key=xxxxxxxxxx\npassword=xxxxxxxxxx']);
   await editor.fill('client_secret=synthetic-send-123\nclient_id=synthetic-send-456');
   await editor.press('Enter');
   await expect(review(page)).toBeVisible();
@@ -273,7 +273,7 @@ for (const host of ['chatgpt.com','claude.ai']) test(`${host}: credential field 
     'awsAccessKeyId','aws-access-key-id','aws access key id','aws_access_key_id','CLIENT-ID','clienT  Id'];
   const separators=[': ', ' = ', ' is ', ':    ', '= ', ' ='];
   const original=names.map((name,i)=>name+separators[i%separators.length]+`synthetic-format-${i}`).join('\n');
-  const masked=names.map((name,i)=>name+separators[i%separators.length]+'xxxxx').join('\n');
+  const masked=names.map((name,i)=>name+separators[i%separators.length]+'xxxxxxxxxx').join('\n');
   await editor.fill(original); await editor.press('Enter');
   await expect(review(page).getByRole('heading')).toHaveText(`${names.length} secrets detected`);
   expect(await page.evaluate(()=>window.submitted)).toEqual([]);
@@ -293,20 +293,20 @@ for (const host of ['chatgpt.com','claude.ai']) test(`${host}: rushed and pasted
   page.on('request',request=>{if(request.method()==='POST') requests.push(request.postData());});
   const cases=[
     ['⚡clienT  secret:    fake-quick-123\nAPI\tTOKEN=fake-tab-456\nCLIENT-ID:fake-id-789',
-      '⚡clienT  secret:    xxxxx\nAPI\tTOKEN=xxxxx\nCLIENT-ID:xxxxx',3],
+      '⚡clienT  secret:    xxxxxxxxxx\nAPI\tTOKEN=xxxxxxxxxx\nCLIENT-ID:xxxxxxxxxx',3],
     ['password=“fake password with spaces”\nclient_secret=‘fake secret phrase’',
-      'password=“xxxxx”\nclient_secret=‘xxxxx’',2],
+      'password=“xxxxxxxxxx”\nclient_secret=‘xxxxxxxxxx’',2],
     ['client\u00a0id:\u00a0fake-copied-id-123\naccess-token：\nfake-nextline-456',
-      'client\u00a0id:\u00a0xxxxx\naccess-token：\nxxxxx',2],
-    ['apiKey="fake unfinished key','apiKey="xxxxx',1],
+      'client\u00a0id:\u00a0xxxxxxxxxx\naccess-token：\nxxxxxxxxxx',2],
+    ['apiKey="fake unfinished key','apiKey="xxxxxxxxxx',1],
     ['Authorization: Bearer fake-bearer-123\napi_key=${SERVICE_KEY}',
-      'Authorization: Bearer xxxxx\napi_key=${SERVICE_KEY}',1],
+      'Authorization: Bearer xxxxxxxxxx\napi_key=${SERVICE_KEY}',1],
     ['Authorization: Bearer "fake-auth-123"\nAuthorization: Basic ‘fake-basic-456’',
-      'Authorization: Bearer "xxxxx"\nAuthorization: Basic ‘xxxxx’',2],
+      'Authorization: Bearer "xxxxxxxxxx"\nAuthorization: Basic ‘xxxxxxxxxx’',2],
     ['clientSecret＝fake-fullwidth-123\npassword=\n"fake following line"',
-      'clientSecret＝xxxxx\npassword=\n"xxxxx"',2],
+      'clientSecret＝xxxxxxxxxx\npassword=\n"xxxxxxxxxx"',2],
     ['password:\nclient_secret: fake-after-empty-123\napi_key=\n"client_id": "fake-following-id-456"',
-      'password:\nclient_secret: xxxxx\napi_key=\n"client_id": "xxxxx"',2],
+      'password:\nclient_secret: xxxxxxxxxx\napi_key=\n"client_id": "xxxxxxxxxx"',2],
   ];
   const sent=[];
   for(const [original,masked,count] of cases) {
@@ -348,7 +348,7 @@ for (const host of ['chatgpt.com','claude.ai']) for (const action of ['Send','Ma
   await expect.poll(activity).toEqual({detected:2,maskedPrompts:0,unmaskedPrompts:0});
   const request=page.waitForRequest(request=>request.method()==='POST');
   await review(page).getByRole('button',{name:action,exact:true}).evaluate(button=>{button.click();button.click();button.click();});
-  const expected=action==='Send'?original:'clienT-secret = xxxxx\npassword=“xxxxx”';
+  const expected=action==='Send'?original:'clienT-secret = xxxxxxxxxx\npassword=“xxxxxxxxxx”';
   expect((await request).postData()).toBe(expected);
   await page.keyboard.down('Enter');
   await page.keyboard.up('Enter');
@@ -376,7 +376,7 @@ for (const host of ['chatgpt.com','claude.ai']) test(`${host}: custom field valu
   await expect.poll(()=>page.evaluate(()=>window.submitted)).toEqual([plain,original]);
   await editor.fill(original); await editor.press('Enter');
   await review(page).getByRole('button',{name:'Mask',exact:true}).click();
-  const masked='{"dataset1": "xxxxx", "project_code": "xxxxx"}';
+  const masked='{"dataset1": "xxxxxxxxxx", "project_code": "xxxxxxxxxx"}';
   await expect.poll(()=>page.evaluate(()=>window.submitted)).toEqual([plain,original,masked]);
   await expect.poll(activity).toEqual({detected:6,maskedPrompts:1,unmaskedPrompts:1});
   const stored=await composer.evaluate(async()=>JSON.stringify(await chrome.storage.local.get(null)));
@@ -431,7 +431,7 @@ test('a masked draft without an available Send control does not count as a sent 
   await expect(review(page)).toBeVisible();
   await page.locator('[data-testid="send-button"]').evaluate(button=>{button.disabled=true;});
   await review(page).getByRole('button',{name:'Mask',exact:true}).click();
-  await expect(editor).toHaveValue('api_key=xxxxx\npassword=xxxxx');
+  await expect(editor).toHaveValue('api_key=xxxxxxxxxx\npassword=xxxxxxxxxx');
   await expect(page.locator('#secret-shield-notice')).toBeVisible();
   await expect.poll(activity).toEqual({detected:2,maskedPrompts:0,unmaskedPrompts:0});
   expect(await page.evaluate(()=>window.submitted)).toEqual([]);
@@ -471,9 +471,9 @@ for (const host of ['chatgpt.com','claude.ai']) {
     const sent=page.waitForRequest(req=>req.method()==='POST');
     await review(page).getByRole('button',{name:'Mask',exact:true}).click();
     await expect(review(page)).toBeHidden();
-    await expect.poll(()=>editorText(editor)).toBe('Explain api_key="xxxxx" please');
-    expect((await sent).postData()).toBe('Explain api_key="xxxxx" please');
-    expect(await page.evaluate(()=>window.submitted)).toEqual(['Explain api_key="xxxxx" please']);
+    await expect.poll(()=>editorText(editor)).toBe('Explain api_key="xxxxxxxxxx" please');
+    expect((await sent).postData()).toBe('Explain api_key="xxxxxxxxxx" please');
+    expect(await page.evaluate(()=>window.submitted)).toEqual(['Explain api_key="xxxxxxxxxx" please']);
     await page.close();
   });
   test(`${host}: Edit retains the original draft and the next attempt asks again`, async () => {
@@ -524,9 +524,9 @@ for (const gesture of ['Enter','send button']) {
     await expect(editor).toHaveText(`Explain api_key="${key}" please`);
     const sent=page.waitForRequest(req=>req.method()==='POST');
     await review(page).getByRole('button',{name:'Mask',exact:true}).click();
-    await expect(editor).toHaveText('Explain api_key="xxxxx" please');
-    expect((await sent).postData()).toBe('Explain api_key="xxxxx" please');
-    expect(await page.evaluate(()=>window.submitted)).toEqual(['Explain api_key="xxxxx" please']);
+    await expect(editor).toHaveText('Explain api_key="xxxxxxxxxx" please');
+    expect((await sent).postData()).toBe('Explain api_key="xxxxxxxxxx" please');
+    expect(await page.evaluate(()=>window.submitted)).toEqual(['Explain api_key="xxxxxxxxxx" please']);
     await page.close();
   });
 }
@@ -584,7 +584,7 @@ for (const action of ['Send','Edit','Mask']) test(`${action}: review enters from
   await review(page).evaluate(dialog=>dialog.getAnimations().forEach(animation=>animation.finish()));
   await expect(review(page)).toBeHidden();
   if (sent) {
-    const expected=action==='Send'?original:'api_key="xxxxx"';
+    const expected=action==='Send'?original:'api_key="xxxxxxxxxx"';
     expect((await sent).postData()).toBe(expected);
     expect(await page.evaluate(()=>window.submitted)).toEqual([expected]);
   } else {
@@ -660,16 +660,16 @@ for (const host of ['chatgpt.com','claude.ai']) test(`${host}: Edit or Mask mode
   await expect(review(page).getByRole('button',{name:'Send',exact:true})).toHaveCount(0);
   const sent=page.waitForRequest(req=>req.method()==='POST');
   await review(page).getByRole('button',{name:'Mask',exact:true}).click();
-  await expect.poll(()=>editorText(editor)).toBe('api_key=xxxxx');
-  expect((await sent).postData()).toBe('api_key=xxxxx');
-  expect(await page.evaluate(()=>window.submitted)).toEqual(['api_key=xxxxx']);
+  await expect.poll(()=>editorText(editor)).toBe('api_key=xxxxxxxxxx');
+  expect((await sent).postData()).toBe('api_key=xxxxxxxxxx');
+  expect(await page.evaluate(()=>window.submitted)).toEqual(['api_key=xxxxxxxxxx']);
   await composer.getByRole('radio',{name:'Send, Edit, or Mask',exact:true}).check();
   await expect(composer.getByRole('radio',{name:'Send, Edit, or Mask',exact:true})).toBeEnabled();
   await expect.poll(()=>composer.evaluate(async()=>(await chrome.storage.local.get('policy')).policy.mode)).toBe('redact');
   await editor.fill(original); await editor.press('Enter');
   await expect(review(page).getByRole('button')).toHaveText(['Send','Edit','Mask']);
   await review(page).getByRole('button',{name:'Send',exact:true}).click();
-  await expect.poll(()=>page.evaluate(()=>window.submitted)).toEqual(['api_key=xxxxx',original]);
+  await expect.poll(()=>page.evaluate(()=>window.submitted)).toEqual(['api_key=xxxxxxxxxx',original]);
   await page.close();
 });
 for (const variant of ['delayed','delayed-missing-send','delayed-sync-event']) test(`Mask waits for framework synchronization and current Send: ${variant}`, async () => {
@@ -680,9 +680,9 @@ for (const variant of ['delayed','delayed-missing-send','delayed-sync-event']) t
   await editor.press('Enter');
   const sent=page.waitForRequest(req=>req.method()==='POST');
   await review(page).getByRole('button',{name:'Mask',exact:true}).click();
-  expect((await sent).postData()).toBe('api_key=xxxxx');
-  await expect(editor).toHaveValue('api_key=xxxxx');
-  expect(await page.evaluate(()=>window.submitted)).toEqual(['api_key=xxxxx']);
+  expect((await sent).postData()).toBe('api_key=xxxxxxxxxx');
+  await expect(editor).toHaveValue('api_key=xxxxxxxxxx');
+  expect(await page.evaluate(()=>window.submitted)).toEqual(['api_key=xxxxxxxxxx']);
   await page.close();
 });
 test('Mask does not submit when the framework rejects the masked editor update', async () => {
@@ -692,7 +692,7 @@ test('Mask does not submit when the framework rejects the masked editor update',
   await editor.press('Enter');
   await page.evaluate(original=>{
     document.querySelector('textarea').addEventListener('input',event=>{
-      if (event.target.value === 'api_key=xxxxx') {
+      if (event.target.value === 'api_key=xxxxxxxxxx') {
         event.target.value=original;
         window.current=original;
       }
@@ -711,7 +711,7 @@ test('changing the draft while Mask waits for synchronization cancels automatic 
   await editor.press('Enter');
   await page.evaluate(()=>{
     document.querySelector('textarea').addEventListener('input',event=>{
-      if (event.target.value === 'api_key=xxxxx') setTimeout(()=>{
+      if (event.target.value === 'api_key=xxxxxxxxxx') setTimeout(()=>{
         event.target.value='password=changed-synthetic-secret-2456';
         event.target.dispatchEvent(new InputEvent('input',{bubbles:true}));
       },20);
@@ -732,7 +732,7 @@ test('a policy refresh while Mask waits for synchronization cancels automatic Se
   await review(page).getByRole('button',{name:'Mask',exact:true}).click();
   await composer.evaluate(()=>chrome.storage.local.set({policy:{mode:'block'}}));
   await expect(composer.locator('input[name=mode]:checked')).toHaveValue('block');
-  await expect.poll(()=>page.evaluate(()=>window.current)).toBe('api_key=xxxxx');
+  await expect.poll(()=>page.evaluate(()=>window.current)).toBe('api_key=xxxxxxxxxx');
   expect(await page.evaluate(()=>window.submitted)).toEqual([]);
   await page.close();
 });
@@ -860,7 +860,7 @@ for (const host of ['chatgpt.com','claude.ai']) test(`${host}: the full prompt i
   await expect(review(page).getByRole('heading')).toHaveText('2 secrets detected');
   await review(page).getByRole('button',{name:'Mask',exact:true}).click();
   await expect.poll(()=>page.evaluate(()=>window.submitted.length)).toBe(3);
-  const masked=original.replace('synthetic-long-start-123','xxxxx').replace('synthetic-long-end-456','xxxxx');
+  const masked=original.replace('synthetic-long-start-123','xxxxxxxxxx').replace('synthetic-long-end-456','xxxxxxxxxx');
   expect(await editorText(editor)).toBe(masked);
   expect((await page.evaluate(()=>window.submitted))[2]).toBe(masked);
   await page.close();
@@ -950,7 +950,7 @@ test('the 50th saved field hides entry and deleting one restores it', async () =
   await page.locator('textarea').press('Enter');
   await expect(review(page)).toBeVisible();
   await review(page).getByRole('button',{name:'Mask',exact:true}).click();
-  await expect.poll(()=>page.evaluate(()=>window.submitted)).toEqual(['dataset49=xxxxx']);
+  await expect.poll(()=>page.evaluate(()=>window.submitted)).toEqual(['dataset49=xxxxxxxxxx']);
   await page.close();
 });
 
@@ -1061,12 +1061,12 @@ test('Mask sends once while held Enter cannot duplicate the submission', async (
   await expect(review(page)).toBeVisible();
   const sent=page.waitForRequest(req=>req.method()==='POST');
   await review(page).getByRole('button',{name:'Mask',exact:true}).click();
-  await expect(editor).toHaveValue('api_key=xxxxx');
-  expect((await sent).postData()).toBe('api_key=xxxxx');
+  await expect(editor).toHaveValue('api_key=xxxxxxxxxx');
+  expect((await sent).postData()).toBe('api_key=xxxxxxxxxx');
   await page.keyboard.down('Enter');
-  expect(await page.evaluate(()=>window.submitted)).toEqual(['api_key=xxxxx']);
+  expect(await page.evaluate(()=>window.submitted)).toEqual(['api_key=xxxxxxxxxx']);
   await page.keyboard.up('Enter');
-  expect(await page.evaluate(()=>window.submitted)).toEqual(['api_key=xxxxx']);
+  expect(await page.evaluate(()=>window.submitted)).toEqual(['api_key=xxxxxxxxxx']);
   await page.close();
 });
 test('settings preserve custom fields and fit the toolbar dashboard', async () => {
@@ -1216,11 +1216,11 @@ for (const host of ['chatgpt.com','claude.ai']) test(`${host}: Markdown and mult
   const page=await chat(host), requests=[];
   page.on('request',request=>{if(request.method()==='POST') requests.push(request.postData());});
   const cases=[
-    ['client_secret: `synthetic-markdown-123`','client_secret: `xxxxx`'],
-    ['`client_secret`: synthetic-label-123','`client_secret`: xxxxx'],
-    ['client_secret:\n```\nsynthetic-fenced-123\n```','client_secret:\n```xxxxx```'],
-    ['Authorization: Bearer\nsynthetic-bearer-123','Authorization: Bearer\nxxxxx'],
-    ['Authorization: Basic\n"synthetic basic token"','Authorization: Basic\n"xxxxx"'],
+    ['client_secret: `synthetic-markdown-123`','client_secret: `xxxxxxxxxx`'],
+    ['`client_secret`: synthetic-label-123','`client_secret`: xxxxxxxxxx'],
+    ['client_secret:\n```\nsynthetic-fenced-123\n```','client_secret:\n```xxxxxxxxxx```'],
+    ['Authorization: Bearer\nsynthetic-bearer-123','Authorization: Bearer\nxxxxxxxxxx'],
+    ['Authorization: Basic\n"synthetic basic token"','Authorization: Basic\n"xxxxxxxxxx"'],
   ];
   const sent=[];
   for(const [original,masked] of cases){
@@ -1250,7 +1250,7 @@ for(const host of ['chatgpt.com','claude.ai']) test(`${host}: CSS-hidden editor 
   await editor.fill('client_secret=synthetic-visible-123');await editor.press('Enter');
   await expect(review(page)).toBeVisible();
   await review(page).getByRole('button',{name:'Mask',exact:true}).click();
-  await expect.poll(()=>page.evaluate(()=>window.submitted)).toEqual(['A plain prompt.','client_secret=xxxxx']);
+  await expect.poll(()=>page.evaluate(()=>window.submitted)).toEqual(['A plain prompt.','client_secret=xxxxxxxxxx']);
   await page.close();
 });
 test('two extension views preserve simultaneous field additions and independent setting changes',async()=>{

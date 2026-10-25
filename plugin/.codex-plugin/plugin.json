@@ -9,7 +9,7 @@
     "developerName": "Orenthic",
     "displayName": "CkretGuard",
     "logo": "./assets/ckretguard.png",
-    "longDescription": "Install and evaluate the bundled CkretGuard Chrome extension. Detect credentials locally before sending ChatGPT or Claude prompts, then choose Send, Edit, or Mask. Mask replaces detected values with xxxxx and sends the masked prompt. This companion does not itself intercept native chat messages; the Chrome extension provides browser input guards and custom field settings. An engineering pilot, not universal DLP.",
+    "longDescription": "Install and evaluate the bundled CkretGuard Chrome extension. Detect credentials locally before sending ChatGPT or Claude prompts, then choose Send, Edit, or Mask. Mask replaces detected values with xxxxxxxxxx and sends the masked prompt. This companion does not itself intercept native chat messages; the Chrome extension provides browser input guards and custom field settings. An engineering pilot, not universal DLP.",
     "shortDescription": "Local prompt secret masking"
   },
   "name": "secret-shield",

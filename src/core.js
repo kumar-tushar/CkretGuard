@@ -3,7 +3,7 @@
   'use strict';
   const MAX_CHARACTERS = 100_000;
   const MAX_CUSTOM_FIELDS = 50;
-  const MASK = 'xxxxx';
+  const MASK = 'xxxxxxxxxx';
   const defaults = Object.freeze({ mode: 'redact', protectClientIds: true, sensitiveNames: [] });
   const names = ['key', 'api_key', 'apikey', 'api-key', 'api key', 'api_token', 'api token', 'secret', 'secret_key', 'secret key',
     'client_secret', 'client secret', 'access_token', 'access token', 'auth_token', 'auth token',
