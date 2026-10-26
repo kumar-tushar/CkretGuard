@@ -43,14 +43,14 @@ export const credentialCases = [
   { name: 'URL query parameter', input: 'https://example.invalid/?token=synthetic-query-123&view=1', masked: `https://example.invalid/?token=${mask}&view=1`, count: 1 },
   { name: 'bare Bearer token', input: 'Use Bearer synthetic-bare-123 for this request.', masked: `Use Bearer ${mask} for this request.`, count: 1 },
   { name: 'bare Basic credential', input: 'Basic dXNlcjpwYXNz', masked: `Basic ${mask}`, count: 1 },
-  { name: 'grouped client credentials', input: 'client id and client secret are\nFdenirddvj\nGhllgdfjkg', masked: `client id and client secret are\n${mask}\n${mask}`, count: 2 },
-  { name: 'grouped credentials with CRLF', input: 'clienT Id, clienT-secret are:\r\n  synthetic-id-123\r\n  synthetic-secret-456', masked: `clienT Id, clienT-secret are:\r\n  ${mask}\r\n  ${mask}`, count: 2 },
-  { name: 'grouped bullet list', input: 'apiKey & access-token:\n- synthetic-key-123\n- synthetic-token-456', masked: `apiKey & access-token:\n- ${mask}\n- ${mask}`, count: 2 },
-  { name: 'grouped values with blank paragraphs', input: 'my client id and client secret are\n\nsynthetic-app-123\n\nsynthetic-secret-456\nExplain this config.', masked: `my client id and client secret are\n\n${mask}\n\n${mask}\nExplain this config.`, count: 2 },
-  { name: 'grouped numbered values', input: 'api_key, password, and client secret are\n1. synthetic-key-123\n2. "synthetic password phrase"\n3. synthetic-secret-456', masked: `api_key, password, and client secret are\n1. ${mask}\n2. "${mask}"\n3. ${mask}`, count: 3 },
-  { name: 'grouped quoted labels', input: '`client id` and `client secret` are\n"synthetic id phrase"\n“synthetic secret phrase”', masked: `\x60client id\x60 and \x60client secret\x60 are\n"${mask}"\n“${mask}”`, count: 2 },
-  { name: 'grouped secret key', input: 'secret key and password are\nsynthetic-key-123\nsynthetic-password-456', masked: `secret key and password are\n${mask}\n${mask}`, count: 2 },
-  { name: 'grouped custom field', input: 'dataset_key and password are\nsynthetic-dataset-123\nsynthetic-password-456', masked: `dataset_key and password are\n${mask}\n${mask}`, count: 2 },
+  { name: 'distant client credentials', input: 'client id and client secret are at the bottom.\nConnection details.\nQ7mV8z2R9tA4nP6xL3cD\nB9wK4s8H2yF7vN5rT6aZ', masked: `client id and client secret are at the bottom.\nConnection details.\n${mask}\n${mask}`, count: 2 },
+  { name: 'distant values with CRLF', input: 'clienT Id, clienT-secret are shown later.\r\nSome explanation.\r\n  Q7mV8z2R9tA4nP6xL3cD\r\n  B9wK4s8H2yF7vN5rT6aZ', masked: `clienT Id, clienT-secret are shown later.\r\nSome explanation.\r\n  ${mask}\r\n  ${mask}`, count: 2 },
+  { name: 'keyword-triggered bullet values', input: 'apiKey & access-token are included below.\n- Q7mV8z2R9tA4nP6xL3cD\n- B9wK4s8H2yF7vN5rT6aZ', masked: `apiKey & access-token are included below.\n- ${mask}\n- ${mask}`, count: 2 },
+  { name: 'distant values with blank paragraphs', input: 'my client id and client secret are shown below.\n\nQ7mV8z2R9tA4nP6xL3cD\n\nB9wK4s8H2yF7vN5rT6aZ\nExplain this config.', masked: `my client id and client secret are shown below.\n\n${mask}\n\n${mask}\nExplain this config.`, count: 2 },
+  { name: 'keyword-triggered numbered values', input: 'api_key, password, and client secret are included below.\n1. Q7mV8z2R9tA4nP6xL3cD\n2. "B9wK4s8H2yF7vN5rT6aZ"\n3. N6cY9tR2mQ5vB8xL4sP7', masked: `api_key, password, and client secret are included below.\n1. ${mask}\n2. "${mask}"\n3. ${mask}`, count: 3 },
+  { name: 'quoted keyword mentions', input: '`client id` and `client secret` are at the bottom.\n"Q7mV8z2R9tA4nP6xL3cD"\n“B9wK4s8H2yF7vN5rT6aZ”', masked: `\x60client id\x60 and \x60client secret\x60 are at the bottom.\n"${mask}"\n“${mask}”`, count: 2 },
+  { name: 'distant secret key values', input: 'secret key and password are included below.\nQ7mV8z2R9tA4nP6xL3cD\nB9wK4s8H2yF7vN5rT6aZ', masked: `secret key and password are included below.\n${mask}\n${mask}`, count: 2 },
+  { name: 'distant custom values', input: 'dataset_key and password are included below.\nQ7mV8z2R9tA4nP6xL3cD\nB9wK4s8H2yF7vN5rT6aZ', masked: `dataset_key and password are included below.\n${mask}\n${mask}`, count: 2 },
 ];
 
 export const plainCases = [

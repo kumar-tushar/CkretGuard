@@ -1,7 +1,7 @@
 (() => {
   'use strict';
   const $ = id => document.getElementById(id);
-  const views = ['home', 'history', 'privacy', 'contact'];
+  const views = ['home', 'history', 'debug', 'privacy', 'contact'];
   let fullPage = false, revision = 0, changing = false;
   function activeView() { return views.includes(location.hash.slice(1)) ? location.hash.slice(1) : 'home'; }
   async function refreshHistory() {
@@ -94,8 +94,9 @@
       if (link.hash === '#' + selected) link.setAttribute('aria-current', 'page');
       else link.removeAttribute('aria-current');
     }
-    document.title = `CkretGuard · ${selected === 'privacy' ? 'Privacy Policy' : selected === 'contact' ? 'Contact Us' : selected === 'history' ? 'History' : 'Protection'}`;
+    document.title = `CkretGuard · ${selected === 'privacy' ? 'Privacy Policy' : selected === 'contact' ? 'Contact Us' : selected === 'history' ? 'History' : selected === 'debug' ? 'Debug Logs' : 'Protection'}`;
     if (selected === 'history') void refreshHistory();
+    if (selected === 'debug') window.dispatchEvent(new Event('ckretguard-debug-open'));
     if (focus) document.querySelector(`#${selected}-view h2`)?.focus();
   }
   $('clear-history').addEventListener('click', () => {

@@ -10,16 +10,17 @@
     <nav aria-label="Main navigation">
       <a href="#home" aria-current="page"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="m3 10 9-7 9 7v10H3Z"/><path d="M9 20v-8h6v8"/></svg>Home</a>
       <a href="#history"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M3 11a9 9 0 1 1 2.6 7M3 4v7h7M12 7v5l3 2"/></svg>History</a>
+      <a href="#debug"><svg aria-hidden="true" viewBox="0 0 24 24"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 7h6M9 12h6M9 17h4"/></svg>Debug Logs</a>
       <a href="#privacy"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="m12 3 8 3v6c0 4-5 7-8 9-3-2-8-5-8-9V6Z"/><path d="m8 12 3 3 5-6"/></svg>Privacy Policy</a>
       <a href="#contact"><svg aria-hidden="true" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="m3 7 9 6 9-6"/></svg>Contact Us</a>
     </nav>
     <p class="sidebar-footer">CkretGuard by Orenthic</p>
   </aside>
   <main>
-    <header><span class="brand-icon" aria-hidden="true"></span><div><h1>CkretGuard<span>Local prompt guard</span></h1></div><button id="expand" class="text-button" type="button" aria-label="Open in full mode"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2h4l.6 3.1 2 .9 2.8-1 2 3.5-2.2 2v3l2.2 2-2 3.5-2.8-1-2 .9L14 22h-4l-.6-3.1-2-.9-2.8 1-2-3.5 2.2-2v-3l-2.2-2 2-3.5 2.8 1 2-.9Z"/><circle cx="12" cy="12" r="3"/></svg></button></header>
+    <header><div class="brand-heading"><div class="brand-title"><span class="brand-icon" aria-hidden="true"></span><h1>CkretGuard</h1></div></div><button id="expand" class="text-button" type="button" aria-label="Open in full mode"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2h4l.6 3.1 2 .9 2.8-1 2 3.5-2.2 2v3l2.2 2-2 3.5-2.8-1-2 .9L14 22h-4l-.6-3.1-2-.9-2.8 1-2-3.5 2.2-2v-3l-2.2-2 2-3.5 2.8 1 2-.9Z"/><circle cx="12" cy="12" r="3"/></svg></button></header>
     <div id="home-view" class="view">
     <div class="coverage" id="coverage" role="status" hidden></div>
-    <section class="intro"><h2>Ask freely. Keep secrets private.</h2></section>
+    <section class="intro"><h2>Share prompts. Protect secrets.</h2></section>
     <section class="analytics" aria-label="Protection activity">
       <dl class="stats" aria-live="polite">
         <div><dt>Detected</dt><dd id="stat-detected">—</dd></div>
@@ -70,12 +71,25 @@
       <p id="history-status" role="status" aria-live="polite"></p>
       <ul id="history-list" class="history-list" aria-label="Unmasked prompt history"></ul>
     </section>
+    <section id="debug-view" class="view page-view" aria-labelledby="debug-title" hidden>
+      <h2 id="debug-title" tabindex="-1">Debug Logs</h2>
+      <p>CkretGuard logs events automatically while Chrome is running.</p>
+      <div class="debug-toolbar">
+        <button id="debug-export" class="secondary" type="button" disabled>Export logs</button>
+        <button id="debug-clear" class="secondary" type="button" disabled>Clear logs</button>
+      </div>
+      <p id="debug-status" role="status" aria-live="polite">Loading logs…</p>
+      <p class="debug-help">Logs are kept for seven days, with no entry-count limit. Prompt text and secret values are excluded.<br>Send events record attempts, not confirmed delivery.</p>
+      <ol id="debug-list" class="debug-list" aria-label="Extension debug logs"></ol>
+      <button id="debug-more" class="secondary" type="button" hidden>Load older logs</button>
+    </section>
     <section id="privacy-view" class="view page-view" aria-labelledby="privacy-title" hidden>
       <h2 id="privacy-title" tabindex="-1">Privacy Policy</h2>
       <div class="workspace policy-copy">
         <h3>What stays on your device</h3><p>CkretGuard scans prompts locally. Settings, custom field names, and activity totals stay in this browser. When you choose Send for a prompt with detected secrets, History saves the complete unmasked prompt, detected count, chat site, conversation link when available, and time.</p>
         <h3>What History includes</h3><p>Only unmasked prompts submitted through CkretGuard’s Send choice are saved. Masked prompts, ordinary messages, edited drafts, and cancelled sends are not saved. History begins with this update; earlier prompts cannot be recovered. An entry records a send attempt, not confirmation that the chat service received it.</p>
         <h3>Storage and deletion</h3><p>History is stored in this extension’s local database. It is not synced or uploaded by CkretGuard, and CkretGuard does not encrypt it. Entries older than 90 days are deleted automatically while Chrome is running. You can also delete one entry, clear History, clear extension data, or uninstall the extension. Browser storage limits apply. Deleting History does not change activity totals or remove messages already shared with a chat service.</p>
+        <h3>Local debug logs</h3><p>Debug logging runs automatically while Chrome is running. It keeps events on this device for seven days without an entry-count limit, including action choices, counts, timings, tab IDs, and sanitized error locations. Prompt text, secret values, custom field names, conversation links, and raw console or error messages are excluded. You can export a local JSON file or clear the logs yourself. Entries older than seven days are deleted automatically. Browser storage limits apply.</p>
         <h3>Coverage</h3><p>CkretGuard has no server or remote analytics. The chat website can read text entered into its own page before you send it. Protection covers recognized ChatGPT and Claude text inputs and send controls. Files, images, voice, other apps, and existing conversations are outside its scanning coverage. Detection can miss secrets.</p>
       </div>
     </section>
@@ -94,6 +108,6 @@
       <button id="confirm-clear-history" type="button"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M9 6V3h6v3M5 6l1 15h12l1-15M10 10v7M14 10v7"/></svg>Clear history</button>
     </div>
   </dialog>
-  <script src="core.js"></script><script src="policy.js"></script><script src="stats.js"></script><script src="history.js"></script><script src="composer.js"></script><script src="dashboard.js"></script>
+  <script src="debug.js"></script><script src="core.js"></script><script src="policy.js"></script><script src="stats.js"></script><script src="history.js"></script><script src="composer.js"></script><script src="dashboard.js"></script><script src="debug-view.js"></script>
 </body>
 </html>

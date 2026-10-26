@@ -6,6 +6,10 @@
   globalThis.SecretShieldContent?.();
   const lifecycle = new AbortController();
   const capture = { capture: true, signal: lifecycle.signal };
+  const debug = globalThis.SecretShieldDebug;
+  debug?.install(lifecycle.signal);
+  function log(event, details = {}) { void debug?.record(event, details); }
+  log('guard.started');
   const reconnectEvent = 'ckretguard-reconnect';
   const iconUrl = chrome.runtime.getURL('icons/orbit-pointer.png');
   const reconnectMessage = 'Extension connection lost. Refresh this chat tab before sending.';
@@ -25,6 +29,10 @@
   function show(message) {
     if (lifecycle.signal.aborted) return;
     if (!runtimeAvailable()) message = reconnectMessage;
+    log('notice.shown', { reason: !runtimeAvailable() ? 'context_invalidated' :
+      message.includes('draft or policy changed') ? 'draft_changed' :
+      message.includes('policy') || message.includes('Policy') ? 'policy_unavailable' :
+      message.includes('Send') || message.includes('send') ? 'send_unavailable' : 'unknown' });
     pendingNotice = message;
     if (!document.body) return;
     pendingNotice = '';
@@ -78,6 +86,7 @@
   }
   function denyUnavailable(event) {
     if (!runtimeAvailable()) {
+      log('prompt.blocked', { reason: 'context_invalidated' });
       stop(event);
       policy = null;
       clearApproval();
@@ -87,6 +96,7 @@
       return true;
     }
     if (policy) return false;
+    log('prompt.blocked', { reason: policyError ? 'policy_unavailable' : 'policy_loading' });
     stop(event);
     show(policyError ? 'Policy unavailable. Send is paused. Reload the extension and this tab.' : 'Loading local policy. Send is paused; try again shortly.');
     return true;
@@ -96,6 +106,7 @@
     const previous = review;
     review = null;
     if (!previous) return;
+    log('review.closed', { attempt: previous.attempt });
     previous.dialog.getAnimations().forEach(animation => animation.cancel());
     previous.dialog.close();
     previous.host.remove();
@@ -156,16 +167,20 @@
       if (buttons.length === 1) buttons[0].click();
       else form.requestSubmit();
       if (!allowed.clicked && !allowed.submitted) throw new Error('Send was not activated');
+      log('send.activated', { attempt: current.attempt, action: original ? 'Send' : 'Mask', buttons: buttons.length });
     } catch (error) { clearApproval(); throw error; }
     return true;
   }
 
   async function waitForSend(current, original) {
+    log('send.waiting', { attempt: current.attempt, action: original ? 'Send' : 'Mask' });
+    const started = performance.now();
     const deadline = performance.now() + sendWait;
     do {
       await new Promise(resolve => setTimeout(resolve, 25));
       if (submitDraft(current, original)) return true;
     } while (performance.now() < deadline);
+    log('send.failed', { attempt: current.attempt, reason: 'send_unavailable', durationMs: Math.round(performance.now() - started) });
     return false;
   }
 
@@ -173,11 +188,12 @@
     try {
       const result = await chrome.runtime.sendMessage({ type: 'ckretguard-history', action: 'record', prompt: current.text, count: current.count });
       if (!result?.ok) throw new Error();
-    } catch { show('Send was activated, but this prompt could not be saved to History.'); }
+    } catch { log('history.failed', { attempt: current.attempt, operation: 'record' }); show('Send was activated, but this prompt could not be saved to History.'); }
   }
 
   async function releaseOriginal(current) {
     if (review !== current || current.closing) return;
+    log('review.choice', { attempt: current.attempt, action: 'Send' });
     try {
       if (!reviewIsCurrent(current) || policy.mode === 'block') {
         closeReview();
@@ -196,13 +212,15 @@
         void globalThis.SecretShieldStats?.record('unmaskedPrompts');
         void recordHistory(current);
       } else show('Send is not ready. Your draft is still in the input box.');
-    } catch {
+    } catch (error) {
+      log('send.failed', { attempt: current.attempt, ...debug?.errorDetails(error) });
       if (review === current) closeReview();
       show('Could not activate Send. Your draft is still in the input box.');
     } finally { if (pendingSend === current) pendingSend = null; }
   }
 
-  function openReview(editor, text, count, submitForm) {
+  function openReview(editor, text, findings, submitForm, attempt) {
+    const count = findings.length;
     if (review?.editor === editor && review.text === text && review.generation === generation) return;
     closeReview(false);
     clearApproval();
@@ -221,6 +239,13 @@
       .brand-icon{display:block;flex:0 0 24px;width:24px;height:24px;background:#45d6c8;mask:url("${iconUrl}") center/contain no-repeat}
       h2{font-size:20px;line-height:1.25;letter-spacing:-.6px;margin:20px 0 12px}
       .count{color:#ff6b6b}
+      .review-description{font-size:12px;line-height:16px;color:#bcbcbc;margin:12px 0}
+      .review-values{display:grid;gap:8px;list-style:none;margin:12px 0 0;padding:0}
+      .review-values li{padding:10px 12px;border-radius:8px;background:#ffffff08}
+      .finding-reason{display:block;font-size:12px;line-height:16px;color:#bcbcbc;margin-bottom:6px}
+      .review-values code{display:block;font:400 12px/16px ${fontFamily};white-space:pre-wrap;overflow-wrap:anywhere;user-select:text}
+      .review-more{display:block;flex:none;min-width:0;height:auto;margin:10px 0 0;padding:4px 0;border-radius:0;background:none;color:#45d6c8;font-size:12px;line-height:16px}
+      .review-more[hidden]{display:none}
       .actions{display:flex;flex-wrap:wrap;gap:9px;margin-top:28px}
       button{display:inline-flex;align-items:center;justify-content:center;gap:6px;flex:1;min-width:90px;box-sizing:border-box;height:34px;border:0;outline:none;box-shadow:none;border-radius:999px;padding:0 16px;background:#303030;color:#dfdfdf;font:500 13px ${fontFamily};cursor:pointer}
       .button-icon{width:14px;height:14px;flex:0 0 14px;pointer-events:none}
@@ -232,7 +257,8 @@
     `;
     const dialog = document.createElement('dialog');
     dialog.setAttribute('aria-labelledby', 'ckretguard-review-title');
-    dialog.innerHTML = '<div class="brand-row"><div class="brand">CkretGuard ·  ORENTHIC</div><span class="brand-icon" aria-hidden="true"></span></div><h2 id="ckretguard-review-title"><span class="count"></span> <span class="caption"></span></h2><div class="actions"><button type="button" class="send">Send</button><button type="button" class="edit" autofocus>Edit</button><button type="button" class="mask">Mask</button></div>';
+    dialog.setAttribute('aria-describedby', 'ckretguard-review-description');
+    dialog.innerHTML = '<div class="brand-row"><div class="brand">CkretGuard ·  ORENTHIC</div><span class="brand-icon" aria-hidden="true"></span></div><h2 id="ckretguard-review-title"><span class="count"></span> <span class="caption"></span></h2><p id="ckretguard-review-description" class="review-description">Review these values before sending. Credential validity is not verified.</p><ol class="review-values" aria-label="Detected values"></ol><button type="button" class="review-more" hidden></button><div class="actions"><button type="button" class="send">Send</button><button type="button" class="edit" autofocus>Edit</button><button type="button" class="mask">Mask</button></div>';
     const actionIcons = {
       send: '<path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/>',
       edit: '<path d="m16 3 5 5-13 13H3v-5Z"/><path d="m14 5 5 5"/>',
@@ -243,18 +269,42 @@
     }
     dialog.querySelector('.count').textContent = String(count);
     dialog.querySelector('.caption').textContent = `${count === 1 ? 'secret' : 'secrets'} detected`;
+    const reasons = { 'provider-key': 'Known key format', jwt: 'JWT format', 'private-key': 'Private key block',
+      'connection-password': 'Connection password', authorization: 'Authorization value', 'named-secret': 'Labeled value',
+      'context-secret': 'Possible secret' };
+    const list = dialog.querySelector('.review-values'), more = dialog.querySelector('.review-more');
+    let shown = 0;
+    function showValues() {
+      const next = Math.min(shown + 50, findings.length), fragment = document.createDocumentFragment();
+      while (shown < next) {
+        const finding = findings[shown], item = document.createElement('li');
+        const reason = document.createElement('span'), value = document.createElement('code');
+        reason.className = 'finding-reason';
+        reason.textContent = `${++shown}. ${reasons[finding.type] ?? 'Detected value'}`;
+        value.textContent = text.slice(finding.start, finding.end);
+        item.append(reason, value); fragment.append(item);
+      }
+      list.append(fragment);
+      more.hidden = shown === findings.length;
+      more.textContent = `Show more (${findings.length - shown} remaining)`;
+    }
+    more.addEventListener('click', showValues);
+    showValues();
     const send = dialog.querySelector('.send');
     if (policy.mode === 'block') send.remove();
-    const current = { host, dialog, editor, text, count, generation, submitForm, closing: false };
+    const current = { host, dialog, editor, text, count, generation, submitForm, attempt, closing: false };
     review = current;
     if (policy.mode !== 'block') send.addEventListener('click', () => releaseOriginal(current));
     dialog.querySelector('.edit').addEventListener('click', async () => {
+      if (review !== current || current.closing) return;
+      log('review.choice', { attempt, action: 'Edit' });
       if (await animateDismiss(current, 'down')) closeReview();
     });
     dialog.querySelector('.mask').addEventListener('click', async () => {
       let masked;
       try {
         if (review !== current || current.closing) return;
+        log('review.choice', { attempt, action: 'Mask' });
         if (!reviewIsCurrent(current)) {
           closeReview();
           show('The draft or policy changed. Send again to review the current prompt.');
@@ -269,22 +319,30 @@
         const result = SecretShieldCore.redact(current.text, policy, current.text.length);
         closeReview(false);
         writeEditor(editor, result.text, result.findings);
-        masked = { editor, text: result.text, generation: current.generation, submitForm: current.submitForm };
+        log('mask.applied', { attempt, count: result.count, chars: result.text.length });
+        masked = { editor, text: result.text, generation: current.generation, submitForm: current.submitForm, attempt };
         pendingSend = masked;
         if (await waitForSend(masked, false)) {
           void globalThis.SecretShieldStats?.record('maskedPrompts');
           return;
         }
         show('The masked draft is ready, but Send is unavailable. It has not been sent.');
-      } catch {
+      } catch (error) {
+        log('send.failed', { attempt, action: 'Mask', ...debug?.errorDetails(error) });
         if (review === current) closeReview();
         show('Could not send the masked prompt. Check the draft and send again.');
       } finally { if (pendingSend === masked) pendingSend = null; }
     });
-    dialog.addEventListener('cancel', event => { event.preventDefault(); if (review === current) closeReview(); });
+    dialog.addEventListener('cancel', event => { event.preventDefault(); if (review === current) { log('review.choice', { attempt, action: 'Cancel' }); closeReview(); } });
     shadow.append(style, dialog);
     (document.body ?? document.documentElement).append(host);
     dialog.showModal();
+    if (dialog.scrollHeight > dialog.clientHeight) {
+      const heading = dialog.querySelector('h2');
+      heading.tabIndex = -1; heading.focus({ preventScroll: true });
+      dialog.scrollTop = 0;
+    }
+    log('review.opened', { attempt, count, mode: policy.mode });
     void globalThis.SecretShieldStats?.record('detected', count);
     if (!matchMedia('(prefers-reduced-motion: reduce)').matches) {
       dialog.animate([{ transform: 'translateY(calc(50vh + 100%))', opacity: 0 },
@@ -296,6 +354,7 @@
   function guard(event, editors) {
     if (denyUnavailable(event)) return true;
     if (editors.length !== 1) {
+      log('prompt.blocked', { reason: 'multiple_editors', editors: editors.length });
       clearApproval();
       stop(event);
       show('Chat input could not be identified uniquely. Reload the chat tab before sending.');
@@ -328,12 +387,15 @@
         clearApproval();
       }
       if (pendingSend?.editor === editor) { stop(event); return true; }
+      const attempt = debug?.attempt(), started = performance.now();
       const result = SecretShieldCore.redact(text, policy, text.length);
+      log('prompt.scanned', { attempt, chars: text.length, count: result.count, contextCount: result.findings.filter(finding => finding.type === 'context-secret').length, durationMs: Math.round(performance.now() - started), trigger: event.type, mode: policy.mode });
       if (!result.count) return false;
       stop(event);
-      openReview(editor, text, result.count, event.type === 'submit' ? event.target : null);
+      openReview(editor, text, result.findings, event.type === 'submit' ? event.target : null, attempt);
       return true;
-    } catch {
+    } catch (error) {
+      log('prompt.scan_failed', debug?.errorDetails(error));
       stop(event);
       show('Could not scan or update this input. Send blocked. Shorten the draft or reload the chat tab.');
       return true;
@@ -382,9 +444,9 @@
     closeReview(false);
     try {
       const loaded = await SecretShieldPolicy.loadPolicy();
-      if (request === generation) { policy = loaded.policy; policyError = false; }
+      if (request === generation) { policy = loaded.policy; policyError = false; log('policy.loaded', { mode: policy.mode, count: policy.sensitiveNames.length }); }
     } catch {
-      if (request === generation) { policyError = true; show('Policy unavailable. Send is paused.'); }
+      if (request === generation) { log('policy.failed'); policyError = true; show('Policy unavailable. Send is paused.'); }
     }
   }
   const onPolicyChanged = (changes, area) => {
@@ -392,9 +454,11 @@
   };
   const onCoverage = (message, _sender, reply) => {
     if (message?.type !== 'coverage') return;
+    log('coverage.checked', { ready: runtimeAvailable() && Boolean(policy), editors: getEditors(adapter).length });
     reply({ site: adapter.name, ready: runtimeAvailable() && Boolean(policy), error: policyError, editors: getEditors(adapter).length });
   };
   function dispose() {
+    log('guard.stopped');
     ++generation;
     policy = null;
     clearApproval();

@@ -15,7 +15,7 @@
   "content_scripts": [{
     "matches": ["https://chatgpt.com/*", "https://chat.openai.com/*", "https://claude.ai/*"],
     "css": ["fonts.css"],
-    "js": ["core.js", "policy.js", "stats.js", "adapters.js", "content.js"],
+    "js": ["debug.js", "core.js", "policy.js", "stats.js", "adapters.js", "content.js"],
     "run_at": "document_start"
   }],
   "web_accessible_resources": [{

@@ -30,6 +30,33 @@
     return { mode, protectClientIds: value.protectClientIds ?? true, sensitiveNames: [...new Set(sensitiveNames)] };
   }
 
+  function looksLikeSecret(value, strong) {
+    const minimum = strong ? 12 : 20;
+    if (value.length < minimum || value.length > 512 || placeholders.test(value) ||
+        !/^[A-Za-z0-9_+/.~!@$%^&*?=-]+$/.test(value) || !/[a-z]/i.test(value)) return false;
+    const letters = value.replace(/[^a-z]/gi, ''), digits = value.replace(/[^0-9]/g, '');
+    const parts = value.replace(/([a-z])([A-Z])/g, '$1 $2').split(/[^A-Za-z]+/).filter(Boolean);
+    const readable = part => /^(?:a|i|an|as|at|be|by|do|if|in|is|it|no|of|on|or|so|to|up|us|we|api|http|https|json|html|css|sql|sdk|uuid|url|jwt|xml|id|ip|db|os|ui)$/i.test(part) ||
+      (part.length >= 3 && (part.match(/[aeiouy]/gi)?.length ?? 0) / part.length >= .25 && !/[bcdfghjklmnpqrstvwxz]{5}/i.test(part));
+    // Human-readable identifiers and word-separated examples are weak evidence, even with digits.
+    const frequencies = new Map();
+    for (const char of value) frequencies.set(char, (frequencies.get(char) ?? 0) + 1);
+    if (frequencies.size < 8) return false;
+    let entropy = 0;
+    for (const count of frequencies.values()) { const p = count / value.length; entropy -= p * Math.log2(p); }
+    if (/^[a-f0-9]{32,}$/i.test(value)) return entropy >= (strong ? 3 : 3.3);
+    if (/^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/i.test(value)) return strong && entropy >= 3.2;
+    if (parts.length && parts.every(readable)) return false;
+    const changes = (value.match(/[a-z][A-Z]|[A-Z][a-z]/g) ?? []).length;
+    if (letters.length >= 4 && digits.length) return entropy >= (strong ? 3.2 : 3.8) &&
+      (digits.length >= 3 || changes >= 3 || /[_+/~!@$%^&*?=-]/.test(value));
+    if (/^[A-Za-z0-9+/]+={1,2}$/.test(value)) return entropy >= (strong ? 3.2 : 3.8);
+    const vowelRatio = (letters.match(/[aeiouy]/gi)?.length ?? 0) / letters.length;
+    return value.length >= (strong ? 20 : 24) && entropy >= (strong ? 3.6 : 4) &&
+      ((changes >= 4 && /[a-z]/.test(value) && /[A-Z]/.test(value)) ||
+        (vowelRatio < .17 && /[bcdfghjklmnpqrstvwxz]{5}/i.test(letters)));
+  }
+
   function scan(text, policy = defaults, maxCharacters = MAX_CHARACTERS) {
     if (typeof text !== 'string' || !Number.isSafeInteger(maxCharacters) || maxCharacters < 0 || text.length > maxCharacters) throw new ScanError();
     policy = normalizePolicy(policy);
@@ -75,54 +102,9 @@
       add(start, end, 'authorization');
       authorizationSchemes.add(match.indices[2][1]);
     }
-    // Read ordered value lines only after an explicit list of recognized labels.
-    // Include opted-out client IDs while parsing so later values never shift positions.
-    const groupedNames = [...new Set([...policy.sensitiveNames.map(escape).sort((a, b) => b.length - a.length),
-      ...sensitive, 'client(?:' + horizontal + '|[_-])*id'])];
-    const groupedLabel = `(?<![\\w-])(?:[a-zA-Z][a-zA-Z0-9]*[_-])*?(?:${groupedNames.join('|')})(?![\\w-])`;
-    const wrappedLabel = `["'“‘\x60]*${groupedLabel}["'”’\x60]*`;
-    const join = `${horizontal}*(?:,${horizontal}*(?:(?:and|&)${horizontal}+)?|and${horizontal}+|&${horizontal}*)`;
-    const groupedHeader = new RegExp(`^${horizontal}*(?:(?:my|our|the)${horizontal}+)?(${wrappedLabel}(?:${join}${wrappedLabel})+)${horizontal}*(?:are${horizontal}*[:=：＝]?|[:=：＝])${horizontal}*$`, 'i');
-    const enabledLabel = new RegExp(`^(?:${label})$`, 'i');
-    const blankLines = new RegExp(`(?:${horizontal}*(?:\\r\\n|[\\r\\n]))*`, 'y');
-    const groupedValue = new RegExp(`${horizontal}*(?:(?:[-*]|\\d+[.)])${horizontal}+)?(?:${valuePattern})${horizontal}*[,;]?${horizontal}*(?:\\r\\n|[\\r\\n]|$)`, 'dy');
-    const groupedHeaders = [];
-    for (const line of text.matchAll(/[^\r\n]+/g)) {
-      const header = groupedHeader.exec(line[0]);
-      if (!header) continue;
-      const fields = [...header[1].matchAll(new RegExp(`${groupedLabel}(?=["'”’\x60]*(?:${join}|${horizontal}*$))`, 'gi'))];
-      if (!fields.some(field => enabledLabel.test(field[0]))) continue;
-      if (fields.length > MAX_CUSTOM_FIELDS) throw new ScanError();
-      groupedHeaders.push({ start: line.index, end: line.index + line[0].length });
-      let cursor = line.index + line[0].length;
-      const newline = /^(?:\r\n|[\r\n])/.exec(text.slice(cursor, cursor + 2));
-      if (!newline) continue;
-      cursor += newline[0].length;
-      const values = [];
-      for (const field of fields) {
-        blankLines.lastIndex = cursor;
-        blankLines.exec(text);
-        cursor = blankLines.lastIndex;
-        groupedValue.lastIndex = cursor;
-        const value = groupedValue.exec(text);
-        if (!value || nextAssignment.test(value[0].trimStart())) {
-          if (values.length) throw new ScanError();
-          break;
-        }
-        const group = value.findIndex((item, index) => index >= 1 && item !== undefined);
-        values.push({ field: field[0], range: value.indices[group] });
-        cursor = groupedValue.lastIndex;
-      }
-      if (values.length === fields.length) for (const value of values) {
-        if (enabledLabel.test(value.field)) add(...value.range, 'named-secret');
-      }
-    }
     // An empty field must not consume another assignment on the following line.
     const assignment = new RegExp(`(${label})["'”’\x60]*${horizontal}*${separator}${horizontal}*(?:(?:\\r\\n|[\\r\\n])${horizontal}*(?!${followingField}))?(?:${valuePattern})`, 'dgi');
-    let headerIndex = 0;
     for (const match of text.matchAll(assignment)) {
-      while (headerIndex < groupedHeaders.length && match.index >= groupedHeaders[headerIndex].end) headerIndex++;
-      if (headerIndex < groupedHeaders.length && match.index >= groupedHeaders[headerIndex].start) continue;
       const group = match.findIndex((value, index) => index >= 2 && value !== undefined);
       const value = match[group];
       const [start, end] = match.indices[group];
@@ -135,7 +117,54 @@
       if (/^(?:key|secret)$/i.test(match[1]) && group === match.length - 1 &&
           /\bis\b/i.test(text.slice(match.indices[1][1], start)) && /^(?:to|that)$/i.test(value) &&
           /^\s+[a-z]+(?:\s|[.!?]|$)/i.test(text.slice(end))) continue;
+      if (group === match.length - 1 && /\bis\b/i.test(text.slice(match.indices[1][1], start)) &&
+          /^(?:above|below|here|there|at|in|the|provided|listed|located|shown|available|following|mentioned|stored|placed|included|written|present|not)$/i.test(value.replace(/[.!?]+$/, ''))) continue;
       add(start, end, 'named-secret');
+    }
+    // Field mentions enable one independent whole-draft pass, regardless of direct matches.
+    const weakNames = new Set(['key', 'secret', 'token']);
+    const fieldPattern = name => name.split(/[_ -]+/).map(escape).join(`(?:${horizontal}|[_-])*`);
+    const keywordPattern = fields => fields.length ? new RegExp(`(?<![\\w-])(?:[a-zA-Z][a-zA-Z0-9]*[_-])*?(?:${fields.join('|')})(?![\\w-])`, 'gi') : null;
+    const strongFields = [...new Set(builtIn.filter(name => !weakNames.has(name)).map(name => `(?:${fieldPattern(name)})s?`)),
+      ...policy.sensitiveNames.map(escape).sort((a, b) => b.length - a.length)];
+    const strongMentions = [...text.matchAll(keywordPattern(strongFields))];
+    const weakMentions = [...text.matchAll(keywordPattern([...weakNames].map(name => `${name}s?`)))];
+    if (strongMentions.length || weakMentions.length) {
+      const ignored = [...candidates, ...strongMentions.map(match => ({ start: match.index, end: match.index + match[0].length })),
+        ...weakMentions.map(match => ({ start: match.index, end: match.index + match[0].length }))];
+      for (const match of text.matchAll(/\$\{[^{}]*\}|\$[A-Z_][A-Z0-9_]*|<[^>\s]+>|\[REDACTED\]|\b[a-z][a-z0-9+.-]*:\/\/[^\s<>"'“”‘’`]+/gi)) {
+        ignored.push({ start: match.index, end: match.index + match[0].length });
+      }
+      const publicFields = ['request_id', 'trace_id', 'correlation_id', 'transaction_id', 'commit_hash',
+        'checksum', 'sha256', 'sha512', 'md5', 'hash', 'uuid'];
+      if (!policy.protectClientIds && !policy.sensitiveNames.some(name => /^client[_ -]*id$/i.test(name))) publicFields.push('client_id');
+      const publicPatterns = publicFields.filter(field => !policy.sensitiveNames.some(name => name.replace(/[_ -]/g, '').toLowerCase() === field.replace(/_/g, ''))).map(fieldPattern);
+      const publicValue = new RegExp(`(?<![\\w-])(?:${publicPatterns.length ? publicPatterns.join('|') : '(?!)'})(?![\\w-])["'”’\x60]*(?:${horizontal}*(?::|=|：|＝|\\bis\\b)${horizontal}*(?:(?:\\r\\n|[\\r\\n])${horizontal}*)?|${horizontal}+)(?:${valuePattern})`, 'dgi');
+      for (const match of text.matchAll(publicValue)) {
+        const group = match.findIndex((value, index) => index >= 1 && value !== undefined);
+        ignored.push({ start: match.indices[group][0], end: match.indices[group][1] });
+      }
+      ignored.sort((a, b) => a.start - b.start || b.end - a.end);
+      const ranges = [];
+      for (const item of ignored) {
+        const previous = ranges.at(-1);
+        if (previous && item.start <= previous.end) previous.end = Math.max(previous.end, item.end);
+        else ranges.push({ start: item.start, end: item.end });
+      }
+      let cursor = 0;
+      for (const match of text.matchAll(/[^\s"'“”‘’`<>{}\[\](),;]+/g)) {
+        let value = match[0], start = match.index;
+        const assignment = /^[A-Za-z_][A-Za-z0-9_.-]{0,63}[:=]/.exec(value);
+        if (assignment && !looksLikeSecret(assignment[0].slice(0, -1), strongMentions.length > 0)) { value = value.slice(assignment[0].length); start += assignment[0].length; }
+        const wrapped = /^(?:\*\*)?(.+?)(?:\*\*)?[.:]?$/.exec(value);
+        if (!wrapped) continue;
+        start += value.indexOf(wrapped[1]); value = wrapped[1];
+        const end = start + value.length;
+        while (cursor < ranges.length && ranges[cursor].end <= start) cursor++;
+        if (cursor < ranges.length && ranges[cursor].start < end) continue;
+        if (/^[^@]+@[^@]+\.[^@]+$/.test(value) || /^(?:\/|\.\.?\/)/.test(value) || /\.[a-z]{1,6}$/i.test(value)) continue;
+        if (looksLikeSecret(value, strongMentions.length > 0)) add(start, end, 'context-secret');
+      }
     }
     // Protect repeated occurrences of a detected value without retaining a vault.
     const repeated = new Set();

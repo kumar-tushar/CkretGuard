@@ -460,7 +460,8 @@ for (const host of ['chatgpt.com','claude.ai']) {
     await expect(review(page)).toBeVisible();
     await expect(review(page).getByRole('heading')).toHaveText('1 secret detected');
     await expect(review(page).locator('.count')).toHaveCSS('color','rgb(255, 107, 107)');
-    await expect(review(page).locator('p')).toHaveCount(0);
+    await expect(review(page).locator('.review-description')).toHaveText('Review these values before sending. Credential validity is not verified.');
+    await expect(review(page).locator('.review-values code')).toHaveText([key]);
     await expect(review(page).getByRole('button',{name:'Edit',exact:true})).toHaveCSS('text-decoration-line','none');
     await expect(review(page).getByRole('button',{name:'Send',exact:true})).toHaveCSS('font-weight','500');
     await expect(review(page).locator('small')).toHaveCount(0);
@@ -703,7 +704,8 @@ for (const host of ['chatgpt.com','claude.ai']) test(`${host}: Edit or Mask mode
   await expect(review(page)).toBeVisible();
   await expect(review(page).getByRole('button',{name:'Send',exact:true})).toHaveCount(0);
   await expect(review(page).getByRole('button')).toHaveText(['Edit','Mask']);
-  await expect(review(page).locator('p')).toHaveCount(0);
+  await expect(review(page).locator('.review-description')).toHaveText('Review these values before sending. Credential validity is not verified.');
+  await expect(review(page).locator('.review-values code')).toHaveText([key]);
   await review(page).getByRole('button',{name:'Edit',exact:true}).click();
   expect(await editorText(editor)).toBe(original);
   expect(await page.evaluate(()=>window.submitted)).toEqual([]);
@@ -1150,8 +1152,7 @@ test('settings preserve custom fields and fit the toolbar dashboard', async () =
     expect(input.height).toBe(button.height);
     expect(saved.y).toBeGreaterThan(input.y+input.height);
   }
-  await expect(composer.locator('h1 span')).toHaveCSS('letter-spacing','normal');
-  await expect(composer.locator('h1 span')).toHaveCSS('color','rgb(255, 255, 255)');
+  await expect(composer.getByText('Local prompt guard',{exact:true})).toHaveCount(0);
   await expect(composer.locator('.stats [title]')).toHaveCount(0);
   await expect(composer.locator('#activity-status')).toBeHidden();
   await expect(composer.getByText('Counts stay on this device.',{exact:true})).toHaveCount(0);

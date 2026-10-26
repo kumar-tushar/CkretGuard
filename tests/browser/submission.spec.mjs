@@ -140,25 +140,26 @@ for (const host of ['chatgpt.com', 'claude.ai']) {
     }
   });
 
-  test(`${host}: grouped client-ID opt-out preserves alignment while Mask protects the secret`, async () => {
+  test(`${host}: client-ID opt-out preserves a labeled public ID while the context check protects the secret`, async () => {
     const state = await chat(host);
     await worker.evaluate(() => chrome.storage.local.set({ policy: { protectClientIds: false } }));
-    await state.editor.fill('client id and client secret:\nsynthetic-public-id-123\nsynthetic-private-secret-456');
+    await state.editor.fill('Client secret will be shown below.\nclient_id: Q7mV8z2R9tA4nP6xL3cD\nB9wK4s8H2yF7vN5rT6aZ');
     await state.editor.press('Enter');
     await expect(review(state.page).getByRole('heading')).toHaveText('1 secret detected');
     await review(state.page).getByRole('button', { name: 'Mask', exact: true }).click();
-    await checkSent(state, 'client id and client secret:\nsynthetic-public-id-123\nxxxxxxxxxx');
+    await checkSent(state, 'Client secret will be shown below.\nclient_id: Q7mV8z2R9tA4nP6xL3cD\nxxxxxxxxxx');
   });
 
-  test(`${host}: incomplete grouped values block sending without partially masking`, async () => {
+  test(`${host}: separated credential mentions review actual candidates without assuming a value count`, async () => {
     const state = await chat(host);
-    const original = 'client id and client secret are\nsynthetic-only-one-123';
+    const original = 'client id and client secret are at the bottom.\nQ7mV8z2R9tA4nP6xL3cD';
     await state.editor.fill(original);
     await state.editor.press('Enter');
-    await expect(state.page.locator('#secret-shield-notice')).toBeVisible();
+    await expect(review(state.page).getByRole('heading')).toHaveText('1 secret detected');
+    await expect(review(state.page).locator('.review-values code')).toHaveText(['Q7mV8z2R9tA4nP6xL3cD']);
     expect(state.requests).toEqual([]);
-    expect(await state.editor.innerText()).toBe(original);
-    await expect(review(state.page)).toBeHidden();
+    await review(state.page).getByRole('button', { name: 'Mask', exact: true }).click();
+    await checkSent(state, original.replace('Q7mV8z2R9tA4nP6xL3cD', 'xxxxxxxxxx'));
   });
 
   for (const action of ['Send', 'Mask']) test(`${host}: ${action} waits for a temporarily removed click-only Send control`, async () => {
