@@ -19,7 +19,7 @@
   <main>
     <header><div class="brand-heading"><div class="brand-title"><span class="brand-icon" aria-hidden="true"></span><h1>CkretGuard</h1></div></div><button id="expand" class="text-button" type="button" aria-label="Open in full mode"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2h4l.6 3.1 2 .9 2.8-1 2 3.5-2.2 2v3l2.2 2-2 3.5-2.8-1-2 .9L14 22h-4l-.6-3.1-2-.9-2.8 1-2-3.5 2.2-2v-3l-2.2-2 2-3.5 2.8 1 2-.9Z"/><circle cx="12" cy="12" r="3"/></svg></button></header>
     <div id="home-view" class="view">
-    <div class="coverage" id="coverage" role="status" hidden></div>
+    <output class="coverage" id="coverage" hidden></output>
     <section class="intro"><h2>Share prompts. Protect secrets.</h2></section>
     <section class="analytics" aria-label="Protection activity">
       <dl class="stats" aria-live="polite">
@@ -27,7 +27,7 @@
         <div><dt>Masked Sent</dt><dd id="stat-maskedPrompts">—</dd></div>
         <div><dt>Unmasked Sent</dt><dd id="stat-unmaskedPrompts">—</dd></div>
       </dl>
-      <p id="activity-status" role="status" hidden></p>
+      <output id="activity-status" hidden></output>
     </section>
     <details id="custom-fields" class="workspace" aria-labelledby="fields-title">
       <summary id="fields-title">Custom secret fields</summary><div class="settings">
@@ -37,7 +37,7 @@
         <input id="sensitive-names" type="text" spellcheck="false" autocomplete="off" aria-describedby="field-help" placeholder="dataset_key" disabled>
         <button id="save-fields" class="secondary" type="submit" disabled>Save</button>
       </form>
-      <p id="field-status" role="status" aria-live="polite">Loading saved fields…</p>
+      <output id="field-status" aria-live="polite">Loading saved fields…</output>
       <div id="saved-fields-panel" class="saved-fields-panel" hidden>
         <p id="field-count">0 custom fields saved.</p>
         <ul id="saved-fields" class="saved-fields" aria-label="Saved secret fields"></ul>
@@ -56,7 +56,7 @@
           <span id="client-ids-help" class="info-tooltip" role="tooltip">Client ID values are also checked when you send a prompt.</span>
         </span>
       </div>
-      <p id="settings-status" role="status" aria-live="polite"></p>
+      <output id="settings-status" aria-live="polite"></output>
     </div></details>
     <footer>
       <strong>CkretGuard by Orenthic</strong>
@@ -68,7 +68,7 @@
     <section id="history-view" class="view page-view" aria-labelledby="history-title" hidden>
       <div class="page-heading"><div><h2 id="history-title" tabindex="-1">History</h2><p>Prompts you sent with secrets left unmasked in the last 90 days.</p></div><button id="clear-history" class="secondary" type="button" hidden>Clear history</button></div>
       <p class="history-note">Full prompts, including their secrets, are saved only on this device for 90 days. Delete entries after rotating exposed credentials.<br>Entries record send attempts; delivery is not confirmed.</p>
-      <p id="history-status" role="status" aria-live="polite"></p>
+      <output id="history-status" aria-live="polite"></output>
       <ul id="history-list" class="history-list" aria-label="Unmasked prompt history"></ul>
     </section>
     <section id="debug-view" class="view page-view" aria-labelledby="debug-title" hidden>
@@ -78,7 +78,7 @@
         <button id="debug-export" class="secondary" type="button" disabled>Export logs</button>
         <button id="debug-clear" class="secondary" type="button" disabled>Clear logs</button>
       </div>
-      <p id="debug-status" role="status" aria-live="polite">Loading logs…</p>
+      <output id="debug-status" aria-live="polite">Loading logs…</output>
       <p class="debug-help">Logs are kept for seven days, with no entry-count limit. Prompt text and secret values are excluded.<br>Send events record attempts, not confirmed delivery.</p>
       <ol id="debug-list" class="debug-list" aria-label="Extension debug logs"></ol>
       <button id="debug-more" class="secondary" type="button" hidden>Load older logs</button>
@@ -102,7 +102,7 @@
     <div class="confirmation-brand"><span>CkretGuard · ORENTHIC</span><span class="brand-icon" aria-hidden="true"></span></div>
     <h2 id="clear-history-title">Clear history?</h2>
     <p id="clear-history-description">Delete all saved unmasked prompts from this device? This cannot be undone. Activity totals will stay the same.</p>
-    <p id="clear-history-error" role="status" aria-live="polite"></p>
+    <output id="clear-history-error" aria-live="polite"></output>
     <div class="confirmation-actions">
       <button id="cancel-clear-history" class="secondary" type="button" autofocus>Cancel</button>
       <button id="confirm-clear-history" type="button"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M9 6V3h6v3M5 6l1 15h12l1-15M10 10v7M14 10v7"/></svg>Clear history</button>
