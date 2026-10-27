@@ -12,5 +12,5 @@
     "check": "npm test && npm run test:browser",
     "package": "npm run check && node scripts/package.mjs"
   },
-  "devDependencies": { "@playwright/test": "1.63.0" }
+  "devDependencies": { "@playwright/test": "1.63.0", "lexical": "0.52.0" }
 }

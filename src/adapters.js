@@ -80,7 +80,7 @@
     }
     throw new Error('Editor text could not be mapped');
   }
-  function writeEditor(editor, text, findings) {
+  async function writeEditor(editor, text, findings) {
     if (editor instanceof HTMLTextAreaElement || editor instanceof HTMLInputElement) {
       const prototype = editor instanceof HTMLTextAreaElement ? HTMLTextAreaElement.prototype : HTMLInputElement.prototype;
       Object.getOwnPropertyDescriptor(prototype, 'value').set.call(editor, text);
@@ -100,7 +100,16 @@
           selection.removeAllRanges();
           selection.addRange(range);
           const expected = current.slice(0, finding.start) + SecretShieldCore.MASK + current.slice(finding.end);
-          if (!document.execCommand('insertText', false, SecretShieldCore.MASK) || readEditor(editor) !== expected) throw new Error('Editor update failed');
+          if (!document.execCommand('insertText', false, SecretShieldCore.MASK)) throw new Error('Editor update failed');
+          // Let batched editor state commit before replacing another value in the same text node.
+          await Promise.resolve();
+          if (!editor.isConnected) {
+            const replacements = getEditors(getAdapter(location.hostname));
+            if (replacements.length !== 1 || readEditor(replacements[0]) !== expected) throw new Error('Editor update failed');
+            editor = replacements[0];
+            editor.focus();
+          }
+          if (readEditor(editor) !== expected) throw new Error('Editor update failed');
           current = expected;
         }
         if (current !== text) throw new Error('Editor update failed');

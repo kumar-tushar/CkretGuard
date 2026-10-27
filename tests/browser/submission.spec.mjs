@@ -232,10 +232,10 @@ for (const host of ['chatgpt.com', 'claude.ai']) {
 
   test(`${host}: Mask follows a framework remount only when the masked draft matches exactly`, async () => {
     const state = await chat(host);
-    const original = await prepare(state, '<p>api_key = xxxxxxxxxx</p><p>dataset_key = synthetic-remount-123</p>');
+    const original = await prepare(state, '<p>api_key = synthetic-remount-123</p><p>dataset_key = synthetic-remount-123</p><p>password = synthetic-remount-123</p>');
     await state.page.evaluate(() => { window.options = { delay: 90, remount: true }; });
     await review(state.page).getByRole('button', { name: 'Mask', exact: true }).click();
-    await checkSent(state, original.replace('synthetic-remount-123', 'xxxxxxxxxx'));
+    await checkSent(state, original.replaceAll('synthetic-remount-123', 'xxxxxxxxxx'));
     expect(await state.page.evaluate(() => window.remounted)).toBe(true);
   });
 

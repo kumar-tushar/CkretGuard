@@ -315,7 +315,7 @@
         }
         const result = SecretShieldCore.redact(current.text, policy, current.text.length);
         closeReview(false);
-        writeEditor(editor, result.text, result.findings);
+        await writeEditor(editor, result.text, result.findings);
         log('mask.applied', { attempt, count: result.count, chars: result.text.length });
         masked = { editor, text: result.text, generation: current.generation, submitForm: current.submitForm, attempt };
         pendingSend = masked;
