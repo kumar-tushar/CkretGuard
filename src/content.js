@@ -241,11 +241,10 @@
       dialog{box-sizing:border-box;width:min(460px,calc(100vw - 32px));max-height:calc(100vh - 40px);overflow:auto;border:1px solid #ffffff28;border-radius:16px;padding:26px;background:rgb(24 24 24 / .9);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);color:#dfdfdf;box-shadow:0 24px 70px #0006;font:14px/1.6 ${fontFamily}}
       dialog::backdrop{background:#0003}
       .brand-row{display:flex;align-items:center;justify-content:space-between;gap:12px}
-      .brand{color:#45d6c8;font-size:12px;font-weight:500;letter-spacing:1.7px;white-space:pre-wrap}
+      .brand{color:#45d6c8;font-size:12px;font-weight:600;letter-spacing:1.7px;white-space:pre-wrap}
       .brand-icon{display:block;flex:0 0 24px;width:24px;height:24px;background:#45d6c8;mask:url("${iconUrl}") center/contain no-repeat}
       h2{font-size:20px;line-height:1.25;letter-spacing:-.6px;margin:20px 0 12px}
       .count{color:#ff6b6b}
-      .review-description{font-size:12px;line-height:16px;color:#bcbcbc;margin:12px 0}
       .review-values{display:grid;gap:8px;list-style:none;margin:12px 0 0;padding:0}
       .review-values li{padding:10px 12px;border-radius:8px;background:#ffffff08}
       .review-values code{display:block;font:400 12px/16px ${fontFamily};white-space:pre-wrap;overflow-wrap:anywhere;user-select:text}
@@ -261,8 +260,7 @@
     `;
     const dialog = document.createElement('dialog');
     dialog.setAttribute('aria-labelledby', 'ckretguard-review-title');
-    dialog.setAttribute('aria-describedby', 'ckretguard-review-description');
-    dialog.innerHTML = '<div class="brand-row"><div class="brand">CkretGuard ·  ORENTHIC</div><span class="brand-icon" aria-hidden="true"></span></div><h2 id="ckretguard-review-title"><span class="count"></span> <span class="caption"></span></h2><p id="ckretguard-review-description" class="review-description">Review these values before sending. Credential validity is not verified.</p><ol class="review-values" aria-label="Detected values"></ol><button type="button" class="review-more" hidden></button><div class="actions"><button type="button" class="send">Send</button><button type="button" class="edit" autofocus>Edit</button><button type="button" class="mask">Mask</button></div>';
+    dialog.innerHTML = '<div class="brand-row"><div class="brand">CkretGuard ·  Orenthic</div><span class="brand-icon" aria-hidden="true"></span></div><h2 id="ckretguard-review-title"><span class="count"></span> <span class="caption"></span></h2><ol class="review-values" aria-label="Detected values"></ol><button type="button" class="review-more" hidden></button><div class="actions"><button type="button" class="send">Send</button><button type="button" class="edit" autofocus>Edit</button><button type="button" class="mask">Mask</button></div>';
     const actionIcons = {
       send: '<path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/>',
       edit: '<path d="m16 3 5 5-13 13H3v-5Z"/><path d="m14 5 5 5"/>',

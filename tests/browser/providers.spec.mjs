@@ -7,6 +7,9 @@ const providers = [
   { host: 'chat.deepseek.com', site: 'DeepSeek', conversation: '/a/chat/s/synthetic-provider-test' },
   { host: 'grok.com', site: 'Grok', conversation: '/c/synthetic-provider-test' },
   { host: 'www.meta.ai', site: 'Meta AI', conversation: '/prompt/synthetic-provider-test' },
+  { host: 'copilot.cloud.microsoft', site: 'Microsoft Copilot', conversation: '/chat/conversation/synthetic-provider-test' },
+  { host: 'www.perplexity.ai', site: 'Perplexity', conversation: '/search/synthetic-provider-test' },
+  { host: 'chat.mistral.ai', site: 'Mistral', conversation: '/chat/synthetic-provider-test' },
 ];
 let context, worker, dashboard;
 const review = page => page.getByRole('dialog');
@@ -15,7 +18,7 @@ const records = () => dashboard.evaluate(() => SecretShieldHistory.request('list
 
 function fixtureApp() {
   window.options = {}; window.current = ''; window.submitted = []; window.stops = 0; window.searches = 0;
-  const editor = document.querySelector('#main-editor,#chat-input');
+  const editor = document.querySelector('#main-editor,#chat-input,#userInput,#m365-chat-editor-target-element,#ask-input');
   const button = () => document.querySelector('#provider-send');
   const disabled = value => {
     const control = button();
@@ -48,7 +51,13 @@ function fixtureApp() {
 }
 function fixture(provider, variant) {
   const gemini = provider.site === 'Gemini', deepseek = provider.site === 'DeepSeek', grok = provider.site === 'Grok';
-  const editor = gemini ?
+  const copilot = provider.site === 'Microsoft Copilot', perplexity = provider.site === 'Perplexity', mistral = provider.site === 'Mistral';
+  const editor = copilot ? (variant === 'consumer' ? '<textarea id="userInput" placeholder="Message Copilot"></textarea>' :
+    '<span id="m365-chat-editor-target-element" role="textbox" contenteditable="true" aria-label="Message Copilot" data-lexical-editor="true" style="display:block;min-height:100px;white-space:pre-wrap"></span>') :
+    perplexity ? (variant === 'legacy' ? '<textarea id="ask-input"></textarea>' :
+      '<div id="ask-input" role="textbox" contenteditable="true" data-lexical-editor="true" style="min-height:100px;white-space:pre-wrap"></div>') :
+    mistral ? '<div data-chat-input-bar="true"><div id="main-editor" class="ProseMirror" contenteditable="true" data-placeholder="Type / for quick access" style="min-height:100px;white-space:pre-wrap"></div></div>' :
+    gemini ?
     '<rich-textarea style="display:block"><div id="main-editor" class="ql-editor" role="textbox" contenteditable="true" style="min-height:100px;white-space:pre-wrap"></div><div class="ql-clipboard" contenteditable="true" style="position:absolute;left:-10000px;width:1px;height:1px"></div></rich-textarea>' :
     deepseek ? '<textarea id="' + (variant === 'legacy' ? 'chat-input' : 'main-editor') + '" placeholder="' + (variant === 'legacy' ? 'Type here' : 'Message DeepSeek') + '"></textarea>' :
     grok ? '<div id="main-editor" class="tiptap ProseMirror query-bar-editor" role="combobox" aria-label="Ask Grok anything" contenteditable="true" style="min-height:100px;white-space:pre-wrap"></div>' :
@@ -57,14 +66,17 @@ function fixture(provider, variant) {
     variant === 'guest' ? '<input id="main-editor" type="text" aria-label="Ask Meta AI" placeholder="Ask Meta AI anything...">' :
     variant === 'mobile' ? '<textarea id="main-editor" data-testid="composer-input" placeholder="Ask Meta AI..."></textarea>' :
     '<textarea data-testid="composer-input" placeholder="Ask Meta AI..." aria-hidden="true" style="display:none"></textarea><div id="main-editor" data-testid="composer-input" data-lexical-editor="true" role="textbox" contenteditable="true" style="min-height:100px;white-space:pre-wrap"></div>';
-  const send = gemini ?
+  const send = copilot ? '<button id="provider-send" type="submit"' + (variant === 'localized' ? ' data-testid="chat-input-send-button" aria-label="Enviar"' : variant === 'consumer' ? ' data-testid="submit-button" aria-label="Submit message"' : ' aria-label="Send"') + '><svg viewBox="0 0 14 16" width="14" height="16"><path d="M7 1L1 7h5v8h2V7h5Z"/></svg></button>' :
+    perplexity ? '<button id="provider-send" type="button"' + (variant === 'localized' ? ' data-testid="submit-button" aria-label="Enviar"' : ' aria-label="Submit"') + '><svg viewBox="0 0 24 24" width="20" height="20"><path d="M12 3L4 11H11V21H13V11H20Z"/></svg></button>' :
+    mistral ? '<button id="provider-send" type="submit"' + (variant === 'localized' ? ' aria-label="Envoyer"' : ' aria-label="Send question"') + '><svg viewBox="0 0 24 24" width="20" height="20"><path d="M12 3L4 11H11V21H13V11H20Z"/></svg></button>' :
+    gemini ?
     '<button id="provider-send" aria-label="' + (variant === 'localized' ? 'Enviar mensaje' : 'Send message') + '"><mat-icon fonticon="arrow_upward" aria-hidden="true">↑</mat-icon></button>' :
     deepseek ? '<div id="provider-send" role="button" tabindex="0" class="ds-button ds-button--primary ds-button--circle"><div class="ds-button__icon"><svg viewBox="' + (variant === 'legacy' ? '0 0 14 16' : '0 0 16 16') + '" width="16" height="16"><path d="' + (variant === 'legacy' ? 'M7 1L1 7h5v8h2V7h5Z' : 'M8.3125 0.980206C8.66767 1.05312 8.97902 1.2042 9.2627 1.43235L14 7H9V15H7V7H2Z') + '"/></svg></div></div>' :
     '<button id="provider-send"' + (grok ? ' data-testid="chat-submit" aria-label="' + (variant === 'localized' ? 'Enviar' : 'Submit') + '"' : ' data-testid="composer-send-button" aria-label="' + (variant === 'localized' ? 'Enviar' : 'Send') + '"') + '><svg viewBox="0 0 24 24" width="20" height="20"><path d="M12 3L4 11H11V21H13V11H20Z"/></svg></button>';
   const stop = !deepseek ? '<button id="stop-response" type="button" aria-label="Stop response"><mat-icon fonticon="stop">■</mat-icon></button>' :
     '<div id="stop-response" role="button" tabindex="0" class="ds-button ds-button--primary ds-button--circle"><svg viewBox="0 0 16 16" width="16" height="16"><path d="M3 3h10v10H3Z"/></svg></div>';
   return '<!doctype html><html lang="en"><head><title>Synthetic ' + provider.site + '</title></head><body><textarea id="search" aria-label="Search conversations"></textarea><input-container>' +
-    (grok ? '<form>' : '') + editor + send + stop + (grok ? '</form>' : '') + '</input-container><script>(' + fixtureApp.toString() + ')();</script></body></html>';
+    (grok || copilot || mistral ? '<form>' : '') + editor + send + stop + (grok || copilot || mistral ? '</form>' : '') + '</input-container><script>(' + fixtureApp.toString() + ')();</script></body></html>';
 }
 
 test.beforeAll(async () => {
@@ -72,10 +84,11 @@ test.beforeAll(async () => {
   context = await chromium.launchPersistentContext('', { channel: 'chromium', headless: true, reducedMotion: 'reduce',
     args: ['--disable-extensions-except=' + extension, '--load-extension=' + extension] });
   worker = context.serviceWorkers()[0] ?? await context.waitForEvent('serviceworker');
-  await context.route(/^https:\/\/(?:gemini\.google\.com|chat\.deepseek\.com|grok\.com|(?:www\.)?meta\.ai)\//, route => {
+  await context.route(/^https:\/\/(?:gemini\.google\.com|chat\.deepseek\.com|grok\.com|(?:www\.)?meta\.ai|copilot\.microsoft\.com|copilot\.com|copilot\.cloud\.microsoft|m365\.cloud\.microsoft|(?:www\.)?perplexity\.ai|chat\.mistral\.ai)\//, route => {
     if (route.request().method() === 'POST') return route.fulfill({ body: 'ok' });
     const url = new URL(route.request().url());
-    return route.fulfill({ contentType: 'text/html', body: fixture(providers.find(provider => provider.host === (url.hostname === 'meta.ai' ? 'www.meta.ai' : url.hostname)), url.searchParams.get('variant')) });
+    const aliases = { 'meta.ai': 'www.meta.ai', 'perplexity.ai': 'www.perplexity.ai', 'copilot.com': 'copilot.cloud.microsoft', 'copilot.microsoft.com': 'copilot.cloud.microsoft', 'm365.cloud.microsoft': 'copilot.cloud.microsoft' };
+    return route.fulfill({ contentType: 'text/html', body: fixture(providers.find(provider => provider.host === (aliases[url.hostname] ?? url.hostname)), url.searchParams.get('variant')) });
   });
   dashboard = await context.newPage();
   await dashboard.goto('chrome-extension://' + new URL(worker.url()).hostname + '/composer.html');
@@ -99,7 +112,7 @@ async function chat(provider, variant = '') {
   await expect.poll(() => worker.evaluate(async id => {
     try { return await chrome.tabs.sendMessage(id, { type: 'coverage' }); } catch { return null; }
   }, tabId)).toMatchObject({ ready: true, editors: 1, site: provider.site });
-  return { page, requests, errors, editor: page.locator('#main-editor,#chat-input') };
+  return { page, requests, errors, editor: page.locator('#main-editor,#chat-input,#userInput,#m365-chat-editor-target-element,#ask-input') };
 }
 async function attempt(state, gesture = 'Enter') {
   if (gesture === 'Enter') await state.editor.press('Enter');
@@ -116,9 +129,10 @@ async function outgoing(state, expected, count = 1) {
   expect(state.errors).toEqual([]);
 }
 
-test('the manifest grants only the eight explicit chat origins and makes local assets available there', async () => {
+test('the manifest grants only explicit chat origins and makes local assets available there', async () => {
   const manifest = await worker.evaluate(() => chrome.runtime.getManifest());
-  const hosts = ['chatgpt.com', 'chat.openai.com', 'claude.ai', ...providers.map(provider => provider.host), 'meta.ai'].map(host => 'https://' + host + '/*');
+  const hosts = ['chatgpt.com', 'chat.openai.com', 'claude.ai', 'gemini.google.com', 'chat.deepseek.com', 'grok.com', 'www.meta.ai', 'meta.ai',
+    'copilot.microsoft.com', 'copilot.com', 'copilot.cloud.microsoft', 'm365.cloud.microsoft', 'www.perplexity.ai', 'perplexity.ai', 'chat.mistral.ai'].map(host => 'https://' + host + '/*');
   expect(manifest.host_permissions).toEqual(hosts);
   expect(manifest.content_scripts[0].matches).toEqual(hosts);
   expect(manifest.web_accessible_resources[0].matches).toEqual(hosts);
@@ -240,6 +254,47 @@ for (const provider of providers.filter(provider => provider.site !== 'Gemini'))
   const counts = await dashboard.evaluate(() => SecretShieldStats.read());
   expect(counts.maskedPrompts).toBe(0); expect(counts.unmaskedPrompts).toBe(0);
   expect(await read(state.editor)).toBe('password=' + (action === 'Mask' ? 'xxxxxxxxxx' : 'synthetic-disabled-123'));
+  const logs = await dashboard.evaluate(() => SecretShieldDebug.request('export'));
+  const error = logs.entries.find(entry => entry.event === 'send.failed');
+  expect(error.site).toBe(provider.site);
+  expect(await dashboard.evaluate(id => SecretShieldDebug.readPrompt(id), error.promptId)).toBe('password=synthetic-disabled-123');
+});
+
+for (const host of ['copilot.microsoft.com', 'copilot.com', 'm365.cloud.microsoft', 'perplexity.ai']) for (const action of ['Edit', 'Send', 'Mask']) test(host + ': supported alias preserves ' + action + ' behavior', async () => {
+  const provider = host === 'perplexity.ai' ? { host, site: 'Perplexity', conversation: '/search/synthetic-alias-test' } :
+    { host, site: 'Microsoft Copilot', conversation: '/chats/synthetic-alias-test' };
+  const state = await chat(provider);
+  await state.editor.fill('api_key=synthetic-alias-123'); await attempt(state);
+  await review(state.page).getByRole('button', { name: action, exact: true }).click();
+  await expect(review(state.page)).toBeHidden();
+  if (action === 'Edit') { expect(state.requests).toEqual([]); expect(await read(state.editor)).toBe('api_key=synthetic-alias-123'); }
+  else await outgoing(state, 'api_key=' + (action === 'Send' ? 'synthetic-alias-123' : 'xxxxxxxxxx'));
+});
+
+for (const [site, variant] of [['Microsoft Copilot', 'consumer'], ['Perplexity', 'legacy']]) for (const action of ['Edit', 'Send', 'Mask']) test(site + ': ' + variant + ' textarea preserves ' + action + ' behavior', async () => {
+  const state = await chat(providers.find(provider => provider.site === site), variant);
+  await state.editor.fill('api_key=synthetic-textarea-123'); await attempt(state);
+  await review(state.page).getByRole('button', { name: action, exact: true }).click();
+  await expect(review(state.page)).toBeHidden();
+  if (action === 'Edit') { expect(state.requests).toEqual([]); expect(await read(state.editor)).toBe('api_key=synthetic-textarea-123'); }
+  else await outgoing(state, 'api_key=' + (action === 'Send' ? 'synthetic-textarea-123' : 'xxxxxxxxxx'));
+});
+
+test('all nine provider logos remain centered and the redundant footer list is absent', async () => {
+  const names = ['ChatGPT', 'Claude', 'Gemini', 'DeepSeek', 'Grok', 'Meta AI', 'Microsoft Copilot', 'Perplexity', 'Mistral'];
+  await expect(dashboard.locator('.provider-icons img')).toHaveCount(names.length);
+  expect(await dashboard.locator('.provider-icons img').evaluateAll(images => images.map(image => image.alt))).toEqual(names);
+  await expect(dashboard.locator('footer')).not.toContainText('text only. Some secrets may be missed.');
+  await expect(dashboard.locator('footer')).toContainText('Websites can read your text before you send it.');
+  for (const width of [410, 661, 1280]) {
+    await dashboard.setViewportSize({ width, height: 1000 });
+    await expect.poll(() => dashboard.locator('.provider-icons img').evaluateAll(images => images.every(image => image.complete && image.naturalWidth > 0))).toBe(true);
+    const position = await dashboard.locator('.provider-icons').evaluate(row => {
+      const first = row.firstElementChild.getBoundingClientRect(), last = row.lastElementChild.getBoundingClientRect(), parent = row.getBoundingClientRect();
+      return { center: (first.left + last.right) / 2, parent: (parent.left + parent.right) / 2, fits: document.documentElement.scrollWidth <= innerWidth };
+    });
+    expect(Math.abs(position.center - position.parent)).toBeLessThan(1); expect(position.fits).toBe(true);
+  }
 });
 
 for (const action of ['Edit', 'Send', 'Mask']) test('Meta AI: the bare-domain alias preserves ' + action + ' behavior', async () => {

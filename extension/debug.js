@@ -3,7 +3,7 @@
   globalThis.SecretShieldDebug?.dispose();
   const key = 'debugLogs', type = 'ckretguard-debug', RETENTION_DAYS = 7, PAGE_SIZE = 200, CHUNK_SIZE = 1024 * 1024;
   const RETENTION_MS = RETENTION_DAYS * 86400000;
-  const sites = { 'chatgpt.com': 'ChatGPT', 'chat.openai.com': 'ChatGPT', 'claude.ai': 'Claude', 'gemini.google.com': 'Gemini', 'chat.deepseek.com': 'DeepSeek', 'grok.com': 'Grok', 'www.meta.ai': 'Meta AI', 'meta.ai': 'Meta AI' };
+  const sites = { 'chatgpt.com': 'ChatGPT', 'chat.openai.com': 'ChatGPT', 'claude.ai': 'Claude', 'gemini.google.com': 'Gemini', 'chat.deepseek.com': 'DeepSeek', 'grok.com': 'Grok', 'www.meta.ai': 'Meta AI', 'meta.ai': 'Meta AI', 'copilot.microsoft.com': 'Microsoft Copilot', 'copilot.com': 'Microsoft Copilot', 'copilot.cloud.microsoft': 'Microsoft Copilot', 'm365.cloud.microsoft': 'Microsoft Copilot', 'www.perplexity.ai': 'Perplexity', 'perplexity.ai': 'Perplexity', 'chat.mistral.ai': 'Mistral' };
   const promptEvents = ['prompt.scanned', 'prompt.scan_failed', 'prompt.blocked'];
   const events = Object.freeze({
     'recording.started': ['info', 'Recording started'], 'recording.stopped': ['info', 'Recording stopped'],
@@ -80,7 +80,7 @@
       id: item.id, time: item.time, event: item.event, source: item.source, details: details(item.details),
       ...(uuid(item.session) ? { session: item.session } : {}),
       ...(uuid(item.promptId) ? { promptId: item.promptId } : {}),
-      ...(['ChatGPT', 'Claude', 'Gemini', 'DeepSeek', 'Grok', 'Meta AI'].includes(item.site) ? { site: item.site } : {}),
+      ...(['ChatGPT', 'Claude', 'Gemini', 'DeepSeek', 'Grok', 'Meta AI', 'Microsoft Copilot', 'Perplexity', 'Mistral'].includes(item.site) ? { site: item.site } : {}),
       ...(Number.isSafeInteger(item.tabId) ? { tabId: item.tabId } : {}),
     }));
     return { entries, next: value?.next ?? null, count: Number.isSafeInteger(value?.count) ? value.count : entries.length, retentionDays: RETENTION_DAYS };

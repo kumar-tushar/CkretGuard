@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "description": "Local prompt redaction for ChatGPT, Claude, Gemini, DeepSeek, Grok and Meta AI in Chrome",
+  "description": "Local prompt redaction for ChatGPT, Claude, Gemini, DeepSeek, Grok, Meta AI, Microsoft Copilot, Perplexity and Mistral in Chrome",
   "engines": { "node": "24.x" },
   "scripts": {
     "build": "node scripts/build.mjs",

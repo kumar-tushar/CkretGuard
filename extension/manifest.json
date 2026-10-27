@@ -3,24 +3,24 @@
   "name": "CkretGuard — Local Prompt Guard",
   "version": "1.0.0",
   "author": "Orenthic",
-  "description": "Detect secrets before sending ChatGPT, Claude, Gemini, DeepSeek, Grok or Meta AI prompts. Choose Send, Edit or Mask.",
+  "description": "Detect secrets before sending prompts to supported AI chats. Review, edit or mask locally with CkretGuard.",
   "minimum_chrome_version": "120",
   "permissions": ["storage", "alarms", "scripting"],
-  "host_permissions": ["https://chatgpt.com/*", "https://chat.openai.com/*", "https://claude.ai/*", "https://gemini.google.com/*", "https://chat.deepseek.com/*", "https://grok.com/*", "https://www.meta.ai/*", "https://meta.ai/*"],
+  "host_permissions": ["https://chatgpt.com/*", "https://chat.openai.com/*", "https://claude.ai/*", "https://gemini.google.com/*", "https://chat.deepseek.com/*", "https://grok.com/*", "https://www.meta.ai/*", "https://meta.ai/*", "https://copilot.microsoft.com/*", "https://copilot.com/*", "https://copilot.cloud.microsoft/*", "https://m365.cloud.microsoft/*", "https://www.perplexity.ai/*", "https://perplexity.ai/*", "https://chat.mistral.ai/*"],
   "action": { "default_title": "CkretGuard · Protection", "default_popup": "composer.html" },
   "background": { "service_worker": "background.js" },
   "options_ui": { "page": "composer.html", "open_in_tab": true },
   "icons": { "16": "icons/ckretguard-16.png", "48": "icons/ckretguard-48.png", "128": "icons/ckretguard-128.png" },
   "storage": { "managed_schema": "managed-schema.json" },
   "content_scripts": [{
-    "matches": ["https://chatgpt.com/*", "https://chat.openai.com/*", "https://claude.ai/*", "https://gemini.google.com/*", "https://chat.deepseek.com/*", "https://grok.com/*", "https://www.meta.ai/*", "https://meta.ai/*"],
+    "matches": ["https://chatgpt.com/*", "https://chat.openai.com/*", "https://claude.ai/*", "https://gemini.google.com/*", "https://chat.deepseek.com/*", "https://grok.com/*", "https://www.meta.ai/*", "https://meta.ai/*", "https://copilot.microsoft.com/*", "https://copilot.com/*", "https://copilot.cloud.microsoft/*", "https://m365.cloud.microsoft/*", "https://www.perplexity.ai/*", "https://perplexity.ai/*", "https://chat.mistral.ai/*"],
     "css": ["fonts.css"],
     "js": ["debug.js", "core.js", "policy.js", "stats.js", "adapters.js", "content.js"],
     "run_at": "document_start"
   }],
   "web_accessible_resources": [{
     "resources": ["icons/orbit-pointer.png", "fonts/dm-sans-latin.woff2"],
-    "matches": ["https://chatgpt.com/*", "https://chat.openai.com/*", "https://claude.ai/*", "https://gemini.google.com/*", "https://chat.deepseek.com/*", "https://grok.com/*", "https://www.meta.ai/*", "https://meta.ai/*"]
+    "matches": ["https://chatgpt.com/*", "https://chat.openai.com/*", "https://claude.ai/*", "https://gemini.google.com/*", "https://chat.deepseek.com/*", "https://grok.com/*", "https://www.meta.ai/*", "https://meta.ai/*", "https://copilot.microsoft.com/*", "https://copilot.com/*", "https://copilot.cloud.microsoft/*", "https://m365.cloud.microsoft/*", "https://www.perplexity.ai/*", "https://perplexity.ai/*", "https://chat.mistral.ai/*"]
   }],
   "content_security_policy": { "extension_pages": "script-src 'self'; object-src 'none'; connect-src 'none'; base-uri 'none'; form-action 'none'" }
 }

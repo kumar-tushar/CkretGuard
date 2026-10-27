@@ -460,7 +460,7 @@ for (const host of ['chatgpt.com','claude.ai']) {
     await expect(review(page)).toBeVisible();
     await expect(review(page).getByRole('heading')).toHaveText('1 secret detected');
     await expect(review(page).locator('.count')).toHaveCSS('color','rgb(255, 107, 107)');
-    await expect(review(page).locator('.review-description')).toHaveText('Review these values before sending. Credential validity is not verified.');
+    await expect(review(page).locator('.review-description')).toHaveCount(0);
     await expect(review(page).locator('.review-values code')).toHaveText([key]);
     await expect(review(page).getByRole('button',{name:'Edit',exact:true})).toHaveCSS('text-decoration-line','none');
     await expect(review(page).getByRole('button',{name:'Send',exact:true})).toHaveCSS('font-weight','500');
@@ -704,7 +704,7 @@ for (const host of ['chatgpt.com','claude.ai']) test(`${host}: Edit or Mask mode
   await expect(review(page)).toBeVisible();
   await expect(review(page).getByRole('button',{name:'Send',exact:true})).toHaveCount(0);
   await expect(review(page).getByRole('button')).toHaveText(['Edit','Mask']);
-  await expect(review(page).locator('.review-description')).toHaveText('Review these values before sending. Credential validity is not verified.');
+  await expect(review(page).locator('.review-description')).toHaveCount(0);
   await expect(review(page).locator('.review-values code')).toHaveText([key]);
   await review(page).getByRole('button',{name:'Edit',exact:true}).click();
   expect(await editorText(editor)).toBe(original);

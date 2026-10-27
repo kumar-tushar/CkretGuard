@@ -2,7 +2,7 @@
 
 Published by **Orenthic**.
 
-Local credential detection and masking for **ChatGPT, Claude, Gemini, DeepSeek, Grok and Meta AI in Chrome**. Version 1.0.0 is an engineering pilot, not a production-certified enterprise DLP product.
+Local credential detection and masking for **ChatGPT, Claude, Gemini, DeepSeek, Grok, Meta AI, Microsoft Copilot, Perplexity and Mistral in Chrome**. Version 1.0.0 is an engineering pilot, not a production-certified enterprise DLP product.
 
 CkretGuard runs a deterministic scanner on your device. It detects common API keys, private keys, bearer/basic credentials, JWTs, connection-string passwords, and labeled credentials (`api_key`, `password`, `client_secret`, `client_id`, and similar names). Additional literal field names can be configured. Client IDs are not always confidential; their protection is enabled by default and configurable. Detection targets credentials, rather than general personal or confidential prose. Built-in multiword field names accept joined/camelCase, spaces or tabs, hyphens, and underscores, including repeated or mixed separators, regardless of capitalization. For example, `apiToken`, `api-token`, `api token`, and `api_token` all match. The same rule covers client secrets, access/auth/refresh tokens, secret/private keys, AWS field names, and client IDs when enabled. Field-to-value separators accept `=`, `:`, `is`, and fullwidth `＝`/`：`; a value may follow on the next line. Straight or curly quotes and Markdown backticks preserve values containing spaces, including a quote left open at the end of a line. Backticks around field labels and fenced credential values are supported. Nonbreaking horizontal spaces are accepted. Complete variable placeholders such as `${SERVICE_KEY}` remain unchanged, and Authorization schemes are excluded from the credential count. Unquoted values end at whitespace; quote values containing spaces. Bearer and Basic tokens accept quotes or backticks and may wrap onto subsequent lines. Incomplete labeled authorization schemes block sending rather than masking only the scheme. Bare Bearer/Basic schemes need token-like or quoted values (or a decodable Basic user/password value), so ordinary authentication prose is preserved. Generic instructions such as “the key is to retry” are preserved; explicit or quoted credential assignments remain protected. Custom field names remain literal apart from capitalization.
 
@@ -19,12 +19,12 @@ npm run build
 
 1. Open `chrome://extensions` in Chrome and enable **Developer mode**.
 2. Choose **Load unpacked** and select this project's `dist` folder.
-3. Pin CkretGuard and reload existing ChatGPT / Claude / Gemini / DeepSeek / Grok / Meta AI tabs.
+3. Pin CkretGuard and reload existing ChatGPT / Claude / Gemini / DeepSeek / Grok / Meta AI / Copilot / Perplexity / Mistral tabs.
 4. Open the extension and expand **Custom secret fields**. Enter a field name such as `dataset_key` and choose **Save**. Saved names appear below the count, one per row, with a remove button on the right. At 50 fields, the input is hidden until a field is removed. For example, adding `dataset1` protects values assigned to that field.
 
-When upgrading, allow access to Gemini, DeepSeek, Grok and Meta AI if Chrome asks for the new site permissions.
+When upgrading, allow access to the newly supported chat sites if Chrome asks for the new site permissions.
 
-After moving from an older build to this recovery-enabled build, refresh existing chat tabs once. Subsequent extension updates and reloads reconnect the guard in supported open tabs without navigating the page, changing the draft, or submitting it. An open review is discarded and the next send reviews the current draft again. The `scripting` permission and explicit host permissions cover only the eight supported chat origins. Restricted site access or a failed reconnection may still require a tab refresh; a disconnected guard blocks recognized sending and displays a refresh notice.
+After moving from an older build to this recovery-enabled build, refresh existing chat tabs once. Subsequent extension updates and reloads reconnect the guard in supported open tabs without navigating the page, changing the draft, or submitting it. An open review is discarded and the next send reviews the current draft again. The `scripting` permission and explicit host permissions cover only the 15 supported chat origins. Restricted site access or a failed reconnection may still require a tab refresh; a disconnected guard blocks recognized sending and displays a refresh notice.
 
 In recognized website inputs, clicking Send or pressing Enter scans the draft. If credentials are detected, the original send is canceled and a single headline shows the exact detected occurrence count (for example, “2 secrets detected”). The number is red. The dialog lists the exact values found, without numbered detection labels. Values are rendered as plain text. For more than 50 occurrences, **Show more** reveals additional rows. These are local detection signals, not verification that credentials are valid or active. The dialog provides three choices:
 
@@ -43,6 +43,8 @@ Use the **settings icon** at the top right to open full mode and use the **Home*
 For a synthetic custom-field example, save `dataset1` in the extension, then enter `dataset1 = fictional-value-123` into a supported chat input. Sending opens the review popup. **Mask** sends `dataset1 = xxxxxxxxxx`. Clicking × beside a saved name removes that custom field; built-in credential detection remains active. Up to 50 names can be saved, with newly added names requiring 3–64 characters, starting with a letter and containing letters, digits, spaces, underscores or hyphens. Names match case-insensitively with `=`, `:`, or `is` assignments, including quoted JSON fields. A bare field name does not trigger a review by itself. A configured name also enables the whole-draft check for opaque values without requiring a nearby assignment. Never test with a real credential.
 
 **The Chrome extension performs the interception.** The optional CkretGuard AI plugin is a setup companion containing the extension and its instructions. Enabling that plugin alone does not intercept prompts in ChatGPT, Codex, Claude, or other clients.
+
+Microsoft Copilot covers `copilot.microsoft.com`, `copilot.com`, `copilot.cloud.microsoft`, and `m365.cloud.microsoft`; Perplexity covers `www.perplexity.ai` and `perplexity.ai`; Mistral covers `chat.mistral.ai` (including its Vibe chat composer). These are browser integrations only. Unrecognized editors, app modes, files, and native desktop clients are not covered. Each integration uses the same review, masking, local History, and Debug Logs behavior.
 
 ## Local debugging
 

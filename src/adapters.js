@@ -33,9 +33,26 @@
       editors: '[contenteditable="true"][role="textbox"][data-testid="composer-input"], textarea[data-testid="composer-input"], input[aria-label="Ask Meta AI"], textarea[aria-label="Ask Meta AI"], textarea[placeholder="Ask Meta AI anything..."], [contenteditable="true"][role="textbox"][aria-label="Ask Meta AI"]',
       send: 'button[data-testid="composer-send-button"], button[aria-label="Send"], button[aria-label="Send message"], [role="button"][aria-label="Send"], [role="button"][aria-label="Send message"]',
     },
+    'copilot.microsoft.com': {
+      name: 'Microsoft Copilot',
+      editors: 'textarea#userInput, #m365-chat-editor-target-element[contenteditable="true"], [contenteditable="true"][role="textbox"][aria-label="Message Copilot"]',
+      send: 'button[data-testid="submit-button"], button[data-testid="chat-input-send-button"], button[aria-label="Submit message"], button[aria-label="Send message"], button[aria-label="Send"], button[aria-label="Submit"]',
+    },
+    'www.perplexity.ai': {
+      name: 'Perplexity',
+      editors: '#ask-input[contenteditable="true"], textarea#ask-input',
+      send: 'button[aria-label="Submit"], button[aria-label="Send"], button[data-testid="submit-button"]',
+    },
+    'chat.mistral.ai': {
+      name: 'Mistral',
+      editors: '[data-chat-input-bar] .ProseMirror[contenteditable="true"], form .ProseMirror[contenteditable="true"][data-placeholder]',
+      send: 'button[aria-label="Send question"], button[aria-label="Send message"], button[aria-label="Send"], form:has([data-chat-input-bar]) button[type="submit"]:not([aria-label*="Stop" i]):not([aria-label*="Cancel" i])',
+    },
   };
   adapters['chat.openai.com'] = adapters['chatgpt.com'];
   adapters['meta.ai'] = adapters['www.meta.ai'];
+  for (const host of ['copilot.com', 'copilot.cloud.microsoft', 'm365.cloud.microsoft']) adapters[host] = adapters['copilot.microsoft.com'];
+  adapters['perplexity.ai'] = adapters['www.perplexity.ai'];
   function getAdapter(hostname) { return adapters[hostname] ?? null; }
   function isVisible(element) {
     return element.isConnected && element.getClientRects().length > 0 &&

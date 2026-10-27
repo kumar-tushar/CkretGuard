@@ -44,6 +44,21 @@ test('history preserves complete prompts and keeps only supported conversation l
     ['https://www.meta.ai/prompt/abc-123?token=private#secret', 'Meta AI', 'https://www.meta.ai/prompt/abc-123'],
     ['https://meta.ai/prompt/abc-123?token=private', 'Meta AI', 'https://meta.ai/prompt/abc-123'],
     ['https://meta.ai/c/abc-123?token=private', 'Meta AI', 'https://meta.ai/c/abc-123'],
+    ['https://copilot.microsoft.com/chat/conversation/abc-123?token=private#secret', 'Microsoft Copilot', 'https://copilot.microsoft.com/chat/conversation/abc-123'],
+    ['https://copilot.microsoft.com/chats/abc-123?token=private#secret', 'Microsoft Copilot', 'https://copilot.microsoft.com/chats/abc-123'],
+    ['https://copilot.com/chat/conversation/abc-123?token=private#secret', 'Microsoft Copilot', 'https://copilot.com/chat/conversation/abc-123'],
+    ['https://copilot.com/chats/abc-123?token=private#secret', 'Microsoft Copilot', 'https://copilot.com/chats/abc-123'],
+    ['https://copilot.cloud.microsoft/chat/conversation/abc-123?token=private#secret', 'Microsoft Copilot', 'https://copilot.cloud.microsoft/chat/conversation/abc-123'],
+    ['https://copilot.cloud.microsoft/chats/abc-123?token=private#secret', 'Microsoft Copilot', 'https://copilot.cloud.microsoft/chats/abc-123'],
+    ['https://m365.cloud.microsoft/chat/conversation/abc-123?token=private#secret', 'Microsoft Copilot', 'https://m365.cloud.microsoft/chat/conversation/abc-123'],
+    ['https://m365.cloud.microsoft/chats/abc-123?token=private#secret', 'Microsoft Copilot', 'https://m365.cloud.microsoft/chats/abc-123'],
+    ['https://www.perplexity.ai/search/dummy-query_abc-123?token=private#secret', 'Perplexity', 'https://www.perplexity.ai/search/dummy-query_abc-123'],
+    ['https://perplexity.ai/search/dummy-query_abc-123?token=private#secret', 'Perplexity', 'https://perplexity.ai/search/dummy-query_abc-123'],
+    ['https://chat.mistral.ai/chat/abc-123?token=private#secret', 'Mistral', 'https://chat.mistral.ai/chat/abc-123'],
+    ['https://chat.mistral.ai/work/abc-123?token=private#secret', 'Mistral', 'https://chat.mistral.ai/work/abc-123'],
+    ['https://www.perplexity.ai/search/private.email@example.invalid', 'Perplexity', 'https://www.perplexity.ai/'],
+    ['https://copilot.cloud.microsoft/unknown/private-value', 'Microsoft Copilot', 'https://copilot.cloud.microsoft/'],
+    ['https://chat.mistral.ai/unknown/private-value', 'Mistral', 'https://chat.mistral.ai/'],
     ['https://www.meta.ai/unknown/private-value', 'Meta AI', 'https://www.meta.ai/'],
     ['https://gemini.google.com/unknown/private-value', 'Gemini', 'https://gemini.google.com/'],
     ['https://chat.deepseek.com/unknown/private-value', 'DeepSeek', 'https://chat.deepseek.com/'],
@@ -64,7 +79,7 @@ test('history rejects unsupported sources and invalid prompt metadata', () => {
     'https://claude.ai:444/', 'https://gemini.google.com.attacker.invalid/app/abc', 'https://chat.deepseek.com.attacker.invalid/',
     'https://gemini.google.com:444/', 'https://user:pass@chat.deepseek.com/', 'https://grok.com.attacker.invalid/',
     'https://www.meta.ai.attacker.invalid/', 'https://meta.ai.attacker.invalid/', 'http://grok.com/',
-    'https://meta.ai:444/', 'https://user:pass@www.meta.ai/', 'javascript:alert(1)', undefined]) assert.throws(() => history.entry('key=synthetic-123', 1, url));
+    'https://meta.ai:444/', 'https://user:pass@www.meta.ai/', 'https://copilot.com.attacker.invalid/', 'https://copilot.cloud.microsoft.attacker.invalid/', 'https://www.perplexity.ai:444/', 'https://chat.mistral.ai.attacker.invalid/', 'javascript:alert(1)', undefined]) assert.throws(() => history.entry('key=synthetic-123', 1, url));
   for (const prompt of ['', '  ', null, 123, {}]) assert.throws(() => history.entry(prompt, 1, 'https://chatgpt.com/'));
   for (const count of [0, -1, 1.5, '2', null, Infinity]) assert.throws(() => history.entry('key=synthetic-123', count, 'https://chatgpt.com/'));
 });

@@ -65,7 +65,7 @@ test('debug schema discards prompts, field names, URLs, arbitrary messages and u
   assert.deepEqual(plain(clean), { count: 2, chars: 27, durationMs: 100, method: 'error', errorName: 'TypeError' });
   assert.deepEqual(plain(debug.details(null)), {});
   assert.deepEqual(plain(debug.authorize({ action: 'record', event: 'send.failed' }, content)), { source: 'content', site: 'Claude', tabId: 7 });
-  for (const [host, site] of [['gemini.google.com', 'Gemini'], ['chat.deepseek.com', 'DeepSeek'], ['grok.com', 'Grok'], ['www.meta.ai', 'Meta AI'], ['meta.ai', 'Meta AI']]) {
+  for (const [host, site] of [['gemini.google.com', 'Gemini'], ['chat.deepseek.com', 'DeepSeek'], ['grok.com', 'Grok'], ['www.meta.ai', 'Meta AI'], ['meta.ai', 'Meta AI'], ['copilot.microsoft.com', 'Microsoft Copilot'], ['copilot.com', 'Microsoft Copilot'], ['copilot.cloud.microsoft', 'Microsoft Copilot'], ['m365.cloud.microsoft', 'Microsoft Copilot'], ['www.perplexity.ai', 'Perplexity'], ['perplexity.ai', 'Perplexity'], ['chat.mistral.ai', 'Mistral']]) {
     const sender = { ...content, url: `https://${host}/?token=never-stored` };
     assert.deepEqual(plain(debug.authorize({ action: 'record', event: 'send.failed' }, sender)), { source: 'content', site, tabId: 7 });
     assert.throws(() => debug.authorize({ action: 'record', event: 'send.failed' }, { ...sender, url: `https://${host}.attacker.invalid/` }));
