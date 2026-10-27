@@ -793,11 +793,9 @@ test('a policy refresh while Mask waits for synchronization cancels automatic Se
   });
   await review(page).getByRole('button',{name:'Mask',exact:true}).click();
   await expect.poll(()=>page.evaluate(()=>window.maskSyncPending)).toBe(true);
-  const tabId=await composer.evaluate(async url=>(await chrome.tabs.query({url}))[0].id,page.url());
   await composer.evaluate(()=>chrome.storage.local.set({policy:{mode:'block'}}));
   await expect(composer.locator('input[name=mode]:checked')).toHaveValue('block');
-  await expect.poll(()=>composer.evaluate(async tabId=>(await SecretShieldDebug.request('export')).entries.some(entry=>
-    entry.event==='policy.loaded' && entry.tabId===tabId && entry.details.mode==='block'),tabId)).toBe(true);
+  await expect(page.locator('#secret-shield-notice')).toBeVisible();
   await page.evaluate(()=>{
     window.current=document.querySelector('textarea').value;
     document.querySelector('[data-testid="send-button"]').disabled=false;

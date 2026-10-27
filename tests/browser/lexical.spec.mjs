@@ -68,7 +68,7 @@ test.beforeAll(async () => {
 test.afterEach(async () => {
   for (const page of context.pages()) if (page !== dashboard) await page.close();
   await dashboard.evaluate(async () => {
-    await SecretShieldHistory.request('clear'); await SecretShieldDebug.request('clear');
+    await SecretShieldHistory.request('clear');
     await chrome.storage.local.remove(['policy', 'activity']);
   });
 });

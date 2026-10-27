@@ -97,7 +97,7 @@ test.beforeAll(async () => {
 test.afterEach(async () => {
   for (const page of context.pages()) if (page !== dashboard) await page.close();
   await dashboard.evaluate(async () => {
-    await SecretShieldHistory.request('clear'); await SecretShieldDebug.request('clear');
+    await SecretShieldHistory.request('clear');
     await chrome.storage.local.remove(['policy', 'activity']);
   });
 });
@@ -157,9 +157,6 @@ for (const provider of providers) {
       expect(entry.site).toBe(provider.site); expect(entry.url).toBe('https://' + provider.host + provider.conversation);
       expect(await dashboard.evaluate(id => SecretShieldHistory.readPrompt(id), entry.id)).toBe(original);
     }
-    const logs = await dashboard.evaluate(() => SecretShieldDebug.request('export'));
-    expect(logs.entries.some(entry => entry.site === provider.site && entry.event === 'review.choice' && entry.details.action === action)).toBe(true);
-    expect(JSON.stringify(logs)).not.toContain('synthetic-provider-');
   });
 
   for (const action of ['Edit', 'Send', 'Mask']) test(provider.site + ': all credential formats preserve the selected ' + action + ' behavior', async () => {
@@ -254,10 +251,6 @@ for (const provider of providers.filter(provider => provider.site !== 'Gemini'))
   const counts = await dashboard.evaluate(() => SecretShieldStats.read());
   expect(counts.maskedPrompts).toBe(0); expect(counts.unmaskedPrompts).toBe(0);
   expect(await read(state.editor)).toBe('password=' + (action === 'Mask' ? 'xxxxxxxxxx' : 'synthetic-disabled-123'));
-  const logs = await dashboard.evaluate(() => SecretShieldDebug.request('export'));
-  const error = logs.entries.find(entry => entry.event === 'send.failed');
-  expect(error.site).toBe(provider.site);
-  expect(await dashboard.evaluate(id => SecretShieldDebug.readPrompt(id), error.promptId)).toBe('password=synthetic-disabled-123');
 });
 
 for (const host of ['copilot.microsoft.com', 'copilot.com', 'm365.cloud.microsoft', 'perplexity.ai']) for (const action of ['Edit', 'Send', 'Mask']) test(host + ': supported alias preserves ' + action + ' behavior', async () => {

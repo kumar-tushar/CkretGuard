@@ -55,12 +55,12 @@ test.afterEach(async () => {
 });
 test.afterAll(async () => { await context?.close(); });
 
-test('full page navigation supports all five views, reloads and browser back', async () => {
+test('full page navigation supports all four production views, reloads and browser back', async () => {
   await expect(dashboard.locator('#field-form')).toBeHidden();
   await expect(dashboard.locator('#protection-settings .settings')).toBeHidden();
-  await expect(dashboard.getByRole('navigation').getByRole('link')).toHaveText(['Home', 'History', 'Debug Logs', 'Privacy Policy', 'Contact Us']);
+  await expect(dashboard.getByRole('navigation').getByRole('link')).toHaveText(['Home', 'History', 'Privacy Policy', 'Contact Us']);
   await expect(dashboard.locator('#expand')).toBeHidden();
-  for (const [name, view] of [['History', 'history'], ['Debug Logs', 'debug'], ['Privacy Policy', 'privacy'], ['Contact Us', 'contact']]) {
+  for (const [name, view] of [['History', 'history'], ['Privacy Policy', 'privacy'], ['Contact Us', 'contact']]) {
     await dashboard.getByRole('navigation').getByRole('link', { name, exact: true }).click();
     await expect(dashboard.locator(`#${view}-view`)).toBeVisible();
     await expect(dashboard.getByRole('navigation').getByRole('link', { name, exact: true })).toHaveAttribute('aria-current', 'page');

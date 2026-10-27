@@ -3,7 +3,6 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import vm from 'node:vm';
 
-const debugSource = await readFile(new URL('../extension/debug.js', import.meta.url), 'utf8');
 const statsSource = await readFile(new URL('../src/stats.js', import.meta.url), 'utf8');
 const historySource = await readFile(new URL('../src/history.js', import.meta.url), 'utf8');
 const coreSource = await readFile(new URL('../src/core.js', import.meta.url), 'utf8');
@@ -24,7 +23,7 @@ function store(initial, failFirstWrite = false) {
         },
       } },
     },
-    importScripts: (...names) => names.forEach(name => vm.runInContext({ 'debug.js':debugSource, 'core.js':coreSource, 'policy.js':policySource, 'history.js':historySource, 'stats.js':statsSource }[name], context)),
+    importScripts: (...names) => names.forEach(name => vm.runInContext({ 'core.js':coreSource, 'policy.js':policySource, 'history.js':historySource, 'stats.js':statsSource }[name], context)),
   });
   vm.runInContext(workerSource, context);
   const send = (kind, count = 1, id = 'test-extension') => new Promise(resolve => {

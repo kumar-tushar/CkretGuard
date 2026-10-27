@@ -6,15 +6,6 @@
   globalThis.SecretShieldContent?.();
   const lifecycle = new AbortController();
   const capture = { capture: true, signal: lifecycle.signal };
-  const debug = globalThis.SecretShieldDebug;
-  debug?.install(lifecycle.signal);
-  function log(event, details = {}, prompt) { void debug?.record(event, details, { prompt }); }
-  function logBlocked(reason, editors) {
-    let prompt;
-    try { if (editors?.length === 1) prompt = readEditor(editors[0]); } catch {}
-    log('prompt.blocked', { reason, editors: editors?.length, attempt: debug?.attempt() }, prompt);
-  }
-  log('guard.started');
   const reconnectEvent = 'ckretguard-reconnect';
   const iconUrl = chrome.runtime.getURL('icons/orbit-pointer.png');
   const reconnectMessage = 'Extension connection lost. Refresh this chat tab before sending.';
@@ -34,10 +25,6 @@
   function show(message) {
     if (lifecycle.signal.aborted) return;
     if (!runtimeAvailable()) message = reconnectMessage;
-    log('notice.shown', { reason: !runtimeAvailable() ? 'context_invalidated' :
-      message.includes('draft or policy changed') ? 'draft_changed' :
-      message.includes('policy') || message.includes('Policy') ? 'policy_unavailable' :
-      message.includes('Send') || message.includes('send') ? 'send_unavailable' : 'unknown' });
     pendingNotice = message;
     if (!document.body) return;
     pendingNotice = '';
@@ -89,9 +76,8 @@
   function editorFrom(target) {
     return target instanceof Element ? target.closest(adapter.editors) : null;
   }
-  function denyUnavailable(event, editors) {
+  function denyUnavailable(event) {
     if (!runtimeAvailable()) {
-      logBlocked('context_invalidated', editors);
       stop(event);
       policy = null;
       clearApproval();
@@ -101,7 +87,6 @@
       return true;
     }
     if (policy) return false;
-    logBlocked(policyError ? 'policy_unavailable' : 'policy_loading', editors);
     stop(event);
     show(policyError ? 'Policy unavailable. Send is paused. Reload the extension and this tab.' : 'Loading local policy. Send is paused; try again shortly.');
     return true;
@@ -111,7 +96,6 @@
     const previous = review;
     review = null;
     if (!previous) return;
-    log('review.closed', { attempt: previous.attempt });
     previous.dialog.getAnimations().forEach(animation => animation.cancel());
     previous.dialog.close();
     previous.host.remove();
@@ -173,33 +157,28 @@
       if (buttons.length === 1) buttons[0].click();
       else form.requestSubmit();
       if (!allowed.clicked && !allowed.submitted) throw new Error('Send was not activated');
-      log('send.activated', { attempt: current.attempt, action: original ? 'Send' : 'Mask', buttons: buttons.length });
     } catch (error) { clearApproval(); throw error; }
     return true;
   }
 
   async function waitForSend(current, original) {
-    log('send.waiting', { attempt: current.attempt, action: original ? 'Send' : 'Mask' });
-    const started = performance.now();
     const deadline = performance.now() + sendWait;
     do {
       await new Promise(resolve => setTimeout(resolve, 25));
       if (submitDraft(current, original)) return true;
     } while (performance.now() < deadline);
-    log('send.failed', { attempt: current.attempt, reason: 'send_unavailable', durationMs: Math.round(performance.now() - started) });
     return false;
   }
 
   async function recordHistory(current) {
     try {
-      const result = await chrome.runtime.sendMessage({ type: 'ckretguard-history', action: 'record', prompt: current.text, count: current.count, attempt: current.attempt });
+      const result = await chrome.runtime.sendMessage({ type: 'ckretguard-history', action: 'record', prompt: current.text, count: current.count });
       if (!result?.ok) throw new Error();
-    } catch { log('history.failed', { attempt: current.attempt, operation: 'record' }); show('Send was activated, but this prompt could not be saved to History.'); }
+    } catch { show('Send was activated, but this prompt could not be saved to History.'); }
   }
 
   async function releaseOriginal(current) {
     if (review !== current || current.closing) return;
-    log('review.choice', { attempt: current.attempt, action: 'Send' });
     try {
       if (!reviewIsCurrent(current) || policy.mode === 'block') {
         closeReview();
@@ -218,14 +197,13 @@
         void globalThis.SecretShieldStats?.record('unmaskedPrompts');
         void recordHistory(current);
       } else show('Send is not ready. Your draft is still in the input box.');
-    } catch (error) {
-      log('send.failed', { attempt: current.attempt, ...debug?.errorDetails(error) });
+    } catch {
       if (review === current) closeReview();
       show('Could not activate Send. Your draft is still in the input box.');
     } finally { if (pendingSend === current) pendingSend = null; }
   }
 
-  function openReview(editor, text, findings, submitForm, attempt) {
+  function openReview(editor, text, findings, submitForm) {
     const count = findings.length;
     if (review?.editor === editor && review.text === text && review.generation === generation) return;
     closeReview(false);
@@ -289,19 +267,17 @@
     showValues();
     const send = dialog.querySelector('.send');
     if (policy.mode === 'block') send.remove();
-    const current = { host, dialog, editor, text, count, generation, submitForm, attempt, closing: false };
+    const current = { host, dialog, editor, text, count, generation, submitForm, closing: false };
     review = current;
     if (policy.mode !== 'block') send.addEventListener('click', () => releaseOriginal(current));
     dialog.querySelector('.edit').addEventListener('click', async () => {
       if (review !== current || current.closing) return;
-      log('review.choice', { attempt, action: 'Edit' });
       if (await animateDismiss(current, 'down')) closeReview();
     });
     dialog.querySelector('.mask').addEventListener('click', async () => {
       let masked;
       try {
         if (review !== current || current.closing) return;
-        log('review.choice', { attempt, action: 'Mask' });
         if (!reviewIsCurrent(current)) {
           closeReview();
           show('The draft or policy changed. Send again to review the current prompt.');
@@ -316,21 +292,19 @@
         const result = SecretShieldCore.redact(current.text, policy, current.text.length);
         closeReview(false);
         await writeEditor(editor, result.text, result.findings);
-        log('mask.applied', { attempt, count: result.count, chars: result.text.length });
-        masked = { editor, text: result.text, generation: current.generation, submitForm: current.submitForm, attempt };
+        masked = { editor, text: result.text, generation: current.generation, submitForm: current.submitForm };
         pendingSend = masked;
         if (await waitForSend(masked, false)) {
           void globalThis.SecretShieldStats?.record('maskedPrompts');
           return;
         }
         show('The masked draft is ready, but Send is unavailable. It has not been sent.');
-      } catch (error) {
-        log('send.failed', { attempt, action: 'Mask', ...debug?.errorDetails(error) });
+      } catch {
         if (review === current) closeReview();
         show('Could not send the masked prompt. Check the draft and send again.');
       } finally { if (pendingSend === masked) pendingSend = null; }
     });
-    dialog.addEventListener('cancel', event => { event.preventDefault(); if (review === current) { log('review.choice', { attempt, action: 'Cancel' }); closeReview(); } });
+    dialog.addEventListener('cancel', event => { event.preventDefault(); if (review === current) closeReview(); });
     shadow.append(style, dialog);
     (document.body ?? document.documentElement).append(host);
     dialog.showModal();
@@ -339,7 +313,6 @@
       heading.tabIndex = -1; heading.focus({ preventScroll: true });
       dialog.scrollTop = 0;
     }
-    log('review.opened', { attempt, count, mode: policy.mode });
     void globalThis.SecretShieldStats?.record('detected', count);
     if (!matchMedia('(prefers-reduced-motion: reduce)').matches) {
       dialog.animate([{ transform: 'translateY(calc(50vh + 100%))', opacity: 0 },
@@ -349,15 +322,14 @@
   }
 
   function guard(event, editors) {
-    if (denyUnavailable(event, editors)) return true;
+    if (denyUnavailable(event)) return true;
     if (editors.length !== 1) {
-      logBlocked('multiple_editors', editors);
       clearApproval();
       stop(event);
       show('Chat input could not be identified uniquely. Reload the chat tab before sending.');
       return true;
     }
-    let text, attempt;
+    let text;
     try {
       const editor = editors[0];
       text = readEditor(editor);
@@ -385,16 +357,12 @@
         clearApproval();
       }
       if (pendingSend?.editor === editor) { stop(event); return true; }
-      attempt = debug?.attempt();
-      const started = performance.now();
       const result = SecretShieldCore.redact(text, policy, text.length);
-      log('prompt.scanned', { attempt, chars: text.length, count: result.count, contextCount: result.findings.filter(finding => finding.type === 'context-secret').length, durationMs: Math.round(performance.now() - started), trigger: event.type, mode: policy.mode }, text);
       if (!result.count) return false;
       stop(event);
-      openReview(editor, text, result.findings, event.type === 'submit' ? event.target : null, attempt);
+      openReview(editor, text, result.findings, event.type === 'submit' ? event.target : null);
       return true;
-    } catch (error) {
-      log('prompt.scan_failed', { attempt, ...debug?.errorDetails(error) }, text);
+    } catch {
       stop(event);
       show('Could not scan or update this input. Send blocked. Shorten the draft or reload the chat tab.');
       return true;
@@ -443,9 +411,9 @@
     closeReview(false);
     try {
       const loaded = await SecretShieldPolicy.loadPolicy();
-      if (request === generation) { policy = loaded.policy; policyError = false; log('policy.loaded', { mode: policy.mode, count: policy.sensitiveNames.length }); }
+      if (request === generation) { policy = loaded.policy; policyError = false; }
     } catch {
-      if (request === generation) { log('policy.failed'); policyError = true; show('Policy unavailable. Send is paused.'); }
+      if (request === generation) { policyError = true; show('Policy unavailable. Send is paused.'); }
     }
   }
   const onPolicyChanged = (changes, area) => {
@@ -453,11 +421,9 @@
   };
   const onCoverage = (message, _sender, reply) => {
     if (message?.type !== 'coverage') return;
-    log('coverage.checked', { ready: runtimeAvailable() && Boolean(policy), editors: getEditors(adapter).length });
     reply({ site: adapter.name, ready: runtimeAvailable() && Boolean(policy), error: policyError, editors: getEditors(adapter).length });
   };
   function dispose() {
-    log('guard.stopped');
     ++generation;
     policy = null;
     clearApproval();

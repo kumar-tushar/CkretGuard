@@ -5,7 +5,6 @@
   function setStatus(id, text, error = false) {
     $(id).textContent = text;
     $(id).classList.toggle('error', error);
-    if (error) void globalThis.SecretShieldDebug?.record(id === 'field-status' ? 'policy.update_failed' : 'policy.failed');
   }
   $('sensitive-names').addEventListener('input', () => {
     setStatus('field-status', '');
@@ -134,7 +133,6 @@
     } catch {
       if (request !== activityRevision) return;
       for (const field of SecretShieldStats.fields) $('stat-' + field).textContent = '—';
-      void globalThis.SecretShieldDebug?.record('activity.failed');
       $('activity-status').textContent = 'Activity counts unavailable.';
       $('activity-status').hidden = false;
     }
@@ -144,19 +142,15 @@
     if (area === 'local' && Object.hasOwn(changes, SecretShieldStats.key)) void refreshActivity();
   });
   async function coverage() {
-    let context;
     try {
       const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
       if (!tab?.id) throw new Error();
-      context = { site: globalThis.SecretShieldDebug?.siteForUrl(tab.url), tabId: tab.id };
       const state = await chrome.tabs.sendMessage(tab.id, { type: 'coverage' });
       const ready = state.ready && state.editors === 1;
-      void globalThis.SecretShieldDebug?.record('coverage.checked', { ready: Boolean(ready), editors: state.editors }, context);
       $('coverage').textContent = ready ? `${state.site} input recognized · prompt guard ready.` : `${state.site} · guard unavailable or input not recognized. Reload the chat tab before sending.`;
       if (ready) $('coverage').append(document.createElement('br'), 'Coverage is limited to supported input and send controls.');
       $('coverage').hidden = false;
-    } catch { void globalThis.SecretShieldDebug?.record('coverage.failed', {}, context); $('coverage').textContent = ''; $('coverage').hidden = true; }
+    } catch { $('coverage').textContent = ''; $('coverage').hidden = true; }
   }
-  void globalThis.SecretShieldDebug?.record('dashboard.opened');
   void reload(); void coverage(); void refreshActivity();
 })();
