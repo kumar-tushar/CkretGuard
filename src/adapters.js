@@ -12,8 +12,30 @@
       editors: '[contenteditable="true"][data-testid="chat-input"], [contenteditable="true"][data-placeholder], fieldset [contenteditable="true"].ProseMirror, [contenteditable="true"].tiptap',
       send: 'button[aria-label="Send message"], button[data-testid="send-button"]',
     },
+    'gemini.google.com': {
+      name: 'Gemini',
+      editors: 'rich-textarea .ql-editor[contenteditable="true"][role="textbox"]',
+      send: 'button[aria-label="Send message"], button[aria-label="Send"], input-container button:has(mat-icon[fonticon="arrow_upward"])',
+    },
+    'chat.deepseek.com': {
+      name: 'DeepSeek',
+      editors: 'textarea#chat-input, textarea[placeholder*="DeepSeek" i]',
+      disabled: '.ds-button--disabled, .ds-icon-button--disabled',
+      send: 'button[aria-label="Send message"], button[aria-label="Send"], [role="button"][aria-label="Send message"], [role="button"][aria-label="Send"], [role="button"]:has(svg[viewBox="0 0 14 16"]), [role="button"].ds-button--primary.ds-button--circle:has(svg path[d^="M8.3125 0.980206"])',
+    },
+    'grok.com': {
+      name: 'Grok',
+      editors: '.query-bar-editor[contenteditable="true"], textarea[aria-label="Ask Grok anything"]',
+      send: 'button[data-testid="chat-submit"], form:has(.query-bar-editor) button[aria-label="Submit"]',
+    },
+    'www.meta.ai': {
+      name: 'Meta AI',
+      editors: '[contenteditable="true"][role="textbox"][data-testid="composer-input"], textarea[data-testid="composer-input"], input[aria-label="Ask Meta AI"], textarea[aria-label="Ask Meta AI"], textarea[placeholder="Ask Meta AI anything..."], [contenteditable="true"][role="textbox"][aria-label="Ask Meta AI"]',
+      send: 'button[data-testid="composer-send-button"], button[aria-label="Send"], button[aria-label="Send message"], [role="button"][aria-label="Send"], [role="button"][aria-label="Send message"]',
+    },
   };
   adapters['chat.openai.com'] = adapters['chatgpt.com'];
+  adapters['meta.ai'] = adapters['www.meta.ai'];
   function getAdapter(hostname) { return adapters[hostname] ?? null; }
   function isVisible(element) {
     return element.isConnected && element.getClientRects().length > 0 &&
@@ -23,7 +45,7 @@
     return [...document.querySelectorAll(adapter.editors)].filter(isVisible);
   }
   function readEditor(editor) {
-    return editor instanceof HTMLTextAreaElement ? editor.value : editor.innerText;
+    return editor instanceof HTMLTextAreaElement || editor instanceof HTMLInputElement ? editor.value : editor.innerText;
   }
   function editorPoint(editor, text, offset) {
     const walker = document.createTreeWalker(editor, NodeFilter.SHOW_TEXT);
@@ -42,8 +64,9 @@
     throw new Error('Editor text could not be mapped');
   }
   function writeEditor(editor, text, findings) {
-    if (editor instanceof HTMLTextAreaElement) {
-      Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value').set.call(editor, text);
+    if (editor instanceof HTMLTextAreaElement || editor instanceof HTMLInputElement) {
+      const prototype = editor instanceof HTMLTextAreaElement ? HTMLTextAreaElement.prototype : HTMLInputElement.prototype;
+      Object.getOwnPropertyDescriptor(prototype, 'value').set.call(editor, text);
     } else {
       // Use the editor's editing transaction where available (ProseMirror/React state).
       editor.focus();

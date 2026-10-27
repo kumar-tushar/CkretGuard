@@ -62,7 +62,15 @@
       <strong>CkretGuard by Orenthic</strong>
       <p>Scans on your device. Unmasked sends stay in History.</p>
       <p>Mask hides detected secrets and sends your prompt.</p>
-      <p>ChatGPT and Claude text only. Some secrets may be missed.<br>Websites can read your text before you send it.</p>
+      <p>ChatGPT, Claude, Gemini, DeepSeek, Grok and Meta AI text only. Some secrets may be missed.<br>Websites can read your text before you send it.</p>
+      <div class="provider-icons">
+        <img src="icons/providers/chatgpt.svg" alt="ChatGPT" width="20" height="20" draggable="false">
+        <img src="icons/providers/claude.svg" alt="Claude" width="20" height="20" draggable="false">
+        <img src="icons/providers/gemini.svg" alt="Gemini" width="20" height="20" draggable="false">
+        <img src="icons/providers/deepseek.svg" alt="DeepSeek" width="20" height="20" draggable="false">
+        <img src="icons/providers/grok.svg" alt="Grok" width="20" height="20" draggable="false">
+        <img src="icons/providers/meta-ai.svg" alt="Meta AI" width="20" height="20" draggable="false">
+      </div>
     </footer>
     </div>
     <section id="history-view" class="view page-view" aria-labelledby="history-title" hidden>
@@ -79,7 +87,7 @@
         <button id="debug-clear" class="secondary" type="button" disabled>Clear logs</button>
       </div>
       <output id="debug-status" aria-live="polite">Loading logs…</output>
-      <p class="debug-help">Logs are kept for seven days, with no entry-count limit. Prompt text and secret values are excluded.<br>Send events record attempts, not confirmed delivery.</p>
+      <p class="debug-help">Logs include full prompts and secret values and stay on this device for seven days. Exports include them too.<br>Send events record attempts, not confirmed delivery.</p>
       <ol id="debug-list" class="debug-list" aria-label="Extension debug logs"></ol>
       <button id="debug-more" class="secondary" type="button" hidden>Load older logs</button>
     </section>
@@ -89,8 +97,8 @@
         <h3>What stays on your device</h3><p>CkretGuard scans prompts locally. Settings, custom field names, and activity totals stay in this browser. When you choose Send for a prompt with detected secrets, History saves the complete unmasked prompt, detected count, chat site, conversation link when available, and time.</p>
         <h3>What History includes</h3><p>Only unmasked prompts submitted through CkretGuard’s Send choice are saved. Masked prompts, ordinary messages, edited drafts, and cancelled sends are not saved. History begins with this update; earlier prompts cannot be recovered. An entry records a send attempt, not confirmation that the chat service received it.</p>
         <h3>Storage and deletion</h3><p>History is stored in this extension’s local database. It is not synced or uploaded by CkretGuard, and CkretGuard does not encrypt it. Entries older than 90 days are deleted automatically while Chrome is running. You can also delete one entry, clear History, clear extension data, or uninstall the extension. Browser storage limits apply. Deleting History does not change activity totals or remove messages already shared with a chat service.</p>
-        <h3>Local debug logs</h3><p>Debug logging runs automatically while Chrome is running. It keeps events on this device for seven days without an entry-count limit, including action choices, counts, timings, tab IDs, and sanitized error locations. Prompt text, secret values, custom field names, conversation links, and raw console or error messages are excluded. You can export a local JSON file or clear the logs yourself. Entries older than seven days are deleted automatically. Browser storage limits apply.</p>
-        <h3>Coverage</h3><p>CkretGuard has no server or remote analytics. The chat website can read text entered into its own page before you send it. Protection covers recognized ChatGPT and Claude text inputs and send controls. Files, images, voice, other apps, and existing conversations are outside its scanning coverage. Detection can miss secrets.</p>
+        <h3>Local debug logs</h3><p>Debug logging runs automatically while Chrome is running. It keeps events on this device for seven days without an entry-count limit, including the chatbot name, full attempted prompts and their secret values, action choices, counts, timings, tab IDs, and sanitized error locations. Each prompt is saved once and linked to its related events. Logs are not encrypted by CkretGuard or uploaded. Local JSON exports include these prompts and secrets. Raw console and error messages remain excluded. You can clear logs yourself; entries and prompt snapshots older than seven days are deleted automatically. Browser storage limits apply.</p>
+        <h3>Coverage</h3><p>CkretGuard has no server or remote analytics. The chat website can read text entered into its own page before you send it. Protection covers recognized ChatGPT, Claude, Gemini, DeepSeek, Grok and Meta AI text inputs and send controls. Files, images, voice, other apps, and existing conversations are outside its scanning coverage. Detection can miss secrets.</p>
       </div>
     </section>
     <section id="contact-view" class="view page-view" aria-labelledby="contact-title" hidden>

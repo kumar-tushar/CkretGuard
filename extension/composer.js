@@ -144,16 +144,18 @@
     if (area === 'local' && Object.hasOwn(changes, SecretShieldStats.key)) void refreshActivity();
   });
   async function coverage() {
+    let context;
     try {
       const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
       if (!tab?.id) throw new Error();
+      context = { site: globalThis.SecretShieldDebug?.siteForUrl(tab.url), tabId: tab.id };
       const state = await chrome.tabs.sendMessage(tab.id, { type: 'coverage' });
       const ready = state.ready && state.editors === 1;
-      void globalThis.SecretShieldDebug?.record('coverage.checked', { ready: Boolean(ready), editors: state.editors });
+      void globalThis.SecretShieldDebug?.record('coverage.checked', { ready: Boolean(ready), editors: state.editors }, context);
       $('coverage').textContent = ready ? `${state.site} input recognized · prompt guard ready.` : `${state.site} · guard unavailable or input not recognized. Reload the chat tab before sending.`;
       if (ready) $('coverage').append(document.createElement('br'), 'Coverage is limited to supported input and send controls.');
       $('coverage').hidden = false;
-    } catch { void globalThis.SecretShieldDebug?.record('coverage.failed'); $('coverage').textContent = ''; $('coverage').hidden = true; }
+    } catch { void globalThis.SecretShieldDebug?.record('coverage.failed', {}, context); $('coverage').textContent = ''; $('coverage').hidden = true; }
   }
   void globalThis.SecretShieldDebug?.record('dashboard.opened');
   void reload(); void coverage(); void refreshActivity();

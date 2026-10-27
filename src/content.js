@@ -8,7 +8,12 @@
   const capture = { capture: true, signal: lifecycle.signal };
   const debug = globalThis.SecretShieldDebug;
   debug?.install(lifecycle.signal);
-  function log(event, details = {}) { void debug?.record(event, details); }
+  function log(event, details = {}, prompt) { void debug?.record(event, details, { prompt }); }
+  function logBlocked(reason, editors) {
+    let prompt;
+    try { if (editors?.length === 1) prompt = readEditor(editors[0]); } catch {}
+    log('prompt.blocked', { reason, editors: editors?.length, attempt: debug?.attempt() }, prompt);
+  }
   log('guard.started');
   const reconnectEvent = 'ckretguard-reconnect';
   const iconUrl = chrome.runtime.getURL('icons/orbit-pointer.png');
@@ -84,9 +89,9 @@
   function editorFrom(target) {
     return target instanceof Element ? target.closest(adapter.editors) : null;
   }
-  function denyUnavailable(event) {
+  function denyUnavailable(event, editors) {
     if (!runtimeAvailable()) {
-      log('prompt.blocked', { reason: 'context_invalidated' });
+      logBlocked('context_invalidated', editors);
       stop(event);
       policy = null;
       clearApproval();
@@ -96,7 +101,7 @@
       return true;
     }
     if (policy) return false;
-    log('prompt.blocked', { reason: policyError ? 'policy_unavailable' : 'policy_loading' });
+    logBlocked(policyError ? 'policy_unavailable' : 'policy_loading', editors);
     stop(event);
     show(policyError ? 'Policy unavailable. Send is paused. Reload the extension and this tab.' : 'Loading local policy. Send is paused; try again shortly.');
     return true;
@@ -156,7 +161,8 @@
       isVisible(button) && (!form || form.contains(button) || button.form === form));
     if (buttons.length > 1) throw new Error('Send control unavailable');
     if (buttons.length === 0 && !(form instanceof HTMLFormElement && current.submitForm === form)) return false;
-    if (buttons.length === 1 && (buttons[0].disabled || buttons[0].getAttribute('aria-disabled') === 'true')) return false;
+    if (buttons.length === 1 && (buttons[0].disabled || buttons[0].getAttribute('aria-disabled') === 'true' ||
+        (adapter.disabled && buttons[0].matches(adapter.disabled)))) return false;
     // Allow one click and its form submission, including a deferred framework callback.
     clearApproval();
     const allowed = { editor: current.editor, text: current.text, generation, original,
@@ -186,7 +192,7 @@
 
   async function recordHistory(current) {
     try {
-      const result = await chrome.runtime.sendMessage({ type: 'ckretguard-history', action: 'record', prompt: current.text, count: current.count });
+      const result = await chrome.runtime.sendMessage({ type: 'ckretguard-history', action: 'record', prompt: current.text, count: current.count, attempt: current.attempt });
       if (!result?.ok) throw new Error();
     } catch { log('history.failed', { attempt: current.attempt, operation: 'record' }); show('Send was activated, but this prompt could not be saved to History.'); }
   }
@@ -232,7 +238,7 @@
     const style = document.createElement('style');
     style.textContent = `
       :host{all:initial;color-scheme:dark}
-      dialog{box-sizing:border-box;width:min(460px,calc(100vw - 32px));max-height:calc(100vh - 40px);overflow:auto;border:1px solid #ffffff28;border-radius:16px;padding:26px;background:rgb(24 24 24 / .55);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);color:#dfdfdf;box-shadow:0 24px 70px #0006;font:14px/1.6 ${fontFamily}}
+      dialog{box-sizing:border-box;width:min(460px,calc(100vw - 32px));max-height:calc(100vh - 40px);overflow:auto;border:1px solid #ffffff28;border-radius:16px;padding:26px;background:rgb(24 24 24 / .9);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);color:#dfdfdf;box-shadow:0 24px 70px #0006;font:14px/1.6 ${fontFamily}}
       dialog::backdrop{background:#0003}
       .brand-row{display:flex;align-items:center;justify-content:space-between;gap:12px}
       .brand{color:#45d6c8;font-size:12px;font-weight:500;letter-spacing:1.7px;white-space:pre-wrap}
@@ -242,7 +248,6 @@
       .review-description{font-size:12px;line-height:16px;color:#bcbcbc;margin:12px 0}
       .review-values{display:grid;gap:8px;list-style:none;margin:12px 0 0;padding:0}
       .review-values li{padding:10px 12px;border-radius:8px;background:#ffffff08}
-      .finding-reason{display:block;font-size:12px;line-height:16px;color:#bcbcbc;margin-bottom:6px}
       .review-values code{display:block;font:400 12px/16px ${fontFamily};white-space:pre-wrap;overflow-wrap:anywhere;user-select:text}
       .review-more{display:block;flex:none;min-width:0;height:auto;margin:10px 0 0;padding:4px 0;border-radius:0;background:none;color:#45d6c8;font-size:12px;line-height:16px}
       .review-more[hidden]{display:none}
@@ -250,8 +255,7 @@
       button{display:inline-flex;align-items:center;justify-content:center;gap:6px;flex:1;min-width:90px;box-sizing:border-box;height:34px;border:0;outline:none;box-shadow:none;border-radius:999px;padding:0 16px;background:#303030;color:#dfdfdf;font:500 13px ${fontFamily};cursor:pointer}
       .button-icon{width:14px;height:14px;flex:0 0 14px;pointer-events:none}
       button:focus-visible{filter:brightness(1.2)}
-      button.mask{background:#1f6fc7;color:#fff}
-      button.mask:hover:enabled{background:#45d6c8;color:#181818}
+      button.mask{background:#45d6c8;color:#181818}
       button.send{color:#fff;background:#b4232d}
       button:disabled{opacity:.45;cursor:not-allowed}
     `;
@@ -269,20 +273,15 @@
     }
     dialog.querySelector('.count').textContent = String(count);
     dialog.querySelector('.caption').textContent = `${count === 1 ? 'secret' : 'secrets'} detected`;
-    const reasons = { 'provider-key': 'Known key format', jwt: 'JWT format', 'private-key': 'Private key block',
-      'connection-password': 'Connection password', authorization: 'Authorization value', 'named-secret': 'Labeled value',
-      'context-secret': 'Possible secret' };
     const list = dialog.querySelector('.review-values'), more = dialog.querySelector('.review-more');
     let shown = 0;
     function showValues() {
       const next = Math.min(shown + 50, findings.length), fragment = document.createDocumentFragment();
       while (shown < next) {
-        const finding = findings[shown], item = document.createElement('li');
-        const reason = document.createElement('span'), value = document.createElement('code');
-        reason.className = 'finding-reason';
-        reason.textContent = `${++shown}. ${reasons[finding.type] ?? 'Detected value'}`;
+        const finding = findings[shown++], item = document.createElement('li');
+        const value = document.createElement('code');
         value.textContent = text.slice(finding.start, finding.end);
-        item.append(reason, value); fragment.append(item);
+        item.append(value); fragment.append(item);
       }
       list.append(fragment);
       more.hidden = shown === findings.length;
@@ -352,17 +351,18 @@
   }
 
   function guard(event, editors) {
-    if (denyUnavailable(event)) return true;
+    if (denyUnavailable(event, editors)) return true;
     if (editors.length !== 1) {
-      log('prompt.blocked', { reason: 'multiple_editors', editors: editors.length });
+      logBlocked('multiple_editors', editors);
       clearApproval();
       stop(event);
       show('Chat input could not be identified uniquely. Reload the chat tab before sending.');
       return true;
     }
+    let text, attempt;
     try {
       const editor = editors[0];
-      const text = readEditor(editor);
+      text = readEditor(editor);
       if (approval) {
         if (approval.expires > performance.now() && approval.editor === editor &&
             approval.generation === generation && (!approval.original || policy.mode !== 'block')) {
@@ -387,15 +387,16 @@
         clearApproval();
       }
       if (pendingSend?.editor === editor) { stop(event); return true; }
-      const attempt = debug?.attempt(), started = performance.now();
+      attempt = debug?.attempt();
+      const started = performance.now();
       const result = SecretShieldCore.redact(text, policy, text.length);
-      log('prompt.scanned', { attempt, chars: text.length, count: result.count, contextCount: result.findings.filter(finding => finding.type === 'context-secret').length, durationMs: Math.round(performance.now() - started), trigger: event.type, mode: policy.mode });
+      log('prompt.scanned', { attempt, chars: text.length, count: result.count, contextCount: result.findings.filter(finding => finding.type === 'context-secret').length, durationMs: Math.round(performance.now() - started), trigger: event.type, mode: policy.mode }, text);
       if (!result.count) return false;
       stop(event);
       openReview(editor, text, result.findings, event.type === 'submit' ? event.target : null, attempt);
       return true;
     } catch (error) {
-      log('prompt.scan_failed', debug?.errorDetails(error));
+      log('prompt.scan_failed', { attempt, ...debug?.errorDetails(error) }, text);
       stop(event);
       show('Could not scan or update this input. Send blocked. Shorten the draft or reload the chat tab.');
       return true;

@@ -1,6 +1,13 @@
 'use strict';
 importScripts('core.js', 'policy.js', 'stats.js', 'history.js', 'debug.js');
 
+function diagnosticContext(sender) {
+  try {
+    const { site, tabId } = SecretShieldDebug.authorize({ action: 'record', event: 'history.failed' }, sender);
+    return { source: 'worker', ...(site ? { site, tabId } : {}) };
+  } catch { return { source: 'worker' }; }
+}
+
 void globalThis.SecretShieldDebug?.perform('prune').catch(() => {});
 void globalThis.SecretShieldDebug?.write('worker.started');
 
@@ -15,7 +22,8 @@ chrome.runtime.onInstalled.addListener(async details => {
           chrome.scripting.executeScript({ target, files: script.js, injectImmediately: true }),
           ...(script.css?.length ? [chrome.scripting.insertCSS({ target, files: script.css })] : []),
         ]);
-        void globalThis.SecretShieldDebug?.write('recovery.finished', { failed: results.filter(result => result.status === 'rejected').length });
+        void globalThis.SecretShieldDebug?.write('recovery.finished', { failed: results.filter(result => result.status === 'rejected').length },
+          { source: 'worker', site: globalThis.SecretShieldDebug?.siteForUrl(tab.url), tabId: tab.id });
       }));
     }
   } catch { void globalThis.SecretShieldDebug?.write('recovery.failed'); }
@@ -77,11 +85,12 @@ chrome.runtime.onMessage.addListener((message, sender, reply) => {
     pending = update.catch(() => {});
     update.then(result => {
       if (['record', 'remove', 'clear'].includes(message.action)) void globalThis.SecretShieldDebug?.write(
-        { record: 'history.recorded', remove: 'history.removed', clear: 'history.cleared' }[message.action], { count: message.action === 'record' ? message.count : undefined });
+        { record: 'history.recorded', remove: 'history.removed', clear: 'history.cleared' }[message.action],
+        { count: message.action === 'record' ? message.count : undefined, attempt: message.attempt }, diagnosticContext(sender));
       if (result.removed) void globalThis.SecretShieldDebug?.write('history.pruned', { removed: result.removed });
       reply({ ok: true, ...result });
       if (['record','remove','clear'].includes(message.action) || result.removed) void chrome.runtime.sendMessage({ type: 'ckretguard-history-changed' }).catch(() => {});
-    }, () => { void globalThis.SecretShieldDebug?.write('history.failed', { operation: message.action }); reply({ ok: false }); });
+    }, () => { void globalThis.SecretShieldDebug?.write('history.failed', { operation: message.action, attempt: message.attempt }, diagnosticContext(sender)); reply({ ok: false }); });
     return true;
   }
   if (message?.type !== 'ckretguard-activity') return;
@@ -98,7 +107,7 @@ chrome.runtime.onMessage.addListener((message, sender, reply) => {
     await chrome.storage.local.set({ [key]: counters });
   });
   pending = update.catch(() => {});
-  update.then(() => reply({ ok: true }), () => { void globalThis.SecretShieldDebug?.write('activity.failed'); reply({ ok: false }); });
+  update.then(() => reply({ ok: true }), () => { void globalThis.SecretShieldDebug?.write('activity.failed', {}, diagnosticContext(sender)); reply({ ok: false }); });
   return true;
 });
 

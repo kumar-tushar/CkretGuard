@@ -1,8 +1,10 @@
 (() => {
   'use strict';
   globalThis.SecretShieldDebug?.dispose();
-  const key = 'debugLogs', type = 'ckretguard-debug', RETENTION_DAYS = 7, PAGE_SIZE = 200;
+  const key = 'debugLogs', type = 'ckretguard-debug', RETENTION_DAYS = 7, PAGE_SIZE = 200, CHUNK_SIZE = 1024 * 1024;
   const RETENTION_MS = RETENTION_DAYS * 86400000;
+  const sites = { 'chatgpt.com': 'ChatGPT', 'chat.openai.com': 'ChatGPT', 'claude.ai': 'Claude', 'gemini.google.com': 'Gemini', 'chat.deepseek.com': 'DeepSeek', 'grok.com': 'Grok', 'www.meta.ai': 'Meta AI', 'meta.ai': 'Meta AI' };
+  const promptEvents = ['prompt.scanned', 'prompt.scan_failed', 'prompt.blocked'];
   const events = Object.freeze({
     'recording.started': ['info', 'Recording started'], 'recording.stopped': ['info', 'Recording stopped'],
     'worker.started': ['info', 'Extension worker started'], 'extension.installed': ['info', 'Extension installed'],
@@ -43,20 +45,30 @@
     if (uuid(value.attempt)) clean.attempt = value.attempt;
     return clean;
   }
+  function siteForUrl(value) {
+    try {
+      const url = new URL(value);
+      return url.protocol === 'https:' && !url.port && !url.username && !url.password && Object.hasOwn(sites, url.hostname) ? sites[url.hostname] : undefined;
+    } catch { return undefined; }
+  }
   function origin(sender) {
     if (sender?.id !== chrome.runtime.id) throw new Error('Invalid debug source');
     const url = new URL(sender.url);
     if (url.protocol === 'chrome-extension:' && url.hostname === chrome.runtime.id && url.pathname === '/composer.html') return { source: 'dashboard' };
-    const sites = { 'chatgpt.com': 'ChatGPT', 'chat.openai.com': 'ChatGPT', 'claude.ai': 'Claude' };
-    if (url.protocol !== 'https:' || url.port || url.username || url.password || !Object.hasOwn(sites, url.hostname) ||
+    const site = siteForUrl(sender.url);
+    if (!site ||
         !sender.tab || sender.frameId !== 0 || !Number.isSafeInteger(sender.tab.id)) throw new Error('Invalid debug source');
-    return { source: 'content', site: sites[url.hostname], tabId: sender.tab.id };
+    return { source: 'content', site, tabId: sender.tab.id };
   }
   function authorize(message, sender) {
     const context = origin(sender);
     if (message.action === 'record') {
       if (!Object.hasOwn(events, message.event) || message.event.startsWith('recording.')) throw new Error('Invalid debug event');
-    } else if (context.source !== 'dashboard' || !['list', 'clear'].includes(message.action)) throw new Error('Invalid debug action');
+      if (context.source === 'dashboard' && Object.values(sites).includes(message.site) && Number.isSafeInteger(message.tabId)) {
+        Object.assign(context, { site: message.site, tabId: message.tabId });
+      }
+    } else if (context.source !== 'dashboard' || !['list', 'read', 'clear'].includes(message.action)) throw new Error('Invalid debug action');
+    if (message.action === 'read' && (!uuid(message.id) || !Number.isSafeInteger(message.offset) || message.offset < 0)) throw new Error('Invalid debug prompt');
     if (message.action === 'list' && message.before && (!Number.isSafeInteger(message.before.time) || !uuid(message.before.id))) throw new Error('Invalid debug page');
     return context;
   }
@@ -67,7 +79,8 @@
       ['worker', 'content', 'dashboard'].includes(item.source)).map(item => ({
       id: item.id, time: item.time, event: item.event, source: item.source, details: details(item.details),
       ...(uuid(item.session) ? { session: item.session } : {}),
-      ...(['ChatGPT', 'Claude'].includes(item.site) ? { site: item.site } : {}),
+      ...(uuid(item.promptId) ? { promptId: item.promptId } : {}),
+      ...(['ChatGPT', 'Claude', 'Gemini', 'DeepSeek', 'Grok', 'Meta AI'].includes(item.site) ? { site: item.site } : {}),
       ...(Number.isSafeInteger(item.tabId) ? { tabId: item.tabId } : {}),
     }));
     return { entries, next: value?.next ?? null, count: Number.isSafeInteger(value?.count) ? value.count : entries.length, retentionDays: RETENTION_DAYS };
@@ -76,10 +89,12 @@
   const session = (() => { try { return crypto.randomUUID(); } catch { return undefined; } })();
   async function database() {
     const db = await new Promise((resolve, reject) => {
-      const request = indexedDB.open('ckretguard-debug', 1);
+      const request = indexedDB.open('ckretguard-debug', 2);
       request.onupgradeneeded = () => {
-        request.result.createObjectStore('events', { keyPath: 'id' }).createIndex('time', 'time');
-        request.result.createObjectStore('metadata');
+        const db = request.result;
+        if (!db.objectStoreNames.contains('events')) db.createObjectStore('events', { keyPath: 'id' }).createIndex('time', 'time');
+        if (!db.objectStoreNames.contains('metadata')) db.createObjectStore('metadata');
+        if (!db.objectStoreNames.contains('prompts')) db.createObjectStore('prompts', { keyPath: 'id' }).createIndex('time', 'time');
       };
       request.onsuccess = () => resolve(request.result);
       request.onerror = () => reject(new Error('Debug logs unavailable'));
@@ -112,25 +127,61 @@
   }
   function perform(action, value = {}, context = { source: 'worker' }) {
     const task = pending.then(async () => {
-      if (!['record', 'list', 'clear', 'prune'].includes(action) ||
+      if (!['record', 'list', 'read', 'clear', 'prune'].includes(action) ||
           (action === 'record' && !Object.hasOwn(events, value.event))) throw new Error('Invalid debug action');
+      if (action === 'read' && (!uuid(value.id) || !Number.isSafeInteger(value.offset) || value.offset < 0)) throw new Error('Invalid debug prompt');
       const db = await database();
       let removed = 0;
       try {
         const result = await new Promise((resolve, reject) => {
-          const transaction = db.transaction('events', 'readwrite'), records = transaction.objectStore('events');
+          const transaction = db.transaction(['events', 'prompts'], 'readwrite'), records = transaction.objectStore('events'), prompts = transaction.objectStore('prompts');
           const state = { entries: [], next: null, count: 0, retentionDays: RETENTION_DAYS };
           transaction.oncomplete = () => resolve(state);
           transaction.onabort = transaction.onerror = () => reject(new Error('Debug logs unavailable'));
           const expired = records.index('time').openKeyCursor(IDBKeyRange.upperBound(Date.now() - RETENTION_MS, true));
+          const expiredPrompts = prompts.index('time').openKeyCursor(IDBKeyRange.upperBound(Date.now() - RETENTION_MS, true));
+          expiredPrompts.onsuccess = () => {
+            const cursor = expiredPrompts.result;
+            if (cursor) { prompts.delete(cursor.primaryKey); cursor.continue(); }
+          };
           expired.onsuccess = () => {
             const cursor = expired.result;
             if (cursor) { records.delete(cursor.primaryKey); removed++; cursor.continue(); return; }
             if (action === 'record') {
-              records.add({ id: crypto.randomUUID(), time: Date.now(), ...(session ? { session } : {}),
-                event: value.event, ...context, details: details(value.details) });
-            } else if (action === 'clear') records.clear();
-            const count = records.count(); count.onsuccess = () => { state.count = count.result; };
+              const entry = { id: crypto.randomUUID(), time: Date.now(), ...(session ? { session } : {}),
+                event: value.event, ...context, details: details(value.details) };
+              const hasPrompt = context.source === 'content' && promptEvents.includes(value.event) && typeof value.prompt === 'string';
+              const promptId = entry.details.attempt ?? (hasPrompt ? entry.id : undefined);
+              if (promptId) {
+                const request = prompts.get(promptId);
+                request.onsuccess = () => {
+                  // Attempt IDs alone never grant access to another tab's snapshot.
+                  const saved = request.result, sameSource = saved?.site === context.site && saved?.tabId === context.tabId;
+                  if (hasPrompt && !saved) {
+                    prompts.put({ id: promptId, time: entry.time, site: context.site, tabId: context.tabId, prompt: value.prompt });
+                    entry.promptId = promptId;
+                  } else if (saved && sameSource) {
+                    prompts.put({ ...saved, time: entry.time });
+                    entry.promptId = promptId;
+                  }
+                  records.add(entry);
+                  const count = records.count(); count.onsuccess = () => { state.count = count.result; };
+                };
+              } else {
+                records.add(entry);
+                const count = records.count(); count.onsuccess = () => { state.count = count.result; };
+              }
+            } else if (action === 'clear') { records.clear(); prompts.clear(); }
+            if (action === 'read') {
+              const request = prompts.get(value.id);
+              request.onsuccess = () => {
+                const prompt = request.result?.prompt;
+                if (typeof prompt !== 'string') { Object.assign(state, { missing: true, text: '', done: true }); return; }
+                const text = prompt.slice(value.offset, value.offset + CHUNK_SIZE);
+                Object.assign(state, { text, done: value.offset + text.length >= prompt.length });
+              };
+            }
+            if (action !== 'record') { const count = records.count(); count.onsuccess = () => { state.count = count.result; }; }
             if (action !== 'list') return;
             const before = value.before;
             const request = records.index('time').openCursor(before ? IDBKeyRange.upperBound(before.time) : null, 'prev');
@@ -159,11 +210,13 @@
     catch { return false; }
   }
   const worker = typeof document === 'undefined';
-  async function record(event, data = {}) {
+  async function record(event, data = {}, context = {}) {
     try {
       if (!Object.hasOwn(events, event)) return false;
       if (worker) return await write(event, data);
-      return (await chrome.runtime.sendMessage({ type, action: 'record', event, details: details(data) }))?.ok === true;
+      return (await chrome.runtime.sendMessage({ type, action: 'record', event, details: details(data),
+        ...(typeof context.prompt === 'string' && promptEvents.includes(event) ? { prompt: context.prompt } : {}),
+        ...(Object.values(sites).includes(context.site) && Number.isSafeInteger(context.tabId) ? { site: context.site, tabId: context.tabId } : {}) }))?.ok === true;
     } catch { return false; }
   }
   function attempt() {
@@ -175,11 +228,30 @@
     do {
       const result = await chrome.runtime.sendMessage({ type, action: action === 'export' ? 'list' : action, ...extra, ...(before ? { before } : {}) });
       if (!result?.ok) throw new Error('Debug logs unavailable');
+      if (action === 'read') return result.state;
       state = normalize(result.state);
       entries.push(...state.entries);
       before = state.next;
     } while (action === 'export' && before);
+    if (action === 'export' && extra.includePrompts) {
+      const prompts = [];
+      for (const id of new Set(entries.map(entry => entry.promptId).filter(Boolean))) {
+        const prompt = await readPrompt(id);
+        prompts.push({ id, ...(prompt === undefined ? { missing: true } : { prompt }) });
+      }
+      return { ...state, entries, prompts };
+    }
     return { ...state, entries };
+  }
+  async function readPrompt(id) {
+    let text = '', done = false;
+    while (!done) {
+      const chunk = await request('read', { id, offset: text.length });
+      if (chunk.missing) return undefined;
+      if (typeof chunk.text !== 'string' || (!chunk.text.length && !chunk.done)) throw new Error('Debug prompt unavailable');
+      text += chunk.text; done = chunk.done;
+    }
+    return text;
   }
   function errorDetails(error) {
     const clean = {};
@@ -228,6 +300,6 @@
   }
   function dispose() { cleanup(); }
   globalThis.SecretShieldDebug = Object.freeze({ key, type, events, RETENTION_DAYS, PAGE_SIZE, RETENTION_MS, details, normalize, authorize,
-    perform, record, write, request, attempt, errorDetails, install, dispose });
+    perform, record, write, request, readPrompt, siteForUrl, attempt, errorDetails, install, dispose });
   install();
 })();

@@ -783,10 +783,26 @@ test('a policy refresh while Mask waits for synchronization cancels automatic Se
   await editor.fill(original);
   await expect.poll(()=>page.evaluate(()=>window.current)).toBe(original);
   await editor.press('Enter');
+  await page.evaluate(()=>{
+    document.querySelector('textarea').addEventListener('input',event=>{
+      if (event.target.value === 'api_key=xxxxxxxxxx') {
+        clearTimeout(window.syncTimer);
+        window.maskSyncPending=true;
+      }
+    });
+  });
   await review(page).getByRole('button',{name:'Mask',exact:true}).click();
+  await expect.poll(()=>page.evaluate(()=>window.maskSyncPending)).toBe(true);
+  const tabId=await composer.evaluate(async url=>(await chrome.tabs.query({url}))[0].id,page.url());
   await composer.evaluate(()=>chrome.storage.local.set({policy:{mode:'block'}}));
   await expect(composer.locator('input[name=mode]:checked')).toHaveValue('block');
-  await expect.poll(()=>page.evaluate(()=>window.current)).toBe('api_key=xxxxxxxxxx');
+  await expect.poll(()=>composer.evaluate(async tabId=>(await SecretShieldDebug.request('export')).entries.some(entry=>
+    entry.event==='policy.loaded' && entry.tabId===tabId && entry.details.mode==='block'),tabId)).toBe(true);
+  await page.evaluate(()=>{
+    window.current=document.querySelector('textarea').value;
+    document.querySelector('[data-testid="send-button"]').disabled=false;
+  });
+  expect(await editorText(editor)).toBe('api_key=xxxxxxxxxx');
   expect(await page.evaluate(()=>window.submitted)).toEqual([]);
   await page.close();
 });

@@ -36,6 +36,17 @@ test('history preserves complete prompts and keeps only supported conversation l
     ['https://chatgpt.com/c/abc-123?token=private#secret', 'ChatGPT', 'https://chatgpt.com/c/abc-123'],
     ['https://chat.openai.com/c/old-123', 'ChatGPT', 'https://chat.openai.com/c/old-123'],
     ['https://claude.ai/chat/abc-123', 'Claude', 'https://claude.ai/chat/abc-123'],
+    ['https://gemini.google.com/app/abc123?token=private#secret', 'Gemini', 'https://gemini.google.com/app/abc123'],
+    ['https://gemini.google.com/u/1/app/abc123', 'Gemini', 'https://gemini.google.com/u/1/app/abc123'],
+    ['https://chat.deepseek.com/a/chat/s/abc-123?token=private', 'DeepSeek', 'https://chat.deepseek.com/a/chat/s/abc-123'],
+    ['https://grok.com/c/abc-123?token=private#secret', 'Grok', 'https://grok.com/c/abc-123'],
+    ['https://www.meta.ai/c/abc-123?token=private#secret', 'Meta AI', 'https://www.meta.ai/c/abc-123'],
+    ['https://www.meta.ai/prompt/abc-123?token=private#secret', 'Meta AI', 'https://www.meta.ai/prompt/abc-123'],
+    ['https://meta.ai/prompt/abc-123?token=private', 'Meta AI', 'https://meta.ai/prompt/abc-123'],
+    ['https://meta.ai/c/abc-123?token=private', 'Meta AI', 'https://meta.ai/c/abc-123'],
+    ['https://www.meta.ai/unknown/private-value', 'Meta AI', 'https://www.meta.ai/'],
+    ['https://gemini.google.com/unknown/private-value', 'Gemini', 'https://gemini.google.com/'],
+    ['https://chat.deepseek.com/unknown/private-value', 'DeepSeek', 'https://chat.deepseek.com/'],
     ['https://chatgpt.com/unknown/private-value', 'ChatGPT', 'https://chatgpt.com/'],
   ]) {
     const entry = history.entry(prompt, 2, url);
@@ -50,7 +61,10 @@ test('history preserves complete prompts and keeps only supported conversation l
 test('history rejects unsupported sources and invalid prompt metadata', () => {
   const { history } = harness();
   for (const url of ['http://chatgpt.com/', 'https://chatgpt.com.attacker.invalid/', 'https://user:pass@chatgpt.com/',
-    'https://claude.ai:444/', 'javascript:alert(1)', undefined]) assert.throws(() => history.entry('key=synthetic-123', 1, url));
+    'https://claude.ai:444/', 'https://gemini.google.com.attacker.invalid/app/abc', 'https://chat.deepseek.com.attacker.invalid/',
+    'https://gemini.google.com:444/', 'https://user:pass@chat.deepseek.com/', 'https://grok.com.attacker.invalid/',
+    'https://www.meta.ai.attacker.invalid/', 'https://meta.ai.attacker.invalid/', 'http://grok.com/',
+    'https://meta.ai:444/', 'https://user:pass@www.meta.ai/', 'javascript:alert(1)', undefined]) assert.throws(() => history.entry('key=synthetic-123', 1, url));
   for (const prompt of ['', '  ', null, 123, {}]) assert.throws(() => history.entry(prompt, 1, 'https://chatgpt.com/'));
   for (const count of [0, -1, 1.5, '2', null, Infinity]) assert.throws(() => history.entry('key=synthetic-123', count, 'https://chatgpt.com/'));
 });

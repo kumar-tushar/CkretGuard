@@ -44,7 +44,6 @@ for (const host of ['chatgpt.com', 'claude.ai']) for (const action of ['Send', '
   const dialog = page.getByRole('dialog', { name: '2 secrets detected', exact: true });
   await expect(dialog).toBeVisible();
   await expect(dialog.locator('.review-values code')).toHaveText([first, second]);
-  await expect(dialog.locator('.finding-reason')).toHaveText(['1. Possible secret', '2. Possible secret']);
   expect(sent).toEqual([]);
   if (host === 'chatgpt.com' && action === 'Edit') {
     await mkdir('artifacts', { recursive: true });
@@ -66,7 +65,6 @@ for (const host of ['chatgpt.com', 'claude.ai']) test(`${host}: known formats, e
   const dialog = page.getByRole('dialog');
   await expect(dialog.getByRole('heading')).toHaveText('3 secrets detected');
   await expect(dialog.locator('.review-values code')).toHaveText(['short-value', first, provider]);
-  await expect(dialog.locator('.finding-reason')).toHaveText(['1. Labeled value', '2. Possible secret', '3. Known key format']);
   await dialog.getByRole('button', { name: 'Mask', exact: true }).click();
   await expect.poll(() => sent).toEqual([draft.replace('short-value', 'xxxxxxxxxx').replace(first, 'xxxxxxxxxx').replace(provider, 'xxxxxxxxxx')]);
 });

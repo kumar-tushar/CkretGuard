@@ -2,6 +2,7 @@
   'use strict';
   const $ = id => document.getElementById(id), debug = SecretShieldDebug;
   let state = null, changing = false, revision = 0, refreshTimer;
+  const expanded = new Set(), promptCache = new Map();
   function level(entry) { return ['error', 'warn'].includes(entry.details.method) ? entry.details.method : debug.events[entry.event][0]; }
   function active() { return !document.getElementById('sidebar').hidden && location.hash === '#debug'; }
   function render() {
@@ -10,6 +11,8 @@
     $('debug-more').hidden = !state?.next;
     $('debug-more').disabled = changing;
     if (!state) return;
+    const retained = new Set(state.entries.map(entry => entry.promptId));
+    for (const id of promptCache.keys()) if (!retained.has(id)) promptCache.delete(id);
     $('debug-status').textContent = `Logging automatically · Showing ${state.entries.length.toLocaleString()} of ${state.count.toLocaleString()} events.`;
     const items = state.entries.map(entry => {
       const item = document.createElement('li'), heading = document.createElement('div');
@@ -21,13 +24,35 @@
       time.dateTime = new Date(entry.time).toISOString(); time.textContent = new Date(entry.time).toLocaleString();
       heading.append(title, time);
       const context = document.createElement('p');
-      context.textContent = [entry.site ?? entry.source, entry.tabId === undefined ? '' : `Tab ${entry.tabId}`, entry.event].filter(Boolean).join(' · ');
+      context.textContent = [entry.site ? `Chatbot: ${entry.site}` : 'Extension', entry.source, entry.tabId === undefined ? '' : `Tab ${entry.tabId}`, entry.event].filter(Boolean).join(' · ');
       item.append(heading, context);
       if (Object.keys(entry.details).length) {
         const details = document.createElement('p');
         details.className = 'debug-details';
         details.textContent = Object.entries(entry.details).map(([name, value]) => `${name}: ${value}`).join(' · ');
         item.append(details);
+      }
+      if (entry.promptId) {
+        const group = document.createElement('details'), summary = document.createElement('summary'), prompt = document.createElement('pre');
+        group.className = 'debug-prompt'; summary.textContent = 'View prompt';
+        prompt.textContent = 'Loading prompt…'; group.append(summary, prompt);
+        group.open = expanded.has(entry.id);
+        async function load() {
+          try {
+            if (!promptCache.has(entry.promptId)) promptCache.set(entry.promptId, debug.readPrompt(entry.promptId));
+            const text = await promptCache.get(entry.promptId);
+            prompt.textContent = text === undefined ? 'Prompt unavailable. It may have expired or been cleared.' : text;
+          } catch {
+            promptCache.delete(entry.promptId);
+            prompt.textContent = 'Could not load this prompt. Close and reopen it to retry.';
+          }
+        }
+        group.addEventListener('toggle', () => {
+          if (group.open) { expanded.add(entry.id); void load(); }
+          else expanded.delete(entry.id);
+        });
+        if (group.open) void load();
+        item.append(group);
       }
       return item;
     });
@@ -53,7 +78,11 @@
     if (changing) return;
     changing = true; render();
     let failed = false;
-    try { ++revision; await debug.request(action, extra); state = await debug.request('list'); render(); }
+    try {
+      ++revision; await debug.request(action, extra);
+      if (action === 'clear') { expanded.clear(); promptCache.clear(); }
+      state = await debug.request('list'); render();
+    }
     catch { failed = true; }
     finally { changing = false; render(); if (failed) $('debug-status').textContent = 'Could not update logs. Try again.'; }
   }
@@ -74,9 +103,9 @@
     changing = true; render();
     let failed = false;
     try {
-      const snapshot = await debug.request('export');
+      const snapshot = await debug.request('export', { includePrompts: true });
       const data = { version: chrome.runtime.getManifest().version, exportedAt: new Date().toISOString(),
-        deliveryConfirmed: false, includesPromptText: false, ...snapshot,
+        deliveryConfirmed: false, includesPromptText: true, includesSecrets: true, ...snapshot,
         entries: snapshot.entries.map(entry => ({ ...entry, level: level(entry), message: debug.events[entry.event][1] })) };
       const url = URL.createObjectURL(new Blob([JSON.stringify(data, null, 2) + '\n'], { type: 'application/json' }));
       const link = document.createElement('a');
@@ -86,7 +115,7 @@
     finally { changing = false; render(); if (failed) $('debug-status').textContent = 'Could not export logs. Try again.'; }
   });
   function schedule() {
-    if (!active()) { clearTimeout(refreshTimer); refreshTimer = null; return; }
+    if (!active()) { clearTimeout(refreshTimer); refreshTimer = null; expanded.clear(); promptCache.clear(); return; }
     if (!refreshTimer && !changing) refreshTimer = setTimeout(() => { refreshTimer = null; void refresh(); }, 100);
   }
   chrome.storage.onChanged.addListener((changes, area) => {

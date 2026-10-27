@@ -32,8 +32,8 @@ test.beforeAll(async () => {
     args: [`--disable-extensions-except=${extension}`, `--load-extension=${extension}`] });
   worker = context.serviceWorkers()[0] ?? await context.waitForEvent('serviceworker');
   extensionId = new URL(worker.url()).hostname;
-  await context.route(/^https:\/\/(chatgpt\.com|claude\.ai)\//, route => route.fulfill({ contentType: 'text/html', body: `<!doctype html><html lang="en"><head><title>Synthetic debug test</title></head><body><form>
-    ${new URL(route.request().url()).hostname === 'claude.ai' ? '<div contenteditable="true" data-testid="chat-input" style="white-space:pre-wrap;min-height:80px"></div>' : '<textarea id="prompt-textarea"></textarea>'}
+  await context.route(/^https:\/\/(chatgpt\.com|claude\.ai|www\.meta\.ai)\//, route => route.fulfill({ contentType: 'text/html', body: `<!doctype html><html lang="en"><head><title>Synthetic debug test</title></head><body><form>
+    ${new URL(route.request().url()).hostname === 'claude.ai' ? '<div contenteditable="true" data-testid="chat-input" style="white-space:pre-wrap;min-height:80px"></div>' : new URL(route.request().url()).hostname === 'www.meta.ai' ? '<div contenteditable="true" data-testid="composer-input" role="textbox" style="white-space:pre-wrap;min-height:80px"></div>' : '<textarea id="prompt-textarea"></textarea>'}
     <button data-testid="send-button" aria-label="Send message">Send</button></form>
     <script>window.sent=[];const editor=document.querySelector('textarea,[contenteditable]');const send=()=>window.sent.push(editor.value??editor.innerText);
     editor.addEventListener('keydown',event=>{if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();send();}});
@@ -68,7 +68,7 @@ test('Debug Logs captures immediately without recording controls and matches the
   await expect.poll(events).toContain('mask.applied');
 });
 
-for (const host of ['chatgpt.com', 'claude.ai']) for (const action of ['Send', 'Edit', 'Mask']) test(`${host}: debug timeline records ${action} without prompts or secrets`, async () => {
+for (const host of ['chatgpt.com', 'claude.ai']) for (const action of ['Send', 'Edit', 'Mask']) test(`${host}: debug timeline links ${action} to a complete local prompt and chatbot`, async () => {
   await openLogs();
   const { page } = await chat(host);
   await choose(page, action);
@@ -81,13 +81,19 @@ for (const host of ['chatgpt.com', 'claude.ai']) for (const action of ['Send', '
   expect(attempt.map(entry => entry.event)).toEqual(expect.arrayContaining(['prompt.scanned', 'review.opened', 'review.choice', 'review.closed']));
   expect(attempt.find(entry => entry.event === 'prompt.scanned').details).toMatchObject({ count: 2 });
   expect(JSON.stringify(state)).not.toMatch(/synthetic-debug-value|client_secret|api_key=|never-log-this|private=/);
+  expect(choice.promptId).toMatch(/^[a-f0-9-]{36}$/);
+  expect(await dashboard.evaluate(id => SecretShieldDebug.readPrompt(id), choice.promptId)).toBe('api_key=synthetic-debug-value-123\nclient_secret=synthetic-debug-value-456');
+  const card = dashboard.locator('.debug-entry').filter({ hasText: 'Review action selected' }).first();
+  await expect(card).toContainText('Chatbot: ' + choice.site);
+  await card.locator('summary').click();
+  await expect(card.locator('pre')).toHaveText('api_key=synthetic-debug-value-123\nclient_secret=synthetic-debug-value-456');
   expect(await page.evaluate(() => window.sent)).toEqual(action === 'Edit' ? [] :
     [action === 'Mask' ? 'api_key=xxxxxxxxxx\nclient_secret=xxxxxxxxxx' : 'api_key=synthetic-debug-value-123\nclient_secret=synthetic-debug-value-456']);
   if (action === 'Mask') expect(attempt.map(entry => entry.event)).toContain('mask.applied');
   if (action === 'Edit') expect(attempt.map(entry => entry.event)).not.toContain('send.activated');
 });
 
-test('automatic debug logging exports safe JSON, survives page reload, and clearing does not stop capture or change History', async () => {
+test('automatic debug logging exports complete local prompts, survives page reload, and clearing does not stop capture or change History', async () => {
   await openLogs();
   const { page } = await chat('chatgpt.com'); await choose(page, 'Send');
   await expect.poll(events).toContain('history.recorded');
@@ -98,11 +104,16 @@ test('automatic debug logging exports safe JSON, survives page reload, and clear
   await dashboard.locator('#debug-export').click();
   const file = await download, exported = JSON.parse(await readFile(await file.path(), 'utf8'));
   expect(file.suggestedFilename()).toMatch(/^ckretguard-debug-.*\.json$/);
-  expect(exported).toMatchObject({ version: '1.0.0', deliveryConfirmed: false, includesPromptText: false });
+  expect(exported).toMatchObject({ version: '1.0.0', deliveryConfirmed: false, includesPromptText: true, includesSecrets: true });
   expect(exported.entries.some(entry => entry.event === 'send.activated')).toBe(true);
-  expect(JSON.stringify(exported)).not.toMatch(/synthetic-debug-value|never-log-this|private=/);
+  expect(exported.prompts).toHaveLength(1);
+  expect(exported.prompts[0].prompt).toBe('api_key=synthetic-debug-value-123\nclient_secret=synthetic-debug-value-456');
+  expect(exported.entries.find(entry => entry.event === 'history.recorded')).toMatchObject({ site: 'ChatGPT', promptId: exported.prompts[0].id });
+  expect(JSON.stringify(exported)).not.toMatch(/never-log-this|private=/);
+  const promptId = exported.prompts[0].id;
   await dashboard.locator('#debug-clear').click();
   await expect(dashboard.locator('#debug-list li')).toHaveCount(0);
+  expect(await dashboard.evaluate(id => SecretShieldDebug.readPrompt(id), promptId)).toBeUndefined();
   expect(await dashboard.evaluate(() => SecretShieldHistory.request('list'))).toEqual(saved.history);
   expect(await dashboard.evaluate(() => SecretShieldStats.read())).toEqual(saved.activity);
   await choose(page, 'Mask');
@@ -148,6 +159,8 @@ test('debug timeline shows scan failures and disabled send controls without clai
   await page.locator('textarea').fill('Authorization: Bearer');
   await page.locator('textarea').press('Enter');
   await expect.poll(events).toContain('prompt.scan_failed');
+  const scanFailure = (await logs()).entries.find(entry => entry.event === 'prompt.scan_failed');
+  expect(await dashboard.evaluate(id => SecretShieldDebug.readPrompt(id), scanFailure.promptId)).toBe('Authorization: Bearer');
   await page.locator('textarea').fill('api_key=synthetic-debug-unavailable-123');
   await page.locator('textarea').press('Enter');
   await page.getByRole('button', { name: 'Send message', exact: true }).evaluate(button => { button.disabled = true; });
@@ -159,6 +172,59 @@ test('debug timeline shows scan failures and disabled send controls without clai
   await dashboard.bringToFront();
   await mkdir(path.join(root, 'artifacts'), { recursive: true });
   await dashboard.screenshot({ path: 'artifacts/debug-logs-preview.png', fullPage: true });
+});
+
+test('Meta AI failures expose their original prompt and chatbot without changing the unsent masked draft', async () => {
+  await openLogs();
+  const { page } = await chat('www.meta.ai');
+  const original = 'api_key=synthetic-meta-failed-123\nclient_secret=synthetic-meta-failed-456';
+  const editor = page.locator('[contenteditable]');
+  await editor.fill(original); await editor.press('Enter');
+  await page.getByRole('button', { name: 'Send message', exact: true }).evaluate(button => { button.disabled = true; });
+  await page.getByRole('dialog').getByRole('button', { name: 'Mask', exact: true }).click();
+  await expect.poll(events).toContain('send.failed');
+  const failure = (await logs()).entries.find(entry => entry.event === 'send.failed');
+  expect(failure.site).toBe('Meta AI');
+  expect(await dashboard.evaluate(id => SecretShieldDebug.readPrompt(id), failure.promptId)).toBe(original);
+  const card = dashboard.locator('.debug-entry').filter({ hasText: 'Could not activate the website send control' }).first();
+  await expect(card).toContainText('Chatbot: Meta AI'); await card.locator('summary').click();
+  await expect(card.locator('pre')).toHaveText(original);
+  expect(await editor.innerText()).toBe('api_key=xxxxxxxxxx\nclient_secret=xxxxxxxxxx');
+  expect(await page.evaluate(() => window.sent)).toEqual([]);
+});
+
+test('large prompt snapshots stay complete, render as text, and cannot be read or overwritten by another chat tab', async () => {
+  await openLogs();
+  const { page, tabId } = await chat('chatgpt.com'), other = await chat('claude.ai');
+  const attempt = crypto.randomUUID(), prompt = '<img src=x onerror="window.syntheticLogInjection=true">\n' + 'Synthetic 🛡️ local log line.\n'.repeat(85000);
+  await worker.evaluate(async ({ tabId, attempt, prompt }) => chrome.scripting.executeScript({ target: { tabId }, func: async ({ attempt, prompt }) => {
+    await SecretShieldDebug.record('prompt.scanned', { attempt, count: 0, chars: prompt.length }, { prompt });
+    await SecretShieldDebug.record('send.failed', { attempt, reason: 'send_unavailable' });
+  }, args: [{ attempt, prompt }] }), { tabId, attempt, prompt });
+  const entries = (await logs()).entries.filter(entry => entry.details.attempt === attempt);
+  expect(entries).toHaveLength(2); expect(entries.every(entry => entry.promptId === attempt)).toBe(true);
+  expect(await dashboard.evaluate(id => SecretShieldDebug.readPrompt(id), attempt)).toBe(prompt);
+  const blocked = await worker.evaluate(async ({ tabId, attempt }) => chrome.scripting.executeScript({ target: { tabId }, func: async attempt => {
+    const denied = await chrome.runtime.sendMessage({ type: SecretShieldDebug.type, action: 'read', id: attempt, offset: 0 });
+    await SecretShieldDebug.record('prompt.scanned', { attempt, count: 1 }, { prompt: 'synthetic-other-tab-value' });
+    return denied;
+  }, args: [attempt] }), { tabId: other.tabId, attempt });
+  expect(blocked[0].result).toEqual({ ok: false });
+  const foreign = (await logs()).entries.find(entry => entry.site === 'Claude' && entry.details.attempt === attempt);
+  expect(foreign.promptId).toBeUndefined();
+  expect(await dashboard.evaluate(id => SecretShieldDebug.readPrompt(id), attempt)).toBe(prompt);
+  const card = dashboard.locator('.debug-entry').filter({ hasText: 'Could not activate the website send control' }).first();
+  await card.locator('summary').click(); await expect(card.locator('pre')).toHaveText(prompt);
+  expect(await dashboard.locator('.debug-prompt img').count()).toBe(0);
+  expect(await dashboard.evaluate(() => window.syntheticLogInjection)).toBeUndefined();
+  await worker.evaluate(() => SecretShieldDebug.write('worker.started'));
+  await expect(card.locator('details')).toHaveAttribute('open', '');
+  await expect(card.locator('pre')).toHaveText(prompt);
+  const download = dashboard.waitForEvent('download'); await dashboard.locator('#debug-export').click();
+  const exported = JSON.parse(await readFile(await (await download).path(), 'utf8'));
+  expect(exported.prompts).toHaveLength(1); expect(exported.prompts[0].prompt).toBe(prompt);
+  expect(exported.includesPromptText).toBe(true);
+  expect(await page.evaluate(() => window.sent)).toEqual([]);
 });
 
 for (const host of ['chatgpt.com', 'claude.ai']) test(`${host}: recording and the current draft survive an extension reload`, async () => {
@@ -197,17 +263,21 @@ test('automatic logs retain more than 1,000 events for seven days, paginate and 
   await dashboard.evaluate(now => { globalThis.debugOriginalNow = Date.now; Date.now = () => now; }, now);
   try {
     const seeded = await dashboard.evaluate(async now => {
-      const db = await new Promise((resolve, reject) => { const open = indexedDB.open('ckretguard-debug', 1); open.onsuccess = () => resolve(open.result); open.onerror = () => reject(open.error); });
-      const base = { event: 'prompt.scanned', source: 'content', site: 'ChatGPT', tabId: 42, details: { count: 1 } };
+      const db = await new Promise((resolve, reject) => { const open = indexedDB.open('ckretguard-debug', 2); open.onsuccess = () => resolve(open.result); open.onerror = () => reject(open.error); });
+      const recentPrompt = crypto.randomUUID(), boundaryPrompt = crypto.randomUUID(), expiredPrompt = crypto.randomUUID();
+      const base = { event: 'prompt.scanned', source: 'content', site: 'ChatGPT', tabId: 42, promptId: recentPrompt, details: { count: 1 } };
       const entries = Array.from({ length: 1505 }, () => ({ ...base, id: crypto.randomUUID(), time: now - 6 * 86400000 }));
-      const boundary = { ...base, id: crypto.randomUUID(), time: now - 7 * 86400000 };
-      const expired = { ...base, id: crypto.randomUUID(), time: now - 7 * 86400000 - 1 };
+      const boundary = { ...base, id: crypto.randomUUID(), promptId: boundaryPrompt, time: now - 7 * 86400000 };
+      const expired = { ...base, id: crypto.randomUUID(), promptId: expiredPrompt, time: now - 7 * 86400000 - 1 };
       await new Promise((resolve, reject) => {
-        const transaction = db.transaction('events', 'readwrite');
+        const transaction = db.transaction(['events', 'prompts'], 'readwrite');
         for (const entry of [...entries, boundary, expired]) transaction.objectStore('events').add(entry);
+        for (const [id, time] of [[recentPrompt, entries[0].time], [boundaryPrompt, boundary.time], [expiredPrompt, expired.time]]) {
+          transaction.objectStore('prompts').put({ id, time, site: 'ChatGPT', tabId: 42, prompt: 'synthetic-retained-prompt-' + id });
+        }
         transaction.oncomplete = resolve; transaction.onerror = transaction.onabort = () => reject(transaction.error);
       });
-      db.close(); return { boundary: boundary.id, expired: expired.id };
+      db.close(); return { boundary: boundary.id, expired: expired.id, recentPrompt, boundaryPrompt, expiredPrompt };
     }, now);
     const state = await logs();
     expect(state.count).toBe(1506); expect(state.entries.length).toBe(1506); expect(state.retentionDays).toBe(7);
@@ -223,8 +293,11 @@ test('automatic logs retain more than 1,000 events for seven days, paginate and 
     const download = dashboard.waitForEvent('download'); await dashboard.locator('#debug-export').click();
     const exported = JSON.parse(await readFile(await (await download).path(), 'utf8'));
     expect(exported.entries.length).toBe(1507);
+    expect(exported.prompts).toHaveLength(2);
+    expect(exported.prompts.map(prompt => prompt.id).sort()).toEqual([seeded.recentPrompt, seeded.boundaryPrompt].sort());
+    expect(await dashboard.evaluate(id => SecretShieldDebug.readPrompt(id), seeded.expiredPrompt)).toBeUndefined();
     const databaseCount = await dashboard.evaluate(async () => {
-      const db = await new Promise(resolve => { const open = indexedDB.open('ckretguard-debug', 1); open.onsuccess = () => resolve(open.result); });
+      const db = await new Promise(resolve => { const open = indexedDB.open('ckretguard-debug', 2); open.onsuccess = () => resolve(open.result); });
       const result = await new Promise(resolve => { const request = db.transaction('events').objectStore('events').count(); request.onsuccess = () => resolve(request.result); });
       db.close(); return result;
     });
@@ -255,4 +328,37 @@ test('the former disabled recording preference cannot stop capture and old logs 
   expect((await logs()).entries.map(entry => entry.id)).not.toContain(id);
   await expect.poll(events).toContain('guard.started');
   expect(await dashboard.evaluate(() => SecretShieldDebug.request('toggle', { enabled: false }).then(() => true, () => false))).toBe(false);
+});
+
+test('upgrading the original log database preserves existing entries and enables new prompt snapshots', async () => {
+  await openLogs();
+  const id = crypto.randomUUID();
+  await dashboard.evaluate(async id => {
+    await new Promise((resolve, reject) => {
+      const request = indexedDB.deleteDatabase('ckretguard-debug'); request.onsuccess = resolve; request.onerror = () => reject(request.error);
+    });
+    const db = await new Promise((resolve, reject) => {
+      const request = indexedDB.open('ckretguard-debug', 1);
+      request.onupgradeneeded = () => {
+        request.result.createObjectStore('events', { keyPath: 'id' }).createIndex('time', 'time');
+        request.result.createObjectStore('metadata');
+      };
+      request.onsuccess = () => resolve(request.result); request.onerror = () => reject(request.error);
+    });
+    await new Promise((resolve, reject) => {
+      const transaction = db.transaction(['events', 'metadata'], 'readwrite');
+      transaction.objectStore('events').add({ id, time: Date.now(), event: 'worker.started', source: 'worker', details: {} });
+      transaction.objectStore('metadata').put(true, 'legacy-migrated');
+      transaction.oncomplete = resolve; transaction.onabort = transaction.onerror = () => reject(transaction.error);
+    });
+    db.close();
+  }, id);
+  const replacement = context.waitForEvent('serviceworker');
+  await worker.evaluate(() => chrome.runtime.reload()); worker = await replacement;
+  if (dashboard.isClosed()) dashboard = await context.newPage();
+  await openLogs();
+  expect((await logs()).entries.some(entry => entry.id === id)).toBe(true);
+  const { page } = await chat('claude.ai'); await choose(page, 'Edit');
+  const choice = (await logs()).entries.find(entry => entry.event === 'review.choice');
+  expect(await dashboard.evaluate(id => SecretShieldDebug.readPrompt(id), choice.promptId)).toBe('api_key=synthetic-debug-value-123\nclient_secret=synthetic-debug-value-456');
 });

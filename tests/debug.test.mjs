@@ -32,6 +32,20 @@ test('debug clients capture automatically without reading an enable preference o
   assert.throws(() => debug.authorize({ action: 'toggle', enabled: false }, dashboard));
 });
 
+test('prompt snapshots are explicit and chatbot labels accept only supported URLs', async () => {
+  const { debug, messages } = harness(true), attempt = webcrypto.randomUUID();
+  const prompt = 'api_key=synthetic-snapshot-123';
+  await debug.record('prompt.scanned', { attempt, count: 1 }, { prompt });
+  assert.equal(messages[0].prompt, prompt);
+  assert.equal(messages[0].details.prompt, undefined);
+  await debug.record('console.message', { method: 'log' }, { prompt });
+  assert.equal(messages[1].prompt, undefined);
+  assert.equal(debug.siteForUrl('https://www.meta.ai/prompt/abc'), 'Meta AI');
+  for (const url of ['https://www.meta.ai.attacker.invalid/', 'https://meta.ai:444/', 'http://grok.com/', 'https://user:pass@grok.com/', undefined]) assert.equal(debug.siteForUrl(url), undefined);
+  assert.deepEqual(plain(debug.authorize({ action: 'record', event: 'coverage.failed', site: 'Meta AI', tabId: 7 }, dashboard)), { source: 'dashboard', site: 'Meta AI', tabId: 7 });
+  assert.deepEqual(plain(debug.authorize({ action: 'record', event: 'send.failed', site: 'Grok', tabId: 99 }, content)), { source: 'content', site: 'Claude', tabId: 7 });
+});
+
 test('seven-day retention keeps the exact cutoff and more than 1,000 recent events', () => {
   const { debug, now } = harness();
   const entry = { id: webcrypto.randomUUID(), time: now, event: 'worker.started', source: 'worker', details: {} };
@@ -51,6 +65,11 @@ test('debug schema discards prompts, field names, URLs, arbitrary messages and u
   assert.deepEqual(plain(clean), { count: 2, chars: 27, durationMs: 100, method: 'error', errorName: 'TypeError' });
   assert.deepEqual(plain(debug.details(null)), {});
   assert.deepEqual(plain(debug.authorize({ action: 'record', event: 'send.failed' }, content)), { source: 'content', site: 'Claude', tabId: 7 });
+  for (const [host, site] of [['gemini.google.com', 'Gemini'], ['chat.deepseek.com', 'DeepSeek'], ['grok.com', 'Grok'], ['www.meta.ai', 'Meta AI'], ['meta.ai', 'Meta AI']]) {
+    const sender = { ...content, url: `https://${host}/?token=never-stored` };
+    assert.deepEqual(plain(debug.authorize({ action: 'record', event: 'send.failed' }, sender)), { source: 'content', site, tabId: 7 });
+    assert.throws(() => debug.authorize({ action: 'record', event: 'send.failed' }, { ...sender, url: `https://${host}.attacker.invalid/` }));
+  }
   assert.throws(() => debug.authorize({ action: 'record', event: 'constructor' }, content));
 });
 
@@ -59,11 +78,14 @@ test('only the extension dashboard can read or clear debug logs; recording contr
   for (const sender of [content, { ...content, id: 'other' }, { ...content, frameId: 1 },
     { ...content, url: 'https://claude.ai.attacker.invalid' }, { ...content, url: 'http://claude.ai/' },
     { ...dashboard, url: 'chrome-extension://test-extension/other.html' }, { ...dashboard, id: 'other' }]) {
-    for (const action of ['list', 'clear']) assert.throws(() => debug.authorize({ action }, sender));
+    for (const action of ['list', 'read', 'clear']) assert.throws(() => debug.authorize({ action, id: webcrypto.randomUUID(), offset: 0 }, sender));
   }
   for (const action of ['list', 'clear']) assert.deepEqual(plain(debug.authorize({ action }, dashboard)), { source: 'dashboard' });
   for (const enabled of [true, false]) assert.throws(() => debug.authorize({ action: 'toggle', enabled }, dashboard));
   assert.throws(() => debug.authorize({ action: 'list', before: { time: -1, id: 'invalid' } }, dashboard));
+  assert.deepEqual(plain(debug.authorize({ action: 'read', id: webcrypto.randomUUID(), offset: 0 }, dashboard)), { source: 'dashboard' });
+  for (const offset of [-1, 1.5, Infinity, '0']) assert.throws(() => debug.authorize({ action: 'read', id: webcrypto.randomUUID(), offset }, dashboard));
+  assert.throws(() => debug.authorize({ action: 'read', id: 'invalid', offset: 0 }, dashboard));
 });
 
 test('diagnostic ID and messaging failures are contained and errors retain only safe locations', async () => {
@@ -85,7 +107,7 @@ test('worker debug messages validate senders and never return stored logs to con
   state.worker();
   const response = await state.send({ action: 'record', event: 'prompt.scanned', details: { count: 1 } }, content);
   assert.deepEqual(plain(response), { ok: true });
-  for (const action of ['list', 'clear', 'toggle']) assert.equal((await state.send({ action, enabled: false }, content)).ok, false);
+  for (const action of ['list', 'read', 'clear', 'toggle']) assert.equal((await state.send({ action, id: webcrypto.randomUUID(), offset: 0, enabled: false }, content)).ok, false);
   assert.equal((await state.send({ action: 'toggle', enabled: false }, dashboard)).ok, false);
   const listed = await state.send({ action: 'list' }, dashboard);
   assert.equal(listed.ok, true); assert.deepEqual(plain(listed.state.entries), []);
@@ -102,4 +124,22 @@ test('export retrieves every page rather than truncating to the on-screen batch'
       next: page === 1 ? { time: now, id: 'a'.repeat(36) } : null } };
   };
   assert.equal((await debug.request('export')).entries.length, 2);
+});
+
+test('explicit prompt export reads bounded chunks and deduplicates shared snapshots', async () => {
+  const { debug, context, now } = harness(true), id = webcrypto.randomUUID();
+  const prompt = 'synthetic-🛡️\n'.repeat(180000), offsets = [];
+  context.chrome.runtime.sendMessage = async message => {
+    if (message.action === 'read') {
+      assert.equal(message.id, id); offsets.push(message.offset);
+      const text = prompt.slice(message.offset, message.offset + 1024 * 1024);
+      return { ok: true, state: { text, done: message.offset + text.length >= prompt.length } };
+    }
+    return { ok: true, state: { entries: ['prompt.scanned', 'send.failed'].map(event => ({ id: webcrypto.randomUUID(), time: now,
+      event, source: 'content', site: 'Meta AI', tabId: 7, promptId: id, details: {} })), next: null, count: 2 } };
+  };
+  const snapshot = await debug.request('export', { includePrompts: true });
+  assert.equal(snapshot.prompts.length, 1); assert.equal(snapshot.prompts[0].prompt, prompt);
+  assert.equal(offsets.length > 1, true);
+  assert.equal(snapshot.entries.every(entry => entry.promptId === id), true);
 });
