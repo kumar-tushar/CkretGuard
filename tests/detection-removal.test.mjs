@@ -22,6 +22,33 @@ test('distant candidates, code expressions and repeated values remain unchanged 
   }
 });
 
+test('later keyword, grouped-credential and custom-field additions are also inactive', () => {
+  const first = 'Q7mV8z2R9tA4nP6xL3cD', second = 'B9wK4s8H2yF7vN5rT6aZ';
+  const sensitiveNames = Array.from({ length: MAX_CUSTOM_FIELDS }, (_, i) => `dataset_${i}`);
+  const inputs = [
+    'api_key\n\n311331313113',
+    `My API key and client secret are at the bottom.\nSome explanation.\n${first}\n${second}`,
+    `${first}\nSome explanation.\n${second}\nThe API keys are above.`,
+    'client id and client secret are\nFdenirddvj\nGhllgdfjkg',
+    `api_key=short\n${first}\n${first}\n${second}`,
+    sensitiveNames.map((name, i) => `${name}=${first}${i}`).join('\n'),
+    sensitiveNames.join(', ') + ` are below.\n${first}\n${second}`,
+  ];
+  for (const field of ['key', 'api_key', 'api_token', 'client_secret', 'access_token', 'client_id']) {
+    for (const join of ['', ' ', '_', '-', '\t', '_- ']) {
+      const label = field.split('_').join(join).toUpperCase();
+      for (const separator of [': ', ' = ', ' is ', '：', '＝', '\n\n']) inputs.push(`${label}${separator}${first}`);
+    }
+  }
+  for (const mode of ['redact', 'block']) for (const protectClientIds of [true, false]) {
+    const policy = { mode, protectClientIds, sensitiveNames };
+    for (const input of inputs) {
+      assert.deepEqual(scan(input, policy), [], input);
+      assert.deepEqual(redact(input, policy), { text: input, count: 0, findings: [] }, input);
+    }
+  }
+});
+
 test('policy settings, custom field limits and masking interface remain available', () => {
   const sensitiveNames = Array.from({ length: MAX_CUSTOM_FIELDS }, (_, i) => `dataset_${i}`);
   const policy = { mode: 'block', protectClientIds: false, sensitiveNames };
