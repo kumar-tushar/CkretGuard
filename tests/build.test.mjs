@@ -11,7 +11,7 @@ async function fixture() {
   await Promise.all(['scripts', 'src', 'extension'].map(name => mkdir(path.join(root, name))));
   await cp(new URL('../scripts/build.mjs', import.meta.url), path.join(root, 'scripts/build.mjs'));
   await writeFile(path.join(root, 'extension/manifest.json'), JSON.stringify({ version: '1.0.0' }));
-  for (const name of ['core', 'policy', 'stats', 'history', 'adapters', 'content']) await writeFile(path.join(root, `src/${name}.js`), `globalThis.${name} = 'complete';\n`);
+  for (const name of ['gitleaks-rules', 'core', 'policy', 'stats', 'history', 'adapters', 'content']) await writeFile(path.join(root, `src/${name}.js`), `globalThis[${JSON.stringify(name)}] = 'complete';\n`);
   return root;
 }
 function build(root, inspect = false) {
@@ -24,7 +24,7 @@ function build(root, inspect = false) {
   return (async () => {
     let reads = 0;
     while (inspect && running) {
-      for (const name of ['core', 'policy', 'stats', 'history', 'adapters', 'content']) {
+      for (const name of ['gitleaks-rules', 'core', 'policy', 'stats', 'history', 'adapters', 'content']) {
         const source = await readFile(path.join(root, `dist/${name}.js`), 'utf8');
         assert.match(source, /complete/);
         new vm.Script(source);

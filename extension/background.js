@@ -1,5 +1,5 @@
 'use strict';
-importScripts('core.js', 'policy.js', 'stats.js', 'history.js');
+importScripts('gitleaks-rules.js', 'core.js', 'policy.js', 'stats.js', 'history.js');
 
 async function clearDevelopmentLogs() {
   try { await chrome.storage.local.remove('debugLogs'); } catch {}

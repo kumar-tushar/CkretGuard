@@ -106,7 +106,7 @@ for (const host of ['chatgpt.com', 'claude.ai', 'gemini.google.com', 'chat.deeps
       window.chrome = { storage: { local: { get: async () => ({}) }, managed: { get: async () => ({}) }, onChanged: { addListener() {} } },
         runtime: { id: 'synthetic-extension', getURL: file => `chrome-extension://synthetic/${file}`, onMessage: { addListener: listener => { window.coverageListener = listener; } } } };
     });
-    for (const name of ['core', 'policy', 'adapters', 'content']) await page.addScriptTag({ content: await readFile(path.join(root, 'src', name + '.js'), 'utf8') });
+    for (const name of ['gitleaks-rules', 'core', 'policy', 'adapters', 'content']) await page.addScriptTag({ content: await readFile(path.join(root, 'src', name + '.js'), 'utf8') });
     await expect.poll(() => page.evaluate(() => new Promise(resolve => window.coverageListener({ type: 'coverage' }, null, resolve)))).toMatchObject({ ready: true });
     await page.evaluate(missing => {
       if (missing === 'runtime') delete chrome.runtime;

@@ -95,3 +95,59 @@ for (const action of ['Send', 'Edit', 'Mask']) test(`review still handles ${acti
     [action === 'Mask' ? 'Review xxxxxxxxxx' : 'Review fixture-only-value']);
   if (action === 'Edit') { await expect(editor).toHaveValue('Review fixture-only-value'); await expect(editor).toBeFocused(); }
 });
+
+const first = 'N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8', second = 'B9wK4s8H2yF7vN5rT6aZ';
+for (const [host] of providers) for (const action of ['Send', 'Edit', 'Mask']) test(`${host}: Gitleaks findings preserve ${action} for repeated Enter and click attempts`, async () => {
+  const { page, editor } = await chat(host), submitted = [];
+  const draft = `Keep this text.\napi_key="${first}"\nclient_secret=${second}`;
+  for (const trigger of ['Enter', 'click']) {
+    await editor.fill(draft);
+    const original = await editor.evaluate(el => el.value ?? el.innerText);
+    if (trigger === 'Enter') await editor.press('Enter');
+    else {
+      // The guard opens on pointerdown. Use the same native mouse gesture as
+      // the existing submission tests, without retrying a now-covered button.
+      const button = await page.getByRole('button', { name: /^(?:Send message|Send question|Submit)$/ }).boundingBox();
+      await page.mouse.click(button.x + button.width / 2, button.y + button.height / 2);
+    }
+    const dialog = page.getByRole('dialog', { name: '2 secrets detected', exact: true });
+    await expect(dialog).toBeVisible();
+    await expect(dialog.locator('.review-values code')).toHaveText([first, second]);
+    expect(await page.evaluate(() => window.sent)).toEqual(submitted);
+    await dialog.getByRole('button', { name: action, exact: true }).click();
+    await expect(dialog).toBeHidden();
+    if (action === 'Edit') {
+      expect(await editor.evaluate(el => el.value ?? el.innerText)).toBe(original);
+      await expect(editor).toBeFocused();
+    } else submitted.push(action === 'Send' ? original : original.replace(first, 'xxxxxxxxxx').replace(second, 'xxxxxxxxxx'));
+    await expect.poll(() => page.evaluate(() => window.sent)).toEqual(submitted);
+  }
+  await expect.poll(() => dashboard.evaluate(() => SecretShieldStats.read())).toEqual({
+    detected: 4, maskedPrompts: action === 'Mask' ? 2 : 0, unmaskedPrompts: action === 'Send' ? 2 : 0,
+  });
+  const history = await dashboard.evaluate(() => SecretShieldHistory.request('list'));
+  expect(history).toHaveLength(action === 'Send' ? 2 : 0);
+  for (const entry of history) {
+    expect(await dashboard.evaluate(id => SecretShieldHistory.readPrompt(id), entry.id)).toBe(draft);
+    expect(entry.count).toBe(2);
+  }
+});
+
+test('Gitleaks detection preserves strict mode, custom fields and the current modal design', async () => {
+  await dashboard.evaluate(async () => {
+    await SecretShieldPolicy.update({ kind: 'addField', name: 'dataset_name' });
+    await SecretShieldPolicy.update({ kind: 'set', key: 'mode', value: 'block' });
+  });
+  const { page, editor } = await chat('claude.ai');
+  await editor.fill(`api_key=${first}`); await editor.press('Enter');
+  const dialog = page.getByRole('dialog');
+  await expect(dialog.getByRole('button', { name: 'Send', exact: true })).toHaveCount(0);
+  await expect(dialog.getByRole('button', { name: 'Mask', exact: true })).toHaveCSS('background-color', 'rgb(69, 214, 200)');
+  await expect(dialog.getByRole('button', { name: 'Mask', exact: true })).toHaveCSS('height', '34px');
+  await dialog.getByRole('button', { name: 'Mask', exact: true }).click();
+  await expect.poll(() => page.evaluate(() => window.sent)).toEqual(['api_key=xxxxxxxxxx']);
+  expect(await dashboard.evaluate(async () => (await SecretShieldPolicy.loadPolicy()).policy.sensitiveNames)).toEqual(['dataset_name']);
+  await editor.fill('key={event.id}\nExplain how API keys work.'); await editor.press('Enter');
+  await expect(dialog).toBeHidden();
+  await expect.poll(() => page.evaluate(() => window.sent)).toHaveLength(2);
+});

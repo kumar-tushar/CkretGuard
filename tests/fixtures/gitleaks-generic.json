@@ -1,0 +1,2356 @@
+{
+  "source": "https://github.com/gitleaks/gitleaks/blob/5f6ec56cfa6f8c67648d863582c7ae2f206d5c1c/config/gitleaks.toml",
+  "referenceVersion": "8.30.1",
+  "options": {
+    "enabledRule": "generic-api-key",
+    "decodeDepth": 0,
+    "ignoreGitleaksAllow": true
+  },
+  "cases": [
+    {
+      "name": "api_key separator ' = '",
+      "input": "api_key = N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8",
+      "secrets": [
+        "N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8"
+      ]
+    },
+    {
+      "name": "api_key separator ': '",
+      "input": "api_key: N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8",
+      "secrets": [
+        "N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8"
+      ]
+    },
+    {
+      "name": "api_key separator '=>'",
+      "input": "api_key=>N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8",
+      "secrets": [
+        "N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8"
+      ]
+    },
+    {
+      "name": "api_key separator '::='",
+      "input": "api_key::=N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8",
+      "secrets": [
+        "N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8"
+      ]
+    },
+    {
+      "name": "api_key separator '|||'",
+      "input": "api_key|||N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8",
+      "secrets": []
+    },
+    {
+      "name": "api_key separator '?='",
+      "input": "api_key?=N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8",
+      "secrets": [
+        "N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8"
+      ]
+    },
+    {
+      "name": "api_key separator ', '",
+      "input": "api_key, N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8",
+      "secrets": [
+        "N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8"
+      ]
+    },
+    {
+      "name": "api_key separator '\\n\\n'",
+      "input": "api_key\n\nN7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8",
+      "secrets": []
+    },
+    {
+      "name": "Api key separator ' = '",
+      "input": "Api key = N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8",
+      "secrets": [
+        "N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8"
+      ]
+    },
+    {
+      "name": "Api key separator ': '",
+      "input": "Api key: N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8",
+      "secrets": [
+        "N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8"
+      ]
+    },
+    {
+      "name": "Api key separator '=>'",
+      "input": "Api key=>N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8",
+      "secrets": [
+        "N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8"
+      ]
+    },
+    {
+      "name": "Api key separator '::='",
+      "input": "Api key::=N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8",
+      "secrets": [
+        "N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8"
+      ]
+    },
+    {
+      "name": "Api key separator '|||'",
+      "input": "Api key|||N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8",
+      "secrets": []
+    },
+    {
+      "name": "Api key separator '?='",
+      "input": "Api key?=N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8",
+      "secrets": [
+        "N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8"
+      ]
+    },
+    {
+      "name": "Api key separator ', '",
+      "input": "Api key, N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8",
+      "secrets": [
+        "N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8"
+      ]
+    },
+    {
+      "name": "Api key separator '\\n\\n'",
+      "input": "Api key\n\nN7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8",
+      "secrets": []
+    },
+    {
+      "name": "API_TOKEN separator ' = '",
+      "input": "API_TOKEN = N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8",
+      "secrets": [
+        "N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8"
+      ]
+    },
+    {
+      "name": "API_TOKEN separator ': '",
+      "input": "API_TOKEN: N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8",
+      "secrets": [
+        "N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8"
+      ]
+    },
+    {
+      "name": "API_TOKEN separator '=>'",
+      "input": "API_TOKEN=>N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8",
+      "secrets": [
+        "N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8"
+      ]
+    },
+    {
+      "name": "API_TOKEN separator '::='",
+      "input": "API_TOKEN::=N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8",
+      "secrets": [
+        "N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8"
+      ]
+    },
+    {
+      "name": "API_TOKEN separator '|||'",
+      "input": "API_TOKEN|||N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8",
+      "secrets": []
+    },
+    {
+      "name": "API_TOKEN separator '?='",
+      "input": "API_TOKEN?=N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8",
+      "secrets": [
+        "N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8"
+      ]
+    },
+    {
+      "name": "API_TOKEN separator ', '",
+      "input": "API_TOKEN, N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8",
+      "secrets": [
+        "N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8"
+      ]
+    },
+    {
+      "name": "API_TOKEN separator '\\n\\n'",
+      "input": "API_TOKEN\n\nN7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8",
+      "secrets": []
+    },
+    {
+      "name": "client_secret separator ' = '",
+      "input": "client_secret = N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8",
+      "secrets": [
+        "N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8"
+      ]
+    },
+    {
+      "name": "client_secret separator ': '",
+      "input": "client_secret: N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8",
+      "secrets": [
+        "N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8"
+      ]
+    },
+    {
+      "name": "client_secret separator '=>'",
+      "input": "client_secret=>N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8",
+      "secrets": [
+        "N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8"
+      ]
+    },
+    {
+      "name": "client_secret separator '::='",
+      "input": "client_secret::=N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8",
+      "secrets": [
+        "N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8"
+      ]
+    },
+    {
+      "name": "client_secret separator '|||'",
+      "input": "client_secret|||N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8",
+      "secrets": []
+    },
+    {
+      "name": "client_secret separator '?='",
+      "input": "client_secret?=N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8",
+      "secrets": [
+        "N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8"
+      ]
+    },
+    {
+      "name": "client_secret separator ', '",
+      "input": "client_secret, N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8",
+      "secrets": [
+        "N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8"
+      ]
+    },
+    {
+      "name": "client_secret separator '\\n\\n'",
+      "input": "client_secret\n\nN7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8",
+      "secrets": []
+    },
+    {
+      "name": "password separator ' = '",
+      "input": "password = N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8",
+      "secrets": [
+        "N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8"
+      ]
+    },
+    {
+      "name": "password separator ': '",
+      "input": "password: N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8",
+      "secrets": [
+        "N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8"
+      ]
+    },
+    {
+      "name": "password separator '=>'",
+      "input": "password=>N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8",
+      "secrets": [
+        "N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8"
+      ]
+    },
+    {
+      "name": "password separator '::='",
+      "input": "password::=N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8",
+      "secrets": [
+        "N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8"
+      ]
+    },
+    {
+      "name": "password separator '|||'",
+      "input": "password|||N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8",
+      "secrets": []
+    },
+    {
+      "name": "password separator '?='",
+      "input": "password?=N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8",
+      "secrets": [
+        "N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8"
+      ]
+    },
+    {
+      "name": "password separator ', '",
+      "input": "password, N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8",
+      "secrets": [
+        "N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8"
+      ]
+    },
+    {
+      "name": "password separator '\\n\\n'",
+      "input": "password\n\nN7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8",
+      "secrets": []
+    },
+    {
+      "name": "passwd separator ' = '",
+      "input": "passwd = N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8",
+      "secrets": [
+        "N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8"
+      ]
+    },
+    {
+      "name": "passwd separator ': '",
+      "input": "passwd: N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8",
+      "secrets": [
+        "N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8"
+      ]
+    },
+    {
+      "name": "passwd separator '=>'",
+      "input": "passwd=>N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8",
+      "secrets": [
+        "N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8"
+      ]
+    },
+    {
+      "name": "passwd separator '::='",
+      "input": "passwd::=N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8",
+      "secrets": [
+        "N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8"
+      ]
+    },
+    {
+      "name": "passwd separator '|||'",
+      "input": "passwd|||N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8",
+      "secrets": []
+    },
+    {
+      "name": "passwd separator '?='",
+      "input": "passwd?=N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8",
+      "secrets": [
+        "N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8"
+      ]
+    },
+    {
+      "name": "passwd separator ', '",
+      "input": "passwd, N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8",
+      "secrets": [
+        "N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8"
+      ]
+    },
+    {
+      "name": "passwd separator '\\n\\n'",
+      "input": "passwd\n\nN7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8",
+      "secrets": []
+    },
+    {
+      "name": "creds separator ' = '",
+      "input": "creds = N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8",
+      "secrets": [
+        "N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8"
+      ]
+    },
+    {
+      "name": "creds separator ': '",
+      "input": "creds: N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8",
+      "secrets": [
+        "N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8"
+      ]
+    },
+    {
+      "name": "creds separator '=>'",
+      "input": "creds=>N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8",
+      "secrets": [
+        "N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8"
+      ]
+    },
+    {
+      "name": "creds separator '::='",
+      "input": "creds::=N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8",
+      "secrets": [
+        "N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8"
+      ]
+    },
+    {
+      "name": "creds separator '|||'",
+      "input": "creds|||N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8",
+      "secrets": []
+    },
+    {
+      "name": "creds separator '?='",
+      "input": "creds?=N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8",
+      "secrets": [
+        "N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8"
+      ]
+    },
+    {
+      "name": "creds separator ', '",
+      "input": "creds, N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8",
+      "secrets": [
+        "N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8"
+      ]
+    },
+    {
+      "name": "creds separator '\\n\\n'",
+      "input": "creds\n\nN7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8",
+      "secrets": []
+    },
+    {
+      "name": "access_token separator ' = '",
+      "input": "access_token = N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8",
+      "secrets": [
+        "N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8"
+      ]
+    },
+    {
+      "name": "access_token separator ': '",
+      "input": "access_token: N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8",
+      "secrets": [
+        "N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8"
+      ]
+    },
+    {
+      "name": "access_token separator '=>'",
+      "input": "access_token=>N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8",
+      "secrets": [
+        "N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8"
+      ]
+    },
+    {
+      "name": "access_token separator '::='",
+      "input": "access_token::=N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8",
+      "secrets": [
+        "N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8"
+      ]
+    },
+    {
+      "name": "access_token separator '|||'",
+      "input": "access_token|||N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8",
+      "secrets": []
+    },
+    {
+      "name": "access_token separator '?='",
+      "input": "access_token?=N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8",
+      "secrets": [
+        "N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8"
+      ]
+    },
+    {
+      "name": "access_token separator ', '",
+      "input": "access_token, N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8",
+      "secrets": [
+        "N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8"
+      ]
+    },
+    {
+      "name": "access_token separator '\\n\\n'",
+      "input": "access_token\n\nN7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8",
+      "secrets": []
+    },
+    {
+      "name": "user_auth separator ' = '",
+      "input": "user_auth = N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8",
+      "secrets": [
+        "N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8"
+      ]
+    },
+    {
+      "name": "user_auth separator ': '",
+      "input": "user_auth: N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8",
+      "secrets": [
+        "N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8"
+      ]
+    },
+    {
+      "name": "user_auth separator '=>'",
+      "input": "user_auth=>N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8",
+      "secrets": [
+        "N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8"
+      ]
+    },
+    {
+      "name": "user_auth separator '::='",
+      "input": "user_auth::=N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8",
+      "secrets": [
+        "N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8"
+      ]
+    },
+    {
+      "name": "user_auth separator '|||'",
+      "input": "user_auth|||N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8",
+      "secrets": []
+    },
+    {
+      "name": "user_auth separator '?='",
+      "input": "user_auth?=N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8",
+      "secrets": [
+        "N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8"
+      ]
+    },
+    {
+      "name": "user_auth separator ', '",
+      "input": "user_auth, N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8",
+      "secrets": [
+        "N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8"
+      ]
+    },
+    {
+      "name": "user_auth separator '\\n\\n'",
+      "input": "user_auth\n\nN7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8",
+      "secrets": []
+    },
+    {
+      "name": "private-key separator ' = '",
+      "input": "private-key = N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8",
+      "secrets": [
+        "N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8"
+      ]
+    },
+    {
+      "name": "private-key separator ': '",
+      "input": "private-key: N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8",
+      "secrets": [
+        "N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8"
+      ]
+    },
+    {
+      "name": "private-key separator '=>'",
+      "input": "private-key=>N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8",
+      "secrets": [
+        "N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8"
+      ]
+    },
+    {
+      "name": "private-key separator '::='",
+      "input": "private-key::=N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8",
+      "secrets": [
+        "N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8"
+      ]
+    },
+    {
+      "name": "private-key separator '|||'",
+      "input": "private-key|||N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8",
+      "secrets": []
+    },
+    {
+      "name": "private-key separator '?='",
+      "input": "private-key?=N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8",
+      "secrets": [
+        "N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8"
+      ]
+    },
+    {
+      "name": "private-key separator ', '",
+      "input": "private-key, N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8",
+      "secrets": [
+        "N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8"
+      ]
+    },
+    {
+      "name": "private-key separator '\\n\\n'",
+      "input": "private-key\n\nN7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8",
+      "secrets": []
+    },
+    {
+      "name": "quote '', ending ''",
+      "input": "api_key=N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8",
+      "secrets": [
+        "N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8"
+      ]
+    },
+    {
+      "name": "quote '', ending '\\n'",
+      "input": "api_key=N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8\n",
+      "secrets": [
+        "N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8"
+      ]
+    },
+    {
+      "name": "quote '', ending '\\r\\n'",
+      "input": "api_key=N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8\r\n",
+      "secrets": [
+        "N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8"
+      ]
+    },
+    {
+      "name": "quote '', ending ';'",
+      "input": "api_key=N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8;",
+      "secrets": [
+        "N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8"
+      ]
+    },
+    {
+      "name": "quote '', ending '\\\\n'",
+      "input": "api_key=N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8\\n",
+      "secrets": [
+        "N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8"
+      ]
+    },
+    {
+      "name": "quote '', ending '\\\\r'",
+      "input": "api_key=N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8\\r",
+      "secrets": [
+        "N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8"
+      ]
+    },
+    {
+      "name": "quote '', ending '\\t'",
+      "input": "api_key=N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8\t",
+      "secrets": [
+        "N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8"
+      ]
+    },
+    {
+      "name": "quote '', ending ' '",
+      "input": "api_key=N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8 ",
+      "secrets": [
+        "N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8"
+      ]
+    },
+    {
+      "name": "quote '', ending ','",
+      "input": "api_key=N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8,",
+      "secrets": []
+    },
+    {
+      "name": "quote '', ending '}'",
+      "input": "api_key=N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8}",
+      "secrets": []
+    },
+    {
+      "name": "quote '', ending '&'",
+      "input": "api_key=N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8&",
+      "secrets": []
+    },
+    {
+      "name": "quote '\"', ending ''",
+      "input": "api_key=\"N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8\"",
+      "secrets": [
+        "N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8"
+      ]
+    },
+    {
+      "name": "quote '\"', ending '\\n'",
+      "input": "api_key=\"N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8\"\n",
+      "secrets": [
+        "N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8"
+      ]
+    },
+    {
+      "name": "quote '\"', ending '\\r\\n'",
+      "input": "api_key=\"N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8\"\r\n",
+      "secrets": [
+        "N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8"
+      ]
+    },
+    {
+      "name": "quote '\"', ending ';'",
+      "input": "api_key=\"N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8\";",
+      "secrets": [
+        "N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8"
+      ]
+    },
+    {
+      "name": "quote '\"', ending '\\\\n'",
+      "input": "api_key=\"N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8\"\\n",
+      "secrets": [
+        "N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8"
+      ]
+    },
+    {
+      "name": "quote '\"', ending '\\\\r'",
+      "input": "api_key=\"N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8\"\\r",
+      "secrets": [
+        "N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8"
+      ]
+    },
+    {
+      "name": "quote '\"', ending '\\t'",
+      "input": "api_key=\"N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8\"\t",
+      "secrets": [
+        "N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8"
+      ]
+    },
+    {
+      "name": "quote '\"', ending ' '",
+      "input": "api_key=\"N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8\" ",
+      "secrets": [
+        "N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8"
+      ]
+    },
+    {
+      "name": "quote '\"', ending ','",
+      "input": "api_key=\"N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8\",",
+      "secrets": [
+        "N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8"
+      ]
+    },
+    {
+      "name": "quote '\"', ending '}'",
+      "input": "api_key=\"N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8\"}",
+      "secrets": [
+        "N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8"
+      ]
+    },
+    {
+      "name": "quote '\"', ending '&'",
+      "input": "api_key=\"N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8\"&",
+      "secrets": [
+        "N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8"
+      ]
+    },
+    {
+      "name": "quote \"'\", ending ''",
+      "input": "api_key='N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8'",
+      "secrets": [
+        "N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8"
+      ]
+    },
+    {
+      "name": "quote \"'\", ending '\\n'",
+      "input": "api_key='N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8'\n",
+      "secrets": [
+        "N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8"
+      ]
+    },
+    {
+      "name": "quote \"'\", ending '\\r\\n'",
+      "input": "api_key='N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8'\r\n",
+      "secrets": [
+        "N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8"
+      ]
+    },
+    {
+      "name": "quote \"'\", ending ';'",
+      "input": "api_key='N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8';",
+      "secrets": [
+        "N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8"
+      ]
+    },
+    {
+      "name": "quote \"'\", ending '\\\\n'",
+      "input": "api_key='N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8'\\n",
+      "secrets": [
+        "N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8"
+      ]
+    },
+    {
+      "name": "quote \"'\", ending '\\\\r'",
+      "input": "api_key='N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8'\\r",
+      "secrets": [
+        "N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8"
+      ]
+    },
+    {
+      "name": "quote \"'\", ending '\\t'",
+      "input": "api_key='N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8'\t",
+      "secrets": [
+        "N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8"
+      ]
+    },
+    {
+      "name": "quote \"'\", ending ' '",
+      "input": "api_key='N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8' ",
+      "secrets": [
+        "N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8"
+      ]
+    },
+    {
+      "name": "quote \"'\", ending ','",
+      "input": "api_key='N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8',",
+      "secrets": [
+        "N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8"
+      ]
+    },
+    {
+      "name": "quote \"'\", ending '}'",
+      "input": "api_key='N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8'}",
+      "secrets": [
+        "N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8"
+      ]
+    },
+    {
+      "name": "quote \"'\", ending '&'",
+      "input": "api_key='N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8'&",
+      "secrets": [
+        "N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8"
+      ]
+    },
+    {
+      "name": "quote '`', ending ''",
+      "input": "api_key=`N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8`",
+      "secrets": [
+        "N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8"
+      ]
+    },
+    {
+      "name": "quote '`', ending '\\n'",
+      "input": "api_key=`N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8`\n",
+      "secrets": [
+        "N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8"
+      ]
+    },
+    {
+      "name": "quote '`', ending '\\r\\n'",
+      "input": "api_key=`N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8`\r\n",
+      "secrets": [
+        "N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8"
+      ]
+    },
+    {
+      "name": "quote '`', ending ';'",
+      "input": "api_key=`N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8`;",
+      "secrets": [
+        "N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8"
+      ]
+    },
+    {
+      "name": "quote '`', ending '\\\\n'",
+      "input": "api_key=`N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8`\\n",
+      "secrets": [
+        "N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8"
+      ]
+    },
+    {
+      "name": "quote '`', ending '\\\\r'",
+      "input": "api_key=`N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8`\\r",
+      "secrets": [
+        "N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8"
+      ]
+    },
+    {
+      "name": "quote '`', ending '\\t'",
+      "input": "api_key=`N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8`\t",
+      "secrets": [
+        "N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8"
+      ]
+    },
+    {
+      "name": "quote '`', ending ' '",
+      "input": "api_key=`N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8` ",
+      "secrets": [
+        "N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8"
+      ]
+    },
+    {
+      "name": "quote '`', ending ','",
+      "input": "api_key=`N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8`,",
+      "secrets": [
+        "N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8"
+      ]
+    },
+    {
+      "name": "quote '`', ending '}'",
+      "input": "api_key=`N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8`}",
+      "secrets": [
+        "N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8"
+      ]
+    },
+    {
+      "name": "quote '`', ending '&'",
+      "input": "api_key=`N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8`&",
+      "secrets": [
+        "N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8"
+      ]
+    },
+    {
+      "name": "case/whitespace api_key ' '",
+      "input": "api_key: N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8",
+      "secrets": [
+        "N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8"
+      ]
+    },
+    {
+      "name": "case/whitespace api_key '\\n'",
+      "input": "api_key:\nN7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8",
+      "secrets": [
+        "N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8"
+      ]
+    },
+    {
+      "name": "case/whitespace api_key '\\r\\n'",
+      "input": "api_key:\r\nN7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8",
+      "secrets": [
+        "N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8"
+      ]
+    },
+    {
+      "name": "case/whitespace api_key '\\t'",
+      "input": "api_key:\tN7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8",
+      "secrets": [
+        "N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8"
+      ]
+    },
+    {
+      "name": "case/whitespace api_key '\\xa0'",
+      "input": "api_key: N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8",
+      "secrets": []
+    },
+    {
+      "name": "case/whitespace api_key '\\u2028'",
+      "input": "api_key: N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8",
+      "secrets": []
+    },
+    {
+      "name": "case/whitespace client_secret ' '",
+      "input": "client_secret: N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8",
+      "secrets": [
+        "N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8"
+      ]
+    },
+    {
+      "name": "case/whitespace client_secret '\\n'",
+      "input": "client_secret:\nN7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8",
+      "secrets": [
+        "N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8"
+      ]
+    },
+    {
+      "name": "case/whitespace client_secret '\\r\\n'",
+      "input": "client_secret:\r\nN7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8",
+      "secrets": [
+        "N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8"
+      ]
+    },
+    {
+      "name": "case/whitespace client_secret '\\t'",
+      "input": "client_secret:\tN7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8",
+      "secrets": [
+        "N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8"
+      ]
+    },
+    {
+      "name": "case/whitespace client_secret '\\xa0'",
+      "input": "client_secret: N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8",
+      "secrets": []
+    },
+    {
+      "name": "case/whitespace client_secret '\\u2028'",
+      "input": "client_secret: N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8",
+      "secrets": []
+    },
+    {
+      "name": "case/whitespace API ' '",
+      "input": "API: N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8",
+      "secrets": [
+        "N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8"
+      ]
+    },
+    {
+      "name": "case/whitespace API '\\n'",
+      "input": "API:\nN7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8",
+      "secrets": [
+        "N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8"
+      ]
+    },
+    {
+      "name": "case/whitespace API '\\r\\n'",
+      "input": "API:\r\nN7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8",
+      "secrets": [
+        "N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8"
+      ]
+    },
+    {
+      "name": "case/whitespace API '\\t'",
+      "input": "API:\tN7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8",
+      "secrets": [
+        "N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8"
+      ]
+    },
+    {
+      "name": "case/whitespace API '\\xa0'",
+      "input": "API: N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8",
+      "secrets": []
+    },
+    {
+      "name": "case/whitespace API '\\u2028'",
+      "input": "API: N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8",
+      "secrets": []
+    },
+    {
+      "name": "case/whitespace api ' '",
+      "input": "api: N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8",
+      "secrets": [
+        "N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8"
+      ]
+    },
+    {
+      "name": "case/whitespace api '\\n'",
+      "input": "api:\nN7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8",
+      "secrets": [
+        "N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8"
+      ]
+    },
+    {
+      "name": "case/whitespace api '\\r\\n'",
+      "input": "api:\r\nN7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8",
+      "secrets": [
+        "N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8"
+      ]
+    },
+    {
+      "name": "case/whitespace api '\\t'",
+      "input": "api:\tN7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8",
+      "secrets": [
+        "N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8"
+      ]
+    },
+    {
+      "name": "case/whitespace api '\\xa0'",
+      "input": "api: N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8",
+      "secrets": []
+    },
+    {
+      "name": "case/whitespace api '\\u2028'",
+      "input": "api: N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8",
+      "secrets": []
+    },
+    {
+      "name": "case/whitespace Api ' '",
+      "input": "Api: N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8",
+      "secrets": [
+        "N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8"
+      ]
+    },
+    {
+      "name": "case/whitespace Api '\\n'",
+      "input": "Api:\nN7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8",
+      "secrets": [
+        "N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8"
+      ]
+    },
+    {
+      "name": "case/whitespace Api '\\r\\n'",
+      "input": "Api:\r\nN7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8",
+      "secrets": [
+        "N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8"
+      ]
+    },
+    {
+      "name": "case/whitespace Api '\\t'",
+      "input": "Api:\tN7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8",
+      "secrets": [
+        "N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8"
+      ]
+    },
+    {
+      "name": "case/whitespace Api '\\xa0'",
+      "input": "Api: N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8",
+      "secrets": []
+    },
+    {
+      "name": "case/whitespace Api '\\u2028'",
+      "input": "Api: N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8",
+      "secrets": []
+    },
+    {
+      "name": "case/whitespace aPi ' '",
+      "input": "aPi: N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8",
+      "secrets": []
+    },
+    {
+      "name": "case/whitespace aPi '\\n'",
+      "input": "aPi:\nN7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8",
+      "secrets": []
+    },
+    {
+      "name": "case/whitespace aPi '\\r\\n'",
+      "input": "aPi:\r\nN7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8",
+      "secrets": []
+    },
+    {
+      "name": "case/whitespace aPi '\\t'",
+      "input": "aPi:\tN7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8",
+      "secrets": []
+    },
+    {
+      "name": "case/whitespace aPi '\\xa0'",
+      "input": "aPi: N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8",
+      "secrets": []
+    },
+    {
+      "name": "case/whitespace aPi '\\u2028'",
+      "input": "aPi: N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8",
+      "secrets": []
+    },
+    {
+      "name": "case/whitespace apI ' '",
+      "input": "apI: N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8",
+      "secrets": []
+    },
+    {
+      "name": "case/whitespace apI '\\n'",
+      "input": "apI:\nN7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8",
+      "secrets": []
+    },
+    {
+      "name": "case/whitespace apI '\\r\\n'",
+      "input": "apI:\r\nN7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8",
+      "secrets": []
+    },
+    {
+      "name": "case/whitespace apI '\\t'",
+      "input": "apI:\tN7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8",
+      "secrets": []
+    },
+    {
+      "name": "case/whitespace apI '\\xa0'",
+      "input": "apI: N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8",
+      "secrets": []
+    },
+    {
+      "name": "case/whitespace apI '\\u2028'",
+      "input": "apI: N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8",
+      "secrets": []
+    },
+    {
+      "name": "case/whitespace APi ' '",
+      "input": "APi: N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8",
+      "secrets": []
+    },
+    {
+      "name": "case/whitespace APi '\\n'",
+      "input": "APi:\nN7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8",
+      "secrets": []
+    },
+    {
+      "name": "case/whitespace APi '\\r\\n'",
+      "input": "APi:\r\nN7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8",
+      "secrets": []
+    },
+    {
+      "name": "case/whitespace APi '\\t'",
+      "input": "APi:\tN7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8",
+      "secrets": []
+    },
+    {
+      "name": "case/whitespace APi '\\xa0'",
+      "input": "APi: N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8",
+      "secrets": []
+    },
+    {
+      "name": "case/whitespace APi '\\u2028'",
+      "input": "APi: N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8",
+      "secrets": []
+    },
+    {
+      "name": "case/whitespace ſecret ' '",
+      "input": "ſecret: N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8",
+      "secrets": []
+    },
+    {
+      "name": "case/whitespace ſecret '\\n'",
+      "input": "ſecret:\nN7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8",
+      "secrets": []
+    },
+    {
+      "name": "case/whitespace ſecret '\\r\\n'",
+      "input": "ſecret:\r\nN7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8",
+      "secrets": []
+    },
+    {
+      "name": "case/whitespace ſecret '\\t'",
+      "input": "ſecret:\tN7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8",
+      "secrets": []
+    },
+    {
+      "name": "case/whitespace ſecret '\\xa0'",
+      "input": "ſecret: N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8",
+      "secrets": []
+    },
+    {
+      "name": "case/whitespace ſecret '\\u2028'",
+      "input": "ſecret: N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8",
+      "secrets": []
+    },
+    {
+      "name": "case/whitespace Key ' '",
+      "input": "Key: N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8",
+      "secrets": [
+        "N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8"
+      ]
+    },
+    {
+      "name": "case/whitespace Key '\\n'",
+      "input": "Key:\nN7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8",
+      "secrets": [
+        "N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8"
+      ]
+    },
+    {
+      "name": "case/whitespace Key '\\r\\n'",
+      "input": "Key:\r\nN7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8",
+      "secrets": [
+        "N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8"
+      ]
+    },
+    {
+      "name": "case/whitespace Key '\\t'",
+      "input": "Key:\tN7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8",
+      "secrets": [
+        "N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8"
+      ]
+    },
+    {
+      "name": "case/whitespace Key '\\xa0'",
+      "input": "Key: N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8",
+      "secrets": []
+    },
+    {
+      "name": "case/whitespace Key '\\u2028'",
+      "input": "Key: N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8",
+      "secrets": []
+    },
+    {
+      "name": "regression 184",
+      "input": "key={day}",
+      "secrets": []
+    },
+    {
+      "name": "regression 185",
+      "input": "key={event.id}",
+      "secrets": []
+    },
+    {
+      "name": "regression 186",
+      "input": "<div key={event.id}>{event.title}</div>",
+      "secrets": []
+    },
+    {
+      "name": "regression 187",
+      "input": "Explain how an API key works.",
+      "secrets": []
+    },
+    {
+      "name": "regression 188",
+      "input": "api_key\n\nhju867fggfgxxjgswrxl",
+      "secrets": []
+    },
+    {
+      "name": "regression 189",
+      "input": "The API key is at the bottom.\nN7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8",
+      "secrets": []
+    },
+    {
+      "name": "regression 190",
+      "input": "client secret is N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8",
+      "secrets": []
+    },
+    {
+      "name": "regression 191",
+      "input": "dataset_name=N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8",
+      "secrets": []
+    },
+    {
+      "name": "regression 192",
+      "input": "client_id=N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8",
+      "secrets": []
+    },
+    {
+      "name": "regression 193",
+      "input": "api_key=N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8\nN7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8",
+      "secrets": [
+        "N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8"
+      ]
+    },
+    {
+      "name": "regression 194",
+      "input": "api_key=N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8\napi_key=N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8",
+      "secrets": [
+        "N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8",
+        "N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8"
+      ]
+    },
+    {
+      "name": "regression 195",
+      "input": "api_key=\"N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8\" api_key=\"B9wK4s8H2yF7vN5rT6aZ\"",
+      "secrets": [
+        "N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8",
+        "B9wK4s8H2yF7vN5rT6aZ"
+      ]
+    },
+    {
+      "name": "regression 196",
+      "input": "説明 🔐 api_key=\"N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8\"\nनमस्ते",
+      "secrets": [
+        "N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8"
+      ]
+    },
+    {
+      "name": "regression 197",
+      "input": "{\"api_key\":\"N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8\"}",
+      "secrets": [
+        "N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8"
+      ]
+    },
+    {
+      "name": "regression 198",
+      "input": "{\"client_secret\": \"B9wK4s8H2yF7vN5rT6aZ\"}",
+      "secrets": [
+        "B9wK4s8H2yF7vN5rT6aZ"
+      ]
+    },
+    {
+      "name": "regression 199",
+      "input": "api_key=\nclient_secret=N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8",
+      "secrets": []
+    },
+    {
+      "name": "regression 200",
+      "input": "API_KEY=\nCLIENT_SECRET=",
+      "secrets": []
+    },
+    {
+      "name": "regression 201",
+      "input": "private_key=N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8 # gitleaks:allow",
+      "secrets": [
+        "N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8"
+      ]
+    },
+    {
+      "name": "regression 202",
+      "input": "api_key=N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8\r\nKeep this text.",
+      "secrets": [
+        "N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8"
+      ]
+    },
+    {
+      "name": "regression 203",
+      "input": "api_key=N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8 password=B9wK4s8H2yF7vN5rT6aZ",
+      "secrets": [
+        "B9wK4s8H2yF7vN5rT6aZ"
+      ]
+    },
+    {
+      "name": "candidate aaaaaaaaaaaa",
+      "input": "api_key=aaaaaaaaaaaa",
+      "secrets": []
+    },
+    {
+      "name": "candidate aaaaaaaaaaaa123",
+      "input": "api_key=aaaaaaaaaaaa123",
+      "secrets": []
+    },
+    {
+      "name": "candidate aabbccdd01234567",
+      "input": "api_key=aabbccdd01234567",
+      "secrets": []
+    },
+    {
+      "name": "candidate aabbccd012345678",
+      "input": "api_key=aabbccd012345678",
+      "secrets": [
+        "aabbccd012345678"
+      ]
+    },
+    {
+      "name": "candidate abcdefghijklmno",
+      "input": "api_key=abcdefghijklmno",
+      "secrets": []
+    },
+    {
+      "name": "candidate 311331313113",
+      "input": "api_key=311331313113",
+      "secrets": []
+    },
+    {
+      "name": "candidate xxxxxxxxxx",
+      "input": "api_key=xxxxxxxxxx",
+      "secrets": []
+    },
+    {
+      "name": "candidate REDACTED",
+      "input": "api_key=REDACTED",
+      "secrets": []
+    },
+    {
+      "name": "candidate ${SERVICE_KEY}",
+      "input": "api_key=${SERVICE_KEY}",
+      "secrets": []
+    },
+    {
+      "name": "candidate example7Yp3K9s6",
+      "input": "api_key=example7Yp3K9s6",
+      "secrets": []
+    },
+    {
+      "name": "candidate PUBLIC7Yp3K9s6",
+      "input": "api_key=PUBLIC7Yp3K9s6",
+      "secrets": []
+    },
+    {
+      "name": "candidate 6fe4476ee5a1832882e326b506d14126",
+      "input": "api_key=6fe4476ee5a1832882e326b506d14126",
+      "secrets": []
+    },
+    {
+      "name": "candidate 014df517-39d1-4453-b7b3-9930c563627c",
+      "input": "api_key=014df517-39d1-4453-b7b3-9930c563627c",
+      "secrets": []
+    },
+    {
+      "name": "candidate A1b2C3d4E5",
+      "input": "api_key=A1b2C3d4E5",
+      "secrets": []
+    },
+    {
+      "name": "candidate A1b2C3d4E5f",
+      "input": "api_key=A1b2C3d4E5f",
+      "secrets": []
+    },
+    {
+      "name": "candidate A1b2C3d4E5f6",
+      "input": "api_key=A1b2C3d4E5f6",
+      "secrets": [
+        "A1b2C3d4E5f6"
+      ]
+    },
+    {
+      "name": "excluded label accessor",
+      "input": "accessor=\"N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8\"",
+      "secrets": []
+    },
+    {
+      "name": "excluded label access_id",
+      "input": "access_id=\"N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8\"",
+      "secrets": []
+    },
+    {
+      "name": "excluded label api_name",
+      "input": "api_name=\"N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8\"",
+      "secrets": []
+    },
+    {
+      "name": "excluded label api_version",
+      "input": "api_version=\"N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8\"",
+      "secrets": []
+    },
+    {
+      "name": "excluded label author",
+      "input": "author=\"N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8\"",
+      "secrets": []
+    },
+    {
+      "name": "excluded label credentials_id",
+      "input": "credentials_id=\"N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8\"",
+      "secrets": []
+    },
+    {
+      "name": "excluded label withCredentials",
+      "input": "withCredentials=\"N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8\"",
+      "secrets": []
+    },
+    {
+      "name": "excluded label primaryKey",
+      "input": "primaryKey=\"N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8\"",
+      "secrets": []
+    },
+    {
+      "name": "excluded label public_key",
+      "input": "public_key=\"N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8\"",
+      "secrets": []
+    },
+    {
+      "name": "excluded label key_name",
+      "input": "key_name=\"N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8\"",
+      "secrets": []
+    },
+    {
+      "name": "excluded label key_size",
+      "input": "key_size=\"N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8\"",
+      "secrets": []
+    },
+    {
+      "name": "excluded label keyVaultToStoreSecrets",
+      "input": "keyVaultToStoreSecrets=\"N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8\"",
+      "secrets": []
+    },
+    {
+      "name": "excluded label secret_name",
+      "input": "secret_name=\"N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8\"",
+      "secrets": []
+    },
+    {
+      "name": "excluded label UserSecretsId",
+      "input": "UserSecretsId=\"N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8\"",
+      "secrets": []
+    },
+    {
+      "name": "excluded label csrf_token",
+      "input": "csrf_token=\"N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8\"",
+      "secrets": []
+    },
+    {
+      "name": "excluded label token_endpoint",
+      "input": "token_endpoint=\"N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8\"",
+      "secrets": []
+    },
+    {
+      "name": "excluded label api_url",
+      "input": "api_url=\"N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8\"",
+      "secrets": []
+    },
+    {
+      "name": "excluded label key_file",
+      "input": "key_file=\"N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8\"",
+      "secrets": []
+    },
+    {
+      "name": "import",
+      "input": "import { chain_Anvil1_Key, chain_Anvil2_Key } from '../blockchain-tests/consts';",
+      "secrets": []
+    },
+    {
+      "name": "docker",
+      "input": "RUN --mount=type=secret,id=jfrog_secret API_KEY=\"N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8\"",
+      "secrets": []
+    },
+    {
+      "name": "path-dependent allowlist is not active for a prompt",
+      "input": "SRC_key=\"N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8\"",
+      "secrets": [
+        "N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8"
+      ]
+    },
+    {
+      "name": "raw PEM",
+      "input": "-----BEGIN PRIVATE KEY-----\nN7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8\n-----END PRIVATE KEY-----",
+      "secrets": []
+    },
+    {
+      "name": "raw provider token",
+      "input": "sk-proj-N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8",
+      "secrets": []
+    },
+    {
+      "name": "html",
+      "input": "password=\"<img src=x onerror=alert(1)>\"",
+      "secrets": []
+    },
+    {
+      "name": "alphanumeric length 11",
+      "input": "api_key=N7q2V9m4R8s",
+      "secrets": []
+    },
+    {
+      "name": "underscore length 11",
+      "input": "api_key=N7q2_V9m4R8",
+      "secrets": []
+    },
+    {
+      "name": "alphanumeric length 12",
+      "input": "api_key=N7q2V9m4R8s6",
+      "secrets": [
+        "N7q2V9m4R8s6"
+      ]
+    },
+    {
+      "name": "underscore length 12",
+      "input": "api_key=N7q2_V9m4R8s",
+      "secrets": [
+        "N7q2_V9m4R8s"
+      ]
+    },
+    {
+      "name": "alphanumeric length 149",
+      "input": "api_key=N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8N7q2V9m4R8s6T3x5K1p0L",
+      "secrets": [
+        "N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8N7q2V9m4R8s6T3x5K1p0L"
+      ]
+    },
+    {
+      "name": "underscore length 149",
+      "input": "api_key=N7q2_V9m4R8s6T3x5K1p0L2z7H4c9D6b8V9m4R8s6T3x5K1p0L2z7H4c9D6b8V9m4R8s6T3x5K1p0L2z7H4c9D6b8V9m4R8s6T3x5K1p0L2z7H4c9D6b8V9m4R8s6T3x5K1p0L2z7H4c9D6b8V9m4",
+      "secrets": [
+        "N7q2_V9m4R8s6T3x5K1p0L2z7H4c9D6b8V9m4R8s6T3x5K1p0L2z7H4c9D6b8V9m4R8s6T3x5K1p0L2z7H4c9D6b8V9m4R8s6T3x5K1p0L2z7H4c9D6b8V9m4R8s6T3x5K1p0L2z7H4c9D6b8V9m4"
+      ]
+    },
+    {
+      "name": "alphanumeric length 150",
+      "input": "api_key=N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8N7q2V9m4R8s6T3x5K1p0L2",
+      "secrets": [
+        "N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8N7q2V9m4R8s6T3x5K1p0L2"
+      ]
+    },
+    {
+      "name": "underscore length 150",
+      "input": "api_key=N7q2_V9m4R8s6T3x5K1p0L2z7H4c9D6b8V9m4R8s6T3x5K1p0L2z7H4c9D6b8V9m4R8s6T3x5K1p0L2z7H4c9D6b8V9m4R8s6T3x5K1p0L2z7H4c9D6b8V9m4R8s6T3x5K1p0L2z7H4c9D6b8V9m4R",
+      "secrets": [
+        "N7q2_V9m4R8s6T3x5K1p0L2z7H4c9D6b8V9m4R8s6T3x5K1p0L2z7H4c9D6b8V9m4R8s6T3x5K1p0L2z7H4c9D6b8V9m4R8s6T3x5K1p0L2z7H4c9D6b8V9m4R8s6T3x5K1p0L2z7H4c9D6b8V9m4R"
+      ]
+    },
+    {
+      "name": "alphanumeric length 151",
+      "input": "api_key=N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8N7q2V9m4R8s6T3x5K1p0L2z",
+      "secrets": [
+        "N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8N7q2V9m4R8s6T3x5K1p0L2z"
+      ]
+    },
+    {
+      "name": "underscore length 151",
+      "input": "api_key=N7q2_V9m4R8s6T3x5K1p0L2z7H4c9D6b8V9m4R8s6T3x5K1p0L2z7H4c9D6b8V9m4R8s6T3x5K1p0L2z7H4c9D6b8V9m4R8s6T3x5K1p0L2z7H4c9D6b8V9m4R8s6T3x5K1p0L2z7H4c9D6b8V9m4R8",
+      "secrets": []
+    },
+    {
+      "name": "alphanumeric length 200",
+      "input": "api_key=N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8N7q2V9m4",
+      "secrets": [
+        "N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8N7q2V9m4R8s6T3x5K1p0L2z7H4c9D6b8N7q2V9m4"
+      ]
+    },
+    {
+      "name": "underscore length 200",
+      "input": "api_key=N7q2_V9m4R8s6T3x5K1p0L2z7H4c9D6b8V9m4R8s6T3x5K1p0L2z7H4c9D6b8V9m4R8s6T3x5K1p0L2z7H4c9D6b8V9m4R8s6T3x5K1p0L2z7H4c9D6b8V9m4R8s6T3x5K1p0L2z7H4c9D6b8V9m4R8s6T3x5K1p0L2z7H4c9D6b8V9m4R8s6T3x5K1p0L2z7H4c9D6b",
+      "secrets": []
+    },
+    {
+      "name": "seeded candidate 0",
+      "input": "api_key=\"IKdXgxyyJRatpGvYZIOv0uz71jJqqWEr\"",
+      "secrets": [
+        "IKdXgxyyJRatpGvYZIOv0uz71jJqqWEr"
+      ]
+    },
+    {
+      "name": "seeded candidate 1",
+      "input": "api_key=\"NDWLKtTu53Q0mB593YvNSyJqxubF6NmI\"",
+      "secrets": [
+        "NDWLKtTu53Q0mB593YvNSyJqxubF6NmI"
+      ]
+    },
+    {
+      "name": "seeded candidate 2",
+      "input": "api_key=\"SJ0OWB8AAPWik57fvLOjKqQW3vbmi69u\"",
+      "secrets": [
+        "SJ0OWB8AAPWik57fvLOjKqQW3vbmi69u"
+      ]
+    },
+    {
+      "name": "seeded candidate 3",
+      "input": "api_key=\"8Zopv8VSJrzp84O1rmxkbC10vEcjvPV2\"",
+      "secrets": [
+        "8Zopv8VSJrzp84O1rmxkbC10vEcjvPV2"
+      ]
+    },
+    {
+      "name": "seeded candidate 4",
+      "input": "api_key=\"KgVrNUjK1aP4nJWXmdmmazrtbbcLmiF7\"",
+      "secrets": [
+        "KgVrNUjK1aP4nJWXmdmmazrtbbcLmiF7"
+      ]
+    },
+    {
+      "name": "seeded candidate 5",
+      "input": "api_key=\"BO8cXTcuh51VkRqnewSbBYKIm5swUf0I\"",
+      "secrets": [
+        "BO8cXTcuh51VkRqnewSbBYKIm5swUf0I"
+      ]
+    },
+    {
+      "name": "seeded candidate 6",
+      "input": "api_key=\"7JANGU2qlr2sVqsfB8WC8VunHvxHT7dV\"",
+      "secrets": [
+        "7JANGU2qlr2sVqsfB8WC8VunHvxHT7dV"
+      ]
+    },
+    {
+      "name": "seeded candidate 7",
+      "input": "api_key=\"UVvmTX1AR9CEUZrAPNWH2GJx07QIRPi7\"",
+      "secrets": [
+        "UVvmTX1AR9CEUZrAPNWH2GJx07QIRPi7"
+      ]
+    },
+    {
+      "name": "seeded candidate 8",
+      "input": "api_key=\"npSsiIgh7j5JkJEse4SdLO6Sb0SZdecB\"",
+      "secrets": [
+        "npSsiIgh7j5JkJEse4SdLO6Sb0SZdecB"
+      ]
+    },
+    {
+      "name": "seeded candidate 9",
+      "input": "api_key=\"yxUAMWK4Q9mvVAqEyHBybLmkI59FsNXt\"",
+      "secrets": [
+        "yxUAMWK4Q9mvVAqEyHBybLmkI59FsNXt"
+      ]
+    },
+    {
+      "name": "seeded candidate 10",
+      "input": "api_key=\"JPnSBQmIc9CX9cBizwYRzBBjfdjh9iqt\"",
+      "secrets": [
+        "JPnSBQmIc9CX9cBizwYRzBBjfdjh9iqt"
+      ]
+    },
+    {
+      "name": "seeded candidate 11",
+      "input": "api_key=\"499phL1Ea4m6w3uCOaWcmwxXgeZkzYPo\"",
+      "secrets": [
+        "499phL1Ea4m6w3uCOaWcmwxXgeZkzYPo"
+      ]
+    },
+    {
+      "name": "seeded candidate 12",
+      "input": "api_key=\"uWzQUydur79G7hJaCnZOVPxRfx4HP0j2\"",
+      "secrets": [
+        "uWzQUydur79G7hJaCnZOVPxRfx4HP0j2"
+      ]
+    },
+    {
+      "name": "seeded candidate 13",
+      "input": "api_key=\"QGfRw31sGrcOjQY6qUGIw2A3YUO4Pbdv\"",
+      "secrets": [
+        "QGfRw31sGrcOjQY6qUGIw2A3YUO4Pbdv"
+      ]
+    },
+    {
+      "name": "seeded candidate 14",
+      "input": "api_key=\"jddJ24MCAmYQnnrAqFWWBdj4fK01BCQ5\"",
+      "secrets": [
+        "jddJ24MCAmYQnnrAqFWWBdj4fK01BCQ5"
+      ]
+    },
+    {
+      "name": "seeded candidate 15",
+      "input": "api_key=\"8bBz8szRSFTcawJaooTtE26EjvyZlUk6\"",
+      "secrets": [
+        "8bBz8szRSFTcawJaooTtE26EjvyZlUk6"
+      ]
+    },
+    {
+      "name": "seeded candidate 16",
+      "input": "api_key=\"pmIugR0IHTtT7XJ0qH2i6ZQWukojYXZf\"",
+      "secrets": [
+        "pmIugR0IHTtT7XJ0qH2i6ZQWukojYXZf"
+      ]
+    },
+    {
+      "name": "seeded candidate 17",
+      "input": "api_key=\"dU65EnI2uxUczcfXQfYdDOuUooqJHCWE\"",
+      "secrets": [
+        "dU65EnI2uxUczcfXQfYdDOuUooqJHCWE"
+      ]
+    },
+    {
+      "name": "seeded candidate 18",
+      "input": "api_key=\"rWGvV4vJpTDnhIRyS1OuTHUp0qtrpaIy\"",
+      "secrets": [
+        "rWGvV4vJpTDnhIRyS1OuTHUp0qtrpaIy"
+      ]
+    },
+    {
+      "name": "seeded candidate 19",
+      "input": "api_key=\"ZUrUQtqnqgNRXUq8Dji0rduHnOlZtw4m\"",
+      "secrets": [
+        "ZUrUQtqnqgNRXUq8Dji0rduHnOlZtw4m"
+      ]
+    },
+    {
+      "name": "seeded candidate 20",
+      "input": "api_key=\"wWSreplOM4WS3vXMVITAI9GXbf3QnEHQ\"",
+      "secrets": [
+        "wWSreplOM4WS3vXMVITAI9GXbf3QnEHQ"
+      ]
+    },
+    {
+      "name": "seeded candidate 21",
+      "input": "api_key=\"ogtq6hXrTrxBfgL7KkejSa8PtufVJFvY\"",
+      "secrets": [
+        "ogtq6hXrTrxBfgL7KkejSa8PtufVJFvY"
+      ]
+    },
+    {
+      "name": "seeded candidate 22",
+      "input": "api_key=\"E82TLjgHdzeG9yt9KdympGw758i9TI62\"",
+      "secrets": [
+        "E82TLjgHdzeG9yt9KdympGw758i9TI62"
+      ]
+    },
+    {
+      "name": "seeded candidate 23",
+      "input": "api_key=\"a66rt0xcU2S9Ki3MrWE7iaADD7fAs6sg\"",
+      "secrets": [
+        "a66rt0xcU2S9Ki3MrWE7iaADD7fAs6sg"
+      ]
+    },
+    {
+      "name": "seeded candidate 24",
+      "input": "api_key=\"ZJ2UrYYCiBfzJJFpiXfEtOFFIDaK5X0P\"",
+      "secrets": [
+        "ZJ2UrYYCiBfzJJFpiXfEtOFFIDaK5X0P"
+      ]
+    },
+    {
+      "name": "seeded candidate 25",
+      "input": "api_key=\"s0CFzvq5qwh8e5HkQbeYqlOvhMc7XRGp\"",
+      "secrets": [
+        "s0CFzvq5qwh8e5HkQbeYqlOvhMc7XRGp"
+      ]
+    },
+    {
+      "name": "seeded candidate 26",
+      "input": "api_key=\"B7jH9nhRvFKc43yESE3ZOCLTQD50cced\"",
+      "secrets": [
+        "B7jH9nhRvFKc43yESE3ZOCLTQD50cced"
+      ]
+    },
+    {
+      "name": "seeded candidate 27",
+      "input": "api_key=\"nwZvYVFgsgHmNBHHrg60wlA5034hOq7v\"",
+      "secrets": [
+        "nwZvYVFgsgHmNBHHrg60wlA5034hOq7v"
+      ]
+    },
+    {
+      "name": "seeded candidate 28",
+      "input": "api_key=\"eWjIzmu6icCcl0ZQmXBhAXI5OoQuAKle\"",
+      "secrets": [
+        "eWjIzmu6icCcl0ZQmXBhAXI5OoQuAKle"
+      ]
+    },
+    {
+      "name": "seeded candidate 29",
+      "input": "api_key=\"4Efb620PcPx2262tKyM89A8Qli9a7yJZ\"",
+      "secrets": [
+        "4Efb620PcPx2262tKyM89A8Qli9a7yJZ"
+      ]
+    },
+    {
+      "name": "seeded candidate 30",
+      "input": "api_key=\"IfKdZIwaJwmYLTB10bCOLwlvgEWBSjoA\"",
+      "secrets": [
+        "IfKdZIwaJwmYLTB10bCOLwlvgEWBSjoA"
+      ]
+    },
+    {
+      "name": "seeded candidate 31",
+      "input": "api_key=\"FWdrauH11evH7nBgCcBQZ3afbycSbhC9\"",
+      "secrets": [
+        "FWdrauH11evH7nBgCcBQZ3afbycSbhC9"
+      ]
+    },
+    {
+      "name": "seeded candidate 32",
+      "input": "api_key=\"bWwJu4lxBsmV3gLx8ePb3PD66WxzT6vw\"",
+      "secrets": [
+        "bWwJu4lxBsmV3gLx8ePb3PD66WxzT6vw"
+      ]
+    },
+    {
+      "name": "seeded candidate 33",
+      "input": "api_key=\"vAov00pUFq0FX1H2Xoyb2WAUfNX1sWoJ\"",
+      "secrets": [
+        "vAov00pUFq0FX1H2Xoyb2WAUfNX1sWoJ"
+      ]
+    },
+    {
+      "name": "seeded candidate 34",
+      "input": "api_key=\"0NTVE7WU9myYxdNcJReSxMqAn3JhW0E5\"",
+      "secrets": [
+        "0NTVE7WU9myYxdNcJReSxMqAn3JhW0E5"
+      ]
+    },
+    {
+      "name": "seeded candidate 35",
+      "input": "api_key=\"gto47rtU9GdPkLSEytOx60wPvBXUAB9M\"",
+      "secrets": [
+        "gto47rtU9GdPkLSEytOx60wPvBXUAB9M"
+      ]
+    },
+    {
+      "name": "seeded candidate 36",
+      "input": "api_key=\"UhiZQFYKY6O0pCHvQbEn5IceAIFyrpgk\"",
+      "secrets": [
+        "UhiZQFYKY6O0pCHvQbEn5IceAIFyrpgk"
+      ]
+    },
+    {
+      "name": "seeded candidate 37",
+      "input": "api_key=\"smdNFwXhQxwX1KyxXvqA0bPZZjZ27g3m\"",
+      "secrets": [
+        "smdNFwXhQxwX1KyxXvqA0bPZZjZ27g3m"
+      ]
+    },
+    {
+      "name": "seeded candidate 38",
+      "input": "api_key=\"QfXfHWh9gzTFZzjIEXodejjS3bkJN31T\"",
+      "secrets": [
+        "QfXfHWh9gzTFZzjIEXodejjS3bkJN31T"
+      ]
+    },
+    {
+      "name": "seeded candidate 39",
+      "input": "api_key=\"5cHNiKHj4OUFitFHTUCyLDZjhTSu89QU\"",
+      "secrets": [
+        "5cHNiKHj4OUFitFHTUCyLDZjhTSu89QU"
+      ]
+    },
+    {
+      "name": "seeded candidate 40",
+      "input": "api_key=\"M9j3laSwyMhxJcuGPMfgMl2NMi1KbdmG\"",
+      "secrets": [
+        "M9j3laSwyMhxJcuGPMfgMl2NMi1KbdmG"
+      ]
+    },
+    {
+      "name": "seeded candidate 41",
+      "input": "api_key=\"tlKkBAp646rTJHrRsw9yPuhycx5f4dI2\"",
+      "secrets": [
+        "tlKkBAp646rTJHrRsw9yPuhycx5f4dI2"
+      ]
+    },
+    {
+      "name": "seeded candidate 42",
+      "input": "api_key=\"aLcz47xAmNwi9hus9O0eVW5MCJtXtEaH\"",
+      "secrets": [
+        "aLcz47xAmNwi9hus9O0eVW5MCJtXtEaH"
+      ]
+    },
+    {
+      "name": "seeded candidate 43",
+      "input": "api_key=\"m1jiRiBFKyvlxgz1kvxWZDWYPXjTioNk\"",
+      "secrets": [
+        "m1jiRiBFKyvlxgz1kvxWZDWYPXjTioNk"
+      ]
+    },
+    {
+      "name": "seeded candidate 44",
+      "input": "api_key=\"YEROYUzU5QrJJcLErTGyAq1stzNQtz5v\"",
+      "secrets": [
+        "YEROYUzU5QrJJcLErTGyAq1stzNQtz5v"
+      ]
+    },
+    {
+      "name": "seeded candidate 45",
+      "input": "api_key=\"oYKZkVQRpVu7EzAjrCqzpY9CqbDEC32p\"",
+      "secrets": [
+        "oYKZkVQRpVu7EzAjrCqzpY9CqbDEC32p"
+      ]
+    },
+    {
+      "name": "seeded candidate 46",
+      "input": "api_key=\"0qfwicQJVVbNtKA8poBkBBWNiCo6wy7r\"",
+      "secrets": [
+        "0qfwicQJVVbNtKA8poBkBBWNiCo6wy7r"
+      ]
+    },
+    {
+      "name": "seeded candidate 47",
+      "input": "api_key=\"wabvayxN9SDmsBg7V85HHnvSCdIPZg6E\"",
+      "secrets": [
+        "wabvayxN9SDmsBg7V85HHnvSCdIPZg6E"
+      ]
+    },
+    {
+      "name": "seeded candidate 48",
+      "input": "api_key=\"OqZ0vsHT3btkVHz5AZIseXkc4WewNT1G\"",
+      "secrets": [
+        "OqZ0vsHT3btkVHz5AZIseXkc4WewNT1G"
+      ]
+    },
+    {
+      "name": "seeded candidate 49",
+      "input": "api_key=\"m2AD10C5757Kh9YKzTieFtmgxs8UDGdU\"",
+      "secrets": [
+        "m2AD10C5757Kh9YKzTieFtmgxs8UDGdU"
+      ]
+    },
+    {
+      "name": "seeded candidate 50",
+      "input": "api_key=\"7D9MYnMYsHW4Gpu06iZGPiqItjXaplaY\"",
+      "secrets": []
+    },
+    {
+      "name": "seeded candidate 51",
+      "input": "api_key=\"J4gvARQfGfUfAAZSC6uCexu8dGBe3Ozo\"",
+      "secrets": [
+        "J4gvARQfGfUfAAZSC6uCexu8dGBe3Ozo"
+      ]
+    },
+    {
+      "name": "seeded candidate 52",
+      "input": "api_key=\"xiNyPTQchDAIOLmH0FRjP7VckKEDOifw\"",
+      "secrets": [
+        "xiNyPTQchDAIOLmH0FRjP7VckKEDOifw"
+      ]
+    },
+    {
+      "name": "seeded candidate 53",
+      "input": "api_key=\"UNqfGUmwtv0zmnlFfLJybRlTopwyE5rH\"",
+      "secrets": [
+        "UNqfGUmwtv0zmnlFfLJybRlTopwyE5rH"
+      ]
+    },
+    {
+      "name": "seeded candidate 54",
+      "input": "api_key=\"pOe9gzUfuWdjdW5yOzuWYvrdmtABVmhf\"",
+      "secrets": [
+        "pOe9gzUfuWdjdW5yOzuWYvrdmtABVmhf"
+      ]
+    },
+    {
+      "name": "seeded candidate 55",
+      "input": "api_key=\"uf4VC3rkMPOth6a3DHRcTueH5FY5qi1A\"",
+      "secrets": [
+        "uf4VC3rkMPOth6a3DHRcTueH5FY5qi1A"
+      ]
+    },
+    {
+      "name": "seeded candidate 56",
+      "input": "api_key=\"adnvGL2tFUipgTBYz3w2KumgLux6BsCN\"",
+      "secrets": [
+        "adnvGL2tFUipgTBYz3w2KumgLux6BsCN"
+      ]
+    },
+    {
+      "name": "seeded candidate 57",
+      "input": "api_key=\"QDQQ5pLSanpJ7DbLoB1olhM4A1DeAj7X\"",
+      "secrets": [
+        "QDQQ5pLSanpJ7DbLoB1olhM4A1DeAj7X"
+      ]
+    },
+    {
+      "name": "seeded candidate 58",
+      "input": "api_key=\"pbwsG3FTSTB0aYFBDVgaV8A7yEqPJBi3\"",
+      "secrets": [
+        "pbwsG3FTSTB0aYFBDVgaV8A7yEqPJBi3"
+      ]
+    },
+    {
+      "name": "seeded candidate 59",
+      "input": "api_key=\"zCxupLWE66FzvpZ8crr1WvytsHU9xdrz\"",
+      "secrets": [
+        "zCxupLWE66FzvpZ8crr1WvytsHU9xdrz"
+      ]
+    },
+    {
+      "name": "seeded candidate 60",
+      "input": "api_key=\"SrDX2OvQwl5mdfy5KlMY0mtI2xnBhIi6\"",
+      "secrets": [
+        "SrDX2OvQwl5mdfy5KlMY0mtI2xnBhIi6"
+      ]
+    },
+    {
+      "name": "seeded candidate 61",
+      "input": "api_key=\"e4kxHeKe9syWtZr038gGSvRCSAiyKIzv\"",
+      "secrets": [
+        "e4kxHeKe9syWtZr038gGSvRCSAiyKIzv"
+      ]
+    },
+    {
+      "name": "seeded candidate 62",
+      "input": "api_key=\"5LLk2OyGrwTHTSecN2TnDnwnsqE4hrfR\"",
+      "secrets": [
+        "5LLk2OyGrwTHTSecN2TnDnwnsqE4hrfR"
+      ]
+    },
+    {
+      "name": "seeded candidate 63",
+      "input": "api_key=\"0A7Q5df7CIEKwK4FZoMARUqCWUBuva1A\"",
+      "secrets": [
+        "0A7Q5df7CIEKwK4FZoMARUqCWUBuva1A"
+      ]
+    },
+    {
+      "name": "seeded candidate 64",
+      "input": "api_key=\"9nvunTTbB4iQlQaTDLbOiyHioU2bJgZf\"",
+      "secrets": [
+        "9nvunTTbB4iQlQaTDLbOiyHioU2bJgZf"
+      ]
+    },
+    {
+      "name": "seeded candidate 65",
+      "input": "api_key=\"wTOsM7XFy8klXxrIv3mW112fNqAotViy\"",
+      "secrets": [
+        "wTOsM7XFy8klXxrIv3mW112fNqAotViy"
+      ]
+    },
+    {
+      "name": "seeded candidate 66",
+      "input": "api_key=\"woHJfRpilUpQfVRDgxo2c9J7BAeHJ0i3\"",
+      "secrets": [
+        "woHJfRpilUpQfVRDgxo2c9J7BAeHJ0i3"
+      ]
+    },
+    {
+      "name": "seeded candidate 67",
+      "input": "api_key=\"JdPjYihrm0K4qFmzN9Y4iGmofwWWLvfJ\"",
+      "secrets": [
+        "JdPjYihrm0K4qFmzN9Y4iGmofwWWLvfJ"
+      ]
+    },
+    {
+      "name": "seeded candidate 68",
+      "input": "api_key=\"uuYrYu5GPr6GZ7KMy9Nxx1c5dOEkbdqW\"",
+      "secrets": [
+        "uuYrYu5GPr6GZ7KMy9Nxx1c5dOEkbdqW"
+      ]
+    },
+    {
+      "name": "seeded candidate 69",
+      "input": "api_key=\"lG245hudSr7tEa209832DGkO7U9t9W6t\"",
+      "secrets": [
+        "lG245hudSr7tEa209832DGkO7U9t9W6t"
+      ]
+    },
+    {
+      "name": "seeded candidate 70",
+      "input": "api_key=\"LyoMpFtLUsZHDfddeEPESoCTQa6c5bOh\"",
+      "secrets": [
+        "LyoMpFtLUsZHDfddeEPESoCTQa6c5bOh"
+      ]
+    },
+    {
+      "name": "seeded candidate 71",
+      "input": "api_key=\"vxSoyF4e8w3SZHJgzU75twDxu8GUWgKu\"",
+      "secrets": [
+        "vxSoyF4e8w3SZHJgzU75twDxu8GUWgKu"
+      ]
+    },
+    {
+      "name": "seeded candidate 72",
+      "input": "api_key=\"CGcBB1vDJpO5T64sSlo1W4WMJLxG61Jz\"",
+      "secrets": [
+        "CGcBB1vDJpO5T64sSlo1W4WMJLxG61Jz"
+      ]
+    },
+    {
+      "name": "seeded candidate 73",
+      "input": "api_key=\"IQT50THUv4S4FTR7rKB5p1nxnfCmSMWb\"",
+      "secrets": [
+        "IQT50THUv4S4FTR7rKB5p1nxnfCmSMWb"
+      ]
+    },
+    {
+      "name": "seeded candidate 74",
+      "input": "api_key=\"67egm9lem6ahak7aSEjBEcJvkIJSx7Xk\"",
+      "secrets": [
+        "67egm9lem6ahak7aSEjBEcJvkIJSx7Xk"
+      ]
+    },
+    {
+      "name": "seeded candidate 75",
+      "input": "api_key=\"zghMMhA8l3PgPcnf6n72K9hKFQ9j5rDg\"",
+      "secrets": [
+        "zghMMhA8l3PgPcnf6n72K9hKFQ9j5rDg"
+      ]
+    },
+    {
+      "name": "seeded candidate 76",
+      "input": "api_key=\"QszIy2DtrCrVrLo2q2zj8sKQ4NUIR4a2\"",
+      "secrets": [
+        "QszIy2DtrCrVrLo2q2zj8sKQ4NUIR4a2"
+      ]
+    },
+    {
+      "name": "seeded candidate 77",
+      "input": "api_key=\"H02eem9sflisWnnPyLFUXH2FdFSwCiC9\"",
+      "secrets": [
+        "H02eem9sflisWnnPyLFUXH2FdFSwCiC9"
+      ]
+    },
+    {
+      "name": "seeded candidate 78",
+      "input": "api_key=\"U7fLArm4hFuhAtbw3KnUucD3SpfT3Kb5\"",
+      "secrets": [
+        "U7fLArm4hFuhAtbw3KnUucD3SpfT3Kb5"
+      ]
+    },
+    {
+      "name": "seeded candidate 79",
+      "input": "api_key=\"VJTIyHMiYE6PQ0Zb0pHuJoPdc8Lmit7Z\"",
+      "secrets": [
+        "VJTIyHMiYE6PQ0Zb0pHuJoPdc8Lmit7Z"
+      ]
+    },
+    {
+      "name": "seeded candidate 80",
+      "input": "api_key=\"rXpBkDBpGlUsS2yRSGXN9uXeRgXgmYDT\"",
+      "secrets": [
+        "rXpBkDBpGlUsS2yRSGXN9uXeRgXgmYDT"
+      ]
+    },
+    {
+      "name": "seeded candidate 81",
+      "input": "api_key=\"KLMdVMg5WkeQSBUnDe5PIytxZnUNApPe\"",
+      "secrets": [
+        "KLMdVMg5WkeQSBUnDe5PIytxZnUNApPe"
+      ]
+    },
+    {
+      "name": "seeded candidate 82",
+      "input": "api_key=\"dJ04qorW8rv63jUQdCacTzbkplljycQV\"",
+      "secrets": [
+        "dJ04qorW8rv63jUQdCacTzbkplljycQV"
+      ]
+    },
+    {
+      "name": "seeded candidate 83",
+      "input": "api_key=\"mhV68mNZIUALX1C5LSZMySQUuVx8sKUf\"",
+      "secrets": [
+        "mhV68mNZIUALX1C5LSZMySQUuVx8sKUf"
+      ]
+    },
+    {
+      "name": "seeded candidate 84",
+      "input": "api_key=\"8daT78bCNL4vET55pjr7TglByAIeMtRN\"",
+      "secrets": [
+        "8daT78bCNL4vET55pjr7TglByAIeMtRN"
+      ]
+    },
+    {
+      "name": "seeded candidate 85",
+      "input": "api_key=\"HTrPXQsO6y8h7bBNsGSr1HwYji2ZnRuh\"",
+      "secrets": [
+        "HTrPXQsO6y8h7bBNsGSr1HwYji2ZnRuh"
+      ]
+    },
+    {
+      "name": "seeded candidate 86",
+      "input": "api_key=\"wORJwMYkKCz1NRn9fLlvx9PcpmjwSbCB\"",
+      "secrets": [
+        "wORJwMYkKCz1NRn9fLlvx9PcpmjwSbCB"
+      ]
+    },
+    {
+      "name": "seeded candidate 87",
+      "input": "api_key=\"CmTPTssldHq33fNGOpD8Z6P3xt8sLqSu\"",
+      "secrets": [
+        "CmTPTssldHq33fNGOpD8Z6P3xt8sLqSu"
+      ]
+    },
+    {
+      "name": "seeded candidate 88",
+      "input": "api_key=\"bbbaN1dt4ix91WOP0HmmlsPqXl4mA9XV\"",
+      "secrets": [
+        "bbbaN1dt4ix91WOP0HmmlsPqXl4mA9XV"
+      ]
+    },
+    {
+      "name": "seeded candidate 89",
+      "input": "api_key=\"fIOLv2jgMQcAxolWqSaUY1LKwGWr5Ty1\"",
+      "secrets": [
+        "fIOLv2jgMQcAxolWqSaUY1LKwGWr5Ty1"
+      ]
+    },
+    {
+      "name": "seeded candidate 90",
+      "input": "api_key=\"LjvcBdmteSwR2CCPVcVzRGy1OEZKIB1Q\"",
+      "secrets": [
+        "LjvcBdmteSwR2CCPVcVzRGy1OEZKIB1Q"
+      ]
+    },
+    {
+      "name": "seeded candidate 91",
+      "input": "api_key=\"axoWQ8AHGyAAGRuSGs96XYE0hshBEI1e\"",
+      "secrets": [
+        "axoWQ8AHGyAAGRuSGs96XYE0hshBEI1e"
+      ]
+    },
+    {
+      "name": "seeded candidate 92",
+      "input": "api_key=\"0C4iXXeYHpPxaqtkWStwIOZjTBHdaql5\"",
+      "secrets": [
+        "0C4iXXeYHpPxaqtkWStwIOZjTBHdaql5"
+      ]
+    },
+    {
+      "name": "seeded candidate 93",
+      "input": "api_key=\"rFIx8IhhDYPAdT866KFXjaS5brXTf03h\"",
+      "secrets": [
+        "rFIx8IhhDYPAdT866KFXjaS5brXTf03h"
+      ]
+    },
+    {
+      "name": "seeded candidate 94",
+      "input": "api_key=\"d8SCOCwLyy9KWYOOQUfTjEP97Kf5dy4X\"",
+      "secrets": [
+        "d8SCOCwLyy9KWYOOQUfTjEP97Kf5dy4X"
+      ]
+    },
+    {
+      "name": "seeded candidate 95",
+      "input": "api_key=\"gbDJVWHZKi69SPT4MhEByscOVYC4e3Ro\"",
+      "secrets": [
+        "gbDJVWHZKi69SPT4MhEByscOVYC4e3Ro"
+      ]
+    },
+    {
+      "name": "seeded candidate 96",
+      "input": "api_key=\"JPxUwNtKkKArv1gIbRkzE0AWNqSWiaH3\"",
+      "secrets": [
+        "JPxUwNtKkKArv1gIbRkzE0AWNqSWiaH3"
+      ]
+    },
+    {
+      "name": "seeded candidate 97",
+      "input": "api_key=\"y3KNNnbemRaUiK7xayCoZHgEwCk0irkW\"",
+      "secrets": [
+        "y3KNNnbemRaUiK7xayCoZHgEwCk0irkW"
+      ]
+    },
+    {
+      "name": "seeded candidate 98",
+      "input": "api_key=\"C9cBnkpO12dGJbo5tZtu9VeN5eMrd3Z0\"",
+      "secrets": [
+        "C9cBnkpO12dGJbo5tZtu9VeN5eMrd3Z0"
+      ]
+    },
+    {
+      "name": "seeded candidate 99",
+      "input": "api_key=\"olmhB4DxdoZsv8rlsYJBjjqlnOlHtw2a\"",
+      "secrets": [
+        "olmhB4DxdoZsv8rlsYJBjjqlnOlHtw2a"
+      ]
+    },
+    {
+      "name": "unicode candidate 1",
+      "input": "api_key=ſKaabbccd012345678",
+      "secrets": []
+    },
+    {
+      "name": "unicode candidate 2",
+      "input": "api_key=ſKſKaabbccd012345678",
+      "secrets": []
+    },
+    {
+      "name": "unicode candidate 3",
+      "input": "api_key=ſKſKſKaabbccd012345678",
+      "secrets": []
+    },
+    {
+      "name": "unicode candidate 4",
+      "input": "api_key=ſKſKſKſKaabbccd012345678",
+      "secrets": []
+    },
+    {
+      "name": "unicode candidate 5",
+      "input": "api_key=ſKſKſKſKſKaabbccd012345678",
+      "secrets": []
+    },
+    {
+      "name": "unicode candidate 6",
+      "input": "api_key=ſKſKſKſKſKſKaabbccd012345678",
+      "secrets": []
+    },
+    {
+      "name": "unicode candidate 7",
+      "input": "api_key=ſKſKſKſKſKſKſKaabbccd012345678",
+      "secrets": []
+    },
+    {
+      "name": "unicode candidate 8",
+      "input": "api_key=ſKſKſKſKſKſKſKſKaabbccd012345678",
+      "secrets": []
+    },
+    {
+      "name": "unicode candidate 9",
+      "input": "api_key=ſKſKſKſKſKſKſKſKſKaabbccd012345678",
+      "secrets": []
+    },
+    {
+      "name": "unicode candidate 10",
+      "input": "api_key=ſKſKſKſKſKſKſKſKſKſKaabbccd012345678",
+      "secrets": []
+    },
+    {
+      "name": "unicode candidate 11",
+      "input": "api_key=ſKſKſKſKſKſKſKſKſKſKſKaabbccd012345678",
+      "secrets": []
+    },
+    {
+      "name": "unicode candidate 12",
+      "input": "api_key=ſKſKſKſKſKſKſKſKſKſKſKſKaabbccd012345678",
+      "secrets": []
+    },
+    {
+      "name": "unicode candidate 13",
+      "input": "api_key=ſKſKſKſKſKſKſKſKſKſKſKſKſKaabbccd012345678",
+      "secrets": []
+    },
+    {
+      "name": "unicode candidate 14",
+      "input": "api_key=ſKſKſKſKſKſKſKſKſKſKſKſKſKſKaabbccd012345678",
+      "secrets": []
+    },
+    {
+      "name": "unicode candidate 15",
+      "input": "api_key=ſKſKſKſKſKſKſKſKſKſKſKſKſKſKſKaabbccd012345678",
+      "secrets": []
+    }
+  ]
+}

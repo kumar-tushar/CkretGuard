@@ -17,7 +17,7 @@ async function files(directory, prefix = '') {
 }
 try {
   await cp(path.join(root, 'extension'), staging, { recursive: true });
-  for (const name of ['core', 'policy', 'stats', 'history', 'adapters', 'content']) {
+  for (const name of ['gitleaks-rules', 'core', 'policy', 'stats', 'history', 'adapters', 'content']) {
     await cp(path.join(root, 'src', `${name}.js`), path.join(staging, `${name}.js`));
   }
   const manifest = JSON.parse(await readFile(path.join(staging, 'manifest.json'), 'utf8'));
