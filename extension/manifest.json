@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "CkretGuard — Local Prompt Guard",
+  "name": "CkretGuard",
   "version": "1.0.0",
   "author": "Orenthic",
   "description": "Detect secrets before sending prompts to supported AI chats. Review, edit or mask locally with CkretGuard.",

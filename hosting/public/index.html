@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="CkretGuard checks prompts for possible secrets before you send them to supported AI chats. Review, edit, or mask on your device.">
+  <title>CkretGuard · Share prompts. Protect secrets.</title>
+  <link rel="canonical" href="https://ckretguard.web.app/">
+  <link rel="icon" href="ckretguard.png">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+  <header class="site-header"><a class="brand" href="/" aria-label="CkretGuard home"><img src="ckretguard.png" alt="" width="36" height="36">CkretGuard</a><nav aria-label="Main navigation"><a href="/" aria-current="page">Home</a><a href="/privacy-policy">Privacy Policy</a></nav></header>
+  <main id="main" class="home-page">
+    <section class="hero" aria-labelledby="hero-title">
+      <div class="hero-copy">
+        <p class="eyebrow">YOUR PROMPT. YOUR CHOICE.</p>
+        <h1 id="hero-title">Share prompts.<br><span>Protect secrets.</span></h1>
+        <p class="intro">A second look before you send.</p>
+        <p class="hero-description">CkretGuard checks your prompt for possible API keys, passwords, and custom secret fields. Review what it finds, then choose Send, Edit, or Mask.</p>
+        <a class="button" href="#how-it-works">See how it works <span aria-hidden="true">↓</span></a>
+        <p class="hero-note">Chrome extension · Scans on your device</p>
+      </div>
+      <figure class="review-example">
+        <div class="example-draft"><span class="example-label">Your draft</span><code>Api key = <span>K8m4Q2v7N9r5K8m4Q2v7N9r5</span></code></div>
+        <div class="review-card" aria-label="Example secret review">
+          <div class="review-brand"><span>CkretGuard · Orenthic</span><img src="ckretguard.png" alt="" width="28" height="28"></div>
+          <p class="review-heading"><span>1</span> secret detected</p>
+          <div class="found-value">K8m4Q2v7N9r5K8m4Q2v7N9r5</div>
+          <div class="review-actions" aria-label="Available choices in the extension">
+            <span class="send"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="m22 2-7 20-4-9-9-4Z M22 2 11 13"/></svg>Send</span>
+            <span class="edit"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="m15 4 5 5 M3 21l4-1L21 6l-5-5L2 15Z"/></svg>Edit</span>
+            <span class="mask"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="m3 3 18 18 M10 5c5-1 9 3 12 7a22 22 0 0 1-4 5 M6 6a22 22 0 0 0-4 6c5 7 11 9 16 5 M10 10a3 3 0 0 0 4 4"/></svg>Mask</span>
+          </div>
+        </div>
+      </figure>
+    </section>
+    <section class="supported" aria-labelledby="supported-title">
+      <h2 id="supported-title">For the AI chats you use</h2>
+      <ul class="provider-list">
+        <li><img src="providers/chatgpt.svg" alt="" width="24" height="24"><span>ChatGPT</span></li>
+        <li><img src="providers/claude.svg" alt="" width="24" height="24"><span>Claude</span></li>
+        <li><img src="providers/gemini.svg" alt="" width="24" height="24"><span>Gemini</span></li>
+        <li><img src="providers/deepseek.svg" alt="" width="24" height="24"><span>DeepSeek</span></li>
+        <li><img src="providers/grok.svg" alt="" width="24" height="24"><span>Grok</span></li>
+        <li><img src="providers/meta-ai.svg" alt="" width="24" height="24"><span>Meta AI</span></li>
+        <li><img src="providers/copilot.svg" alt="" width="24" height="24"><span>Copilot</span></li>
+        <li><img src="providers/perplexity.svg" alt="" width="24" height="24"><span>Perplexity</span></li>
+        <li><img src="providers/mistral.svg" alt="" width="24" height="24"><span>Mistral</span></li>
+      </ul>
+    </section>
+    <section id="how-it-works" class="how-it-works" aria-labelledby="how-title">
+      <p class="eyebrow">BEFORE YOUR PROMPT LEAVES</p>
+      <h2 id="how-title">One pause. Three choices.</h2>
+      <p class="section-description">When CkretGuard finds possible secrets, it shows the detected values so you can decide what to share.</p>
+      <ol class="choice-grid">
+        <li><span class="step-number">01</span><h3>Send</h3><p>Send the original prompt with the detected values unchanged.</p></li>
+        <li><span class="step-number">02</span><h3>Edit</h3><p>Return to your draft and make changes before sending.</p></li>
+        <li><span class="step-number">03</span><h3>Mask</h3><p>Replace detected values with <code>xxxxxxxxxx</code> and send the masked prompt.</p></li>
+      </ol>
+    </section>
+    <section class="local-section" aria-labelledby="local-title">
+      <div><p class="eyebrow">PROTECTION THAT STAYS LOCAL</p><h2 id="local-title">Your device does the checking.</h2><p>CkretGuard does not upload your prompts to Orenthic or a remote scanning service.</p><a class="text-link" href="/privacy-policy">Read the Privacy Policy <span aria-hidden="true">↗</span></a></div>
+      <dl class="local-details"><div><dt>Protect your own fields</dt><dd>Add up to 50 custom field names for values you want checked.</dd></div><div><dt>Review unmasked sends</dt><dd>Prompts sent through the warning’s Send choice are saved locally for up to 90 days, including their secrets. You can delete them in History.</dd></div><div><dt>Stay in control</dt><dd>Choose Send, Edit, or Mask, or use the stricter Edit or Mask setting.</dd></div></dl>
+    </section>
+    <p class="coverage-note">Covers recognized text inputs on supported chat websites. Some secrets may be missed. Websites can read text entered into their pages before you send it. CkretGuard is independent of the supported providers.</p>
+  </main>
+  <footer class="site-footer"><div><strong>CkretGuard by Orenthic</strong><p>Share prompts. Protect secrets.</p></div><nav aria-label="Footer navigation"><a href="/">Home</a><a href="/privacy-policy">Privacy Policy</a><a href="/terms-and-conditions">Terms and Conditions</a></nav></footer>
+</body>
+</html>
